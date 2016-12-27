@@ -120,9 +120,15 @@ public class Main {
     /**
      * 返回一组能够取得相应位置的'表达式!'，如Pos(r1,r2,c),其中r是正则表达式(在这里是token)，c代表第c个匹配
      *
-     * !!!!返回一组对pos函数的引用!!!!
+     * 注：r=TokenSeq(T1,T2..Tn)表示Str要符合[T1]+[T2]+...[Tn]+这种形式
+     * 如：r=TokenSea(num，letter)，那么str必须是123abc或1Abb这种形式才能和r匹配
+     *
+     * 所以
      * @param inputString
      * @param k
+     * @return 一个表示能够从input中截取出targetString的位置集合。
+     * 如：input=“123-abc-456-zxc" target="abc" 那么一个有效的起点pos(即a的位置)=POS(hyphenTok(即‘-’),letterTok,1||-2)
+     * 这个POS表示第一个或倒数第二个左侧为‘-’，右侧为字母的符号的位置
      */
     public static Set<Expression> generatePos(String inputString,int k){
         Set<Expression> result=new HashSet<Expression>();
@@ -130,26 +136,42 @@ public class Main {
         result.add(new PosExpression(k));
         result.add(new PosExpression(-(inputString.length()-k)));
 
-        // TODO: 2016/11/22 关于token的处理 ，可以降低复杂度？？？(看不懂)
-        // pos表示位置的相对值(第几个字符串的位置)
-        // 找到r1，r2，找到能匹配的k1，k2位置，然后提取出s[k1，k2]，找到s[k1，k2]匹配r12的位置c，得到新的pos(r1,r2,{c,-(_c-c+1)})
-        // FIXME: 2016/12/27 r1和r2的tokens好像是不同的???
-        for (Token r1:tokens){
-            for (Token r2:tokens){
-                // TODO: 2016/12/27 r12 = TokenSeq(tokenSeq1,tokenSeq2); ???
+        int len=inputString.length();
+        for(int k1=k-1;k1>=0;k1--){
+            // TODO 为inputString[k1:k2](含k1，不含k2)寻找一个TokenSeq(如123abc对应{num,letter})
+            // TokenSeq tokenSeq1=findTokenSeq(inputString.substring(k1,k2));
+            for(int k2=k+1;k2<=len;k2++){
+                // TODO：为inputString[k+1:k2](含k+1，不含k2)寻找一个TokenSeq(如123abc对应{num,letter})
+                // TokenSeq tokenSeq2=findTokenSeq(inputString.substring(k+1,k2));
 
-                // TODO: r1'= generateRegex(r1,inputString); r2'=generateRegex(r2,inputString); (不知道是否可以省略)
+                // TODO ：顺序合并r1和r2成为r12
+                // TokenSeq tokenSeq12=new TokenSeq(tokenSeq1,tokenSeq1);
 
-                // TODO: 2016/12/27  mergeSet(result,new PosExpression(xxxx))
+                // TODO：查找inputString[k1,k2]是tokenSeq12在inputString中的第几次match，记作c。
+                // 记cTotal为r12在inputString中总共match的次数
+                // int c = 第几次 inputString.matches(tokenSeq12);
+                // int cTotal=总共 inputString.matches(tokenSeq12);
+
+                // TODO: 2016/12/27 在generateRegex中为token去重复
+                // TokenSeq resTokenSeq1=generateRegex(r1,inputString);
+                // TokenSeq resTokenSeq2=generateRegex(r2,inputString);
+
+                //TODO: 合并结果
+                // result.add(new PosExpression(resTokenSeq1,resTokenSeq2,c));
+                // result.add(new PosExpression(resTokenSeq1,resTokenSeq2,-(cTotal-c+1)));
             }
         }
-
         return result;
     }
 
     /**
-     * TokenSeq??
-     * IParts??
+     * 注：r=TokenSeq(T1,T2..Tn)表示Str要符合[T1]+[T2]+...[Tn]+这种形式
+     * 如：r=TokenSea(num，letter)，那么str必须是123abc或1Abb这种形式才能和r匹配
+     * TokenSeq中可能存在的token，如多次123abc456zxc会表示成{numToken，letterToken，numtoken，letterToken}形势，
+     * 上面例子得到的经过本方法去重复之后得到{numtoken，letterToken}
+     *
+     * △ 但是：123abc456->{numToken，letterToken，numtoken}不可以变成{numToken，letterToken}
+     *
      * 不太理解，不知道是不是可以略去
      *
      * 对于一个某次字符串s匹配，token1和token2会取得一样的效果，此时token1和token2就没有区别(indistinguishable)
