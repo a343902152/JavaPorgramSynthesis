@@ -1,10 +1,14 @@
 package com.zsf;
 
 import com.zsf.interpreter.Expression;
+import com.zsf.interpreter.PosExpression;
+import com.zsf.interpreter.RegExpression;
 import com.zsf.interpreter.TestExpression;
 import javafx.util.Pair;
+import sun.security.x509.URIName;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 
 public class Main {
@@ -51,14 +55,24 @@ public class Main {
         // TODO: 2016/12/27 return dag(....,W2)；
     }
 
-    public static HashMap<Pair<Integer,Integer>,Set<Expression>> mergeSet(Set<Expression> set1,Set<Expression> set2){
+    /**
+     * 把表达式整合起来，能够去重复
+     *
+     * 要求：
+     * 1. 去掉直接重复
+     * 2. 去掉间接(值恒相等)重复
+     * @param set1
+     * @param set2
+     * @return 合并后的集合
+     */
+    public static Set<Expression> mergeSet(Set<Expression> set1,Set<Expression> set2){
 
         return null;
     }
 
 
     /**
-     * generateStr()中得到<I,J>->产生式的方法集合，在loop中进行去重复操作
+     * generateStr()中得到<I,J>->产生式的方法集合，在loop中进行整合
      * 返回一个W'
      * @param inputString
      * @param outputString
@@ -79,16 +93,18 @@ public class Main {
      * @param targetString 要从intputString中截取的字符串
      */
     public static Set<Expression> generateSubString(String inputString,String targetString){
+        Set<Expression> result=new HashSet<Expression>();
+
         int targetLen=targetString.length();
         for(int k=0;k<inputString.length();k++){
-            if(inputString.substring(k,k+targetLen)==targetString){
-                // TODO: 2016/11/22 pos1=generatePos(input,k);   pos2=generatePos(input,k+targetLen)
-//                int pos1=0;
-//                int pos2=0;
-//                resulet+=(pos1,pos2);
+            // 如果input中的某一段能够和target匹配(因为target定长，所以遍历input，每次抽取I中长度为targetLen的一段进行比较)，那么就把此时的posExpression添加到res中
+            if(inputString.substring(k, k + targetLen).equals(targetString)){
+                Set<Expression> res1=generatePos(inputString,k);
+                Set<Expression> res2=generatePos(inputString,k+targetLen);
+                mergeSet(result,mergeSet(res1,res2));
             }
         }
-        return null;
+        return result;
     }
 
     /**
@@ -98,20 +114,28 @@ public class Main {
      * @param inputString
      * @param k
      */
-    public static void generatePos(String inputString,int k){
-        // TODO: 2016/11/22 首先把k这个位置加到res中
-        // k表示位置的绝对值(k这个固定位置)
-        // resSet+=(k)
+    public static Set<Expression> generatePos(String inputString,int k){
+        Set<Expression> result=new HashSet<Expression>();
+        // 首先把k这个位置(正向数底k个，逆向数第-(inputString.length()-k)个)加到res中
+        result.add(new PosExpression(k));
+        result.add(new PosExpression(-(inputString.length()-k)));
 
         // TODO: 2016/11/22 关于token的处理 ，可以降低复杂度？？？(看不懂)
         // pos表示位置的相对值(第几个字符串的位置)
 //        找到r1，r2，找到能匹配的k1，k2位置，然后提取出s[k1，k2]，找到s[k1，k2]匹配r12的位置c，得到新的pos(r1,r2,{c,-(_c-c+1)})
 
 
-        /* 返回一组对pos函数的引用！！！ */
+        return result;
     }
 
-    public static void generateRegex(){
+    /**
+     * TokenSeq??
+     * IParts??
+     * 不太理解
+     * @param regExpression
+     * @param inputString
+     */
+    public static void generateRegex(RegExpression regExpression,String inputString){
 
     }
 
