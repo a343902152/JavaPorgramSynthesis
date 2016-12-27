@@ -1,9 +1,6 @@
 package com.zsf;
 
-import com.zsf.interpreter.Expression;
-import com.zsf.interpreter.PosExpression;
-import com.zsf.interpreter.RegExpression;
-import com.zsf.interpreter.TestExpression;
+import com.zsf.interpreter.*;
 import javafx.util.Pair;
 import sun.security.x509.URIName;
 
@@ -44,9 +41,8 @@ public class Main {
         int len=outputString.length();
         for(int i=0;i<len-1;i++){
             for (int j=i+1;j<len;j++){
-                // TODO 用mergeSet方法合并constStr和generateSubStr方法得到的结果。
-//                W.put(new Pair<Integer, Integer>(i,j),mergeSet(new ConstantStr(outputString.substring(i,j)),
-//                        generateSubString(inputString,outputString.substring(i,j))));
+                W.put(new Pair<Integer, Integer>(i,j),mergeSet(new ConstStrExpression(outputString.substring(i,j)),
+                        generateSubString(inputString,outputString.substring(i,j))));
             }
         }
         // TODO: 2016/12/27 W->W'，利用循环去重复
@@ -69,6 +65,18 @@ public class Main {
 
         return null;
     }
+
+    /**
+     * 合并单个表达式和表达式集合
+     * @param expression 新添加的单个表达式
+     * @param set 已有的表达式集合
+     * @return
+     */
+    public static Set<Expression> mergeSet(Expression expression,Set<Expression> set){
+
+        return null;
+    }
+
 
 
     /**
