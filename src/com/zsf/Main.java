@@ -1,6 +1,11 @@
 package com.zsf;
 
+import com.zsf.interpreter.Expression;
+import com.zsf.interpreter.TestExpression;
+import javafx.util.Pair;
+
 import java.util.HashMap;
+import java.util.Set;
 
 public class Main {
 
@@ -29,10 +34,37 @@ public class Main {
      * @param outputString
      */
     public static void generateStr(String inputString,String outputString){
+        // 论文中记作W W指能产生outputString[i，j]的所有方法集合,包括constStr[s[i,j]]以及动态获得子串方法generateSubString().
+        HashMap<Pair<Integer,Integer>,Set<Expression>> W=new HashMap<Pair<Integer, Integer>, Set<Expression>>();
 
+        int len=outputString.length();
+        for(int i=0;i<len-1;i++){
+            for (int j=i+1;j<len;j++){
+                // TODO 用mergeSet方法合并constStr和generateSubStr方法得到的结果。
+//                W.put(new Pair<Integer, Integer>(i,j),mergeSet(new ConstantStr(outputString.substring(i,j)),
+//                        generateSubString(inputString,outputString.substring(i,j))));
+            }
+        }
+        // TODO: 2016/12/27 W->W'，利用循环去重复
+//        HashMap<Pair<Integer,Integer>,Set<Expression>> W2=generateLoop(inputString,outputString,W);
+
+        // TODO: 2016/12/27 return dag(....,W2)；
     }
 
-    public static void generateLoop(String inputString, String outputString){
+    public static HashMap<Pair<Integer,Integer>,Set<Expression>> mergeSet(Set<Expression> set1,Set<Expression> set2){
+
+        return null;
+    }
+
+
+    /**
+     * generateStr()中得到<I,J>->产生式的方法集合，在loop中进行去重复操作
+     * 返回一个W'
+     * @param inputString
+     * @param outputString
+     * @param W
+     */
+    public static void generateLoop(String inputString, String outputString,HashMap<Pair<Integer,Integer>,Set<Expression>> W){
 
     }
 
@@ -46,7 +78,7 @@ public class Main {
      * @param inputString 输入数据
      * @param targetString 要从intputString中截取的字符串
      */
-    public static void generateSubString(String inputString,String targetString){
+    public static Set<Expression> generateSubString(String inputString,String targetString){
         int targetLen=targetString.length();
         for(int k=0;k<inputString.length();k++){
             if(inputString.substring(k,k+targetLen)==targetString){
@@ -56,7 +88,7 @@ public class Main {
 //                resulet+=(pos1,pos2);
             }
         }
-
+        return null;
     }
 
     /**
