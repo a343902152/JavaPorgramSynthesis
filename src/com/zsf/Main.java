@@ -1,12 +1,11 @@
 package com.zsf;
 
 import com.zsf.interpreter.*;
+import com.zsf.interpreter.token.Token;
 import javafx.util.Pair;
 import sun.security.x509.URIName;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class Main {
 
@@ -77,8 +76,6 @@ public class Main {
         return null;
     }
 
-
-
     /**
      * generateStr()中得到<I,J>->产生式的方法集合，在loop中进行整合
      * 返回一个W'
@@ -116,6 +113,11 @@ public class Main {
     }
 
     /**
+     * generatePos()时，用从这个tokens中获得r1 r2来对字符串进行匹配
+     */
+    private static List<Token> tokens=new ArrayList<Token>();
+
+    /**
      * 返回一组能够取得相应位置的'表达式!'，如Pos(r1,r2,c),其中r是正则表达式(在这里是token)，c代表第c个匹配
      *
      * !!!!返回一组对pos函数的引用!!!!
@@ -130,8 +132,17 @@ public class Main {
 
         // TODO: 2016/11/22 关于token的处理 ，可以降低复杂度？？？(看不懂)
         // pos表示位置的相对值(第几个字符串的位置)
-//        找到r1，r2，找到能匹配的k1，k2位置，然后提取出s[k1，k2]，找到s[k1，k2]匹配r12的位置c，得到新的pos(r1,r2,{c,-(_c-c+1)})
+        // 找到r1，r2，找到能匹配的k1，k2位置，然后提取出s[k1，k2]，找到s[k1，k2]匹配r12的位置c，得到新的pos(r1,r2,{c,-(_c-c+1)})
+        // FIXME: 2016/12/27 r1和r2的tokens好像是不同的???
+        for (Token r1:tokens){
+            for (Token r2:tokens){
+                // TODO: 2016/12/27 r12 = TokenSeq(tokenSeq1,tokenSeq2); ???
 
+                // TODO: r1'= generateRegex(r1,inputString); r2'=generateRegex(r2,inputString); (不知道是否可以省略)
+
+                // TODO: 2016/12/27  mergeSet(result,new PosExpression(xxxx))
+            }
+        }
 
         return result;
     }
@@ -139,7 +150,9 @@ public class Main {
     /**
      * TokenSeq??
      * IParts??
-     * 不太理解
+     * 不太理解，不知道是不是可以略去
+     *
+     * 对于一个某次字符串s匹配，token1和token2会取得一样的效果，此时token1和token2就没有区别(indistinguishable)
      * @param regExpression
      * @param inputString
      */
