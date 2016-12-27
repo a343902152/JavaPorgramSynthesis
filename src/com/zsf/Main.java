@@ -1,11 +1,26 @@
 package com.zsf;
 
+import java.util.HashMap;
+
 public class Main {
 
-    public static void main(String[] args) {
-	// write your code here
-    }
 
+    /**
+     * 根据I->O的examples，利用generateStr()+generatePatrition()...得到能够正确处理I->0转换的表达式
+     * 整个过程类似中缀表达式求值：中缀表达式->后缀表达式->求值
+     * 对应本程序的inputString->[★根据examples得到的expression★]->outputString
+     *
+     * 难点：
+     * 1. 如何找到能够正确映射I->0的表达式集合？
+     * 2. 如何给这些表达式排序找出最优解？
+     *
+     * generateExpressionByEaxmples求得expression之后返回这个表达式，之后的所有I利用这个E来求得O即可
+     *
+     * @param exampleSet
+     */
+    public static void generateExpressionByExamples(HashMap<String,String> exampleSet){
+
+    }
 
     /**
      * generate阶段要调用的函数
@@ -13,11 +28,11 @@ public class Main {
      * @param inputString
      * @param outputString
      */
-    public void generateStr(String inputString,String outputString){
+    public static void generateStr(String inputString,String outputString){
 
     }
 
-    public void generateLppo(String inputString,String outputString){
+    public static void generateLoop(String inputString, String outputString){
 
     }
 
@@ -31,7 +46,7 @@ public class Main {
      * @param inputString 输入数据
      * @param targetString 要从intputString中截取的字符串
      */
-    public void generateSubString(String inputString,String targetString){
+    public static void generateSubString(String inputString,String targetString){
         int targetLen=targetString.length();
         for(int k=0;k<inputString.length();k++){
             if(inputString.substring(k,k+targetLen)==targetString){
@@ -51,7 +66,7 @@ public class Main {
      * @param inputString
      * @param k
      */
-    public void generatePos(String inputString,int k){
+    public static void generatePos(String inputString,int k){
         // TODO: 2016/11/22 首先把k这个位置加到res中
         // k表示位置的绝对值(k这个固定位置)
         // resSet+=(k)
@@ -64,7 +79,27 @@ public class Main {
         /* 返回一组对pos函数的引用！！！ */
     }
 
-    public void generateRegex(){
+    public static void generateRegex(){
+
+    }
+
+    public static void main(String[] args) {
+        String inputString="123-abc-456-zxc";
+        String outputString="abc";
+        HashMap<String,String> exampleSet=new HashMap<String, String>();
+        exampleSet.put(inputString,outputString);
+
+        // TODO : 程序入口，根据examples求得expression
+        generateExpressionByExamples(exampleSet);
+
+        // TODO :每当有新的inputS，利用上面求得的expression将I->O
+
+
+        // region # testCodeRegion
+        generateStr(inputString,outputString);
+
+
+        // endregion
 
     }
 }
