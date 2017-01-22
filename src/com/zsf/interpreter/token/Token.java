@@ -1,6 +1,6 @@
 package com.zsf.interpreter.token;
 
-import com.zsf.interpreter.Expression;
+import com.zsf.interpreter.expressions.Expression;
 
 /**
  * 表示某种语法规则

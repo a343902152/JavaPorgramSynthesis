@@ -1,11 +1,15 @@
 package com.zsf;
 
-import com.zsf.interpreter.*;
+import com.zsf.interpreter.expressions.*;
+import com.zsf.interpreter.expressions.pos.AbsPosExpression;
+import com.zsf.interpreter.expressions.pos.PosExpression;
+import com.zsf.interpreter.expressions.pos.RegPosExpression;
+import com.zsf.interpreter.expressions.string.ConstStrExpression;
+import com.zsf.interpreter.expressions.string.SubStringExpression;
 import com.zsf.interpreter.model.Match;
 import com.zsf.interpreter.token.Regex;
 import com.zsf.interpreter.token.Token;
 import javafx.util.Pair;
-import sun.security.x509.URIName;
 
 import java.util.*;
 
@@ -40,8 +44,8 @@ public class Main {
         HashMap<Pair<Integer,Integer>,Set<Expression>> W=new HashMap<Pair<Integer, Integer>, Set<Expression>>();
 
         int len=outputString.length();
-        for(int i=0;i<len-1;i++){
-            for (int j=i+1;j<len;j++){
+        for(int i=0;i<len;i++){
+            for (int j=i+1;j<=len;j++){
                 W.put(new Pair<Integer, Integer>(i,j),mergeSet(new ConstStrExpression(outputString.substring(i,j)),
                         generateSubString(inputString,outputString.substring(i,j))));
             }
@@ -63,8 +67,8 @@ public class Main {
      * @return 合并后的集合
      */
     public static Set<Expression> mergeSet(Set<Expression> set1,Set<Expression> set2){
-
-        return null;
+        set1.addAll(set2);
+        return set1;
     }
 
     /**
@@ -74,8 +78,8 @@ public class Main {
      * @return
      */
     public static Set<Expression> mergeSet(Expression expression,Set<Expression> set){
-
-        return null;
+        set.add(expression);
+        return set;
     }
 
     /**
@@ -103,12 +107,21 @@ public class Main {
         Set<Expression> result=new HashSet<Expression>();
 
         int targetLen=targetString.length();
-        for(int k=0;k<inputString.length();k++){
+        for(int k=0;k<inputString.length()-targetLen;k++){
             // 如果input中的某一段能够和target匹配(因为target定长，所以遍历input，每次抽取I中长度为targetLen的一段进行比较)，那么就把此时的posExpression添加到res中
+            // TODO: 2017/1/22 这里可能也可以利用matches加速处理
             if(inputString.substring(k, k + targetLen).equals(targetString)){
-                Set<Expression> res1=generatePos(inputString,k);
-                Set<Expression> res2=generatePos(inputString,k+targetLen);
-                mergeSet(result,mergeSet(res1,res2));
+                Set<PosExpression> res1=generatePos(inputString,k);
+                Set<PosExpression> res2=generatePos(inputString,k+targetLen);
+
+                // 把找到的pos转换为subString
+                for (PosExpression expression1:res1){
+                    for(PosExpression expression2:res2){
+                        mergeSet(new SubStringExpression(inputString,expression1,expression2),
+                                result);
+                    }
+                }
+                break;
             }
         }
         return result;
@@ -132,11 +145,11 @@ public class Main {
      * 如：input=“123-abc-456-zxc" target="abc" 那么一个有效的起点pos(即a的位置)=POS(hyphenTok(即‘-’),letterTok,1||-2)
      * 这个POS表示第一个或倒数第二个左侧为‘-’，右侧为字母的符号的位置
      */
-    public static Set<Expression> generatePos(String inputString,int k){
-        Set<Expression> result=new HashSet<Expression>();
+    public static Set<PosExpression> generatePos(String inputString,int k){
+        Set<PosExpression> result=new HashSet<PosExpression>();
         // 首先把k这个位置(正向数底k个，逆向数第-(inputString.length()-k)个)加到res中
-        result.add(new PosExpression(k));
-        result.add(new PosExpression(-(inputString.length()-k)));
+        result.add(new AbsPosExpression(k));
+        result.add(new AbsPosExpression(-(inputString.length()-k)));
 
         /**
          * 新方法：
@@ -220,7 +233,7 @@ public class Main {
      * @param regExpression
      * @param inputString
      */
-    public static void generateRegex(RegExpression regExpression,String inputString){
+    public static void generateRegex(RegExpression regExpression, String inputString){
 
     }
 
@@ -241,9 +254,9 @@ public class Main {
 
 
         // region # testCodeRegion
-//        generateStr(inputString,outputString);
-        generatePos(inputString,4);
-        generatePos(inputString,7);
+        generateStr(inputString,outputString);
+//        generatePos(inputString,4);
+//        generatePos(inputString,7);
 
         // endregion
 

@@ -1,4 +1,6 @@
-package com.zsf.interpreter;
+package com.zsf.interpreter.expressions.string;
+
+import com.zsf.interpreter.expressions.Expression;
 
 /**
  * Created by hasee on 2016/12/27.

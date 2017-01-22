@@ -1,11 +1,12 @@
-package com.zsf.interpreter;
+package com.zsf.interpreter.expressions.pos;
 
+import com.zsf.interpreter.expressions.pos.PosExpression;
 import com.zsf.interpreter.token.Regex;
 
 /**
  * Created by hasee on 2017/1/22.
  */
-public class RegPosExpression extends Expression {
+public class RegPosExpression extends PosExpression {
 
     private Regex r1;
     private Regex r2;

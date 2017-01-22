@@ -1,13 +1,13 @@
-package com.zsf.interpreter;
+package com.zsf.interpreter.expressions.pos;
 
 /**
  * Created by hasee on 2016/12/27.
  */
-public class PosExpression extends Expression {
+public class AbsPosExpression extends PosExpression {
 
     private int pos;
 
-    public PosExpression(int pos) {
+    public AbsPosExpression(int pos) {
         this.pos = pos;
     }
 
