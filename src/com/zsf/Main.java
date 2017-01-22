@@ -1,6 +1,8 @@
 package com.zsf;
 
 import com.zsf.interpreter.*;
+import com.zsf.interpreter.model.Match;
+import com.zsf.interpreter.token.Regex;
 import com.zsf.interpreter.token.Token;
 import javafx.util.Pair;
 import sun.security.x509.URIName;
@@ -136,32 +138,72 @@ public class Main {
         result.add(new PosExpression(k));
         result.add(new PosExpression(-(inputString.length()-k)));
 
-        int len=inputString.length();
+        /**
+         * 新方法：
+         * TODO 重构代码
+         */
+        List<Match> matches=buildStringMatches(inputString);
         for(int k1=k-1;k1>=0;k1--){
-            // TODO 为inputString[k1:k2](含k1，不含k2)寻找一个TokenSeq(如123abc对应{num,letter})
-            // TokenSeq tokenSeq1=findTokenSeq(inputString.substring(k1,k2));
-            for(int k2=k+1;k2<=len;k2++){
-                // TODO：为inputString[k+1:k2](含k+1，不含k2)寻找一个TokenSeq(如123abc对应{num,letter})
-                // TokenSeq tokenSeq2=findTokenSeq(inputString.substring(k+1,k2));
+            for(int m1=0;m1<matches.size();m1++){
+                Match match1=matches.get(m1);
+                // TODO 确定r1，把if改成TokenSeq形式，要能根据match的起点和终点进行跳跃
+                if(match1.getMatchedIndex()==k1 && (match1.getMatchedIndex()+match1.getMatchedString().length())==k){
+                    Regex r1=match1.getRegex();
+                    for(int k2=k+1;k2<=inputString.length();k2++){
+                        for(int m2=0;m2<matches.size();m2++){
+                            Match match2=matches.get(m2);
+                            // TODO 确定r2，把if改成TokenSeq形式，要能根据match的起点和终点进行跳跃
+                            if(match2.getMatchedIndex()==k&&(k+match2.getMatchedString().length())==k2){
+                                Regex r2=match2.getRegex();
 
-                // TODO ：顺序合并r1和r2成为r12
-                // TokenSeq tokenSeq12=new TokenSeq(tokenSeq1,tokenSeq1);
-
-                // TODO：查找inputString[k1,k2]是tokenSeq12在inputString中的第几次match，记作c。
-                // 记cTotal为r12在inputString中总共match的次数
-                // int c = 第几次 inputString.matches(tokenSeq12);
-                // int cTotal=总共 inputString.matches(tokenSeq12);
-
-                // TODO: 2016/12/27 在generateRegex中为token去重复
-                // TokenSeq resTokenSeq1=generateRegex(r1,inputString);
-                // TokenSeq resTokenSeq2=generateRegex(r2,inputString);
-
-                //TODO: 合并结果
-                // result.add(new PosExpression(resTokenSeq1,resTokenSeq2,c));
-                // result.add(new PosExpression(resTokenSeq1,resTokenSeq2,-(cTotal-c+1)));
+                                // TODO: 2017/1/22 用更好的方法合并r1和r2
+                                Regex r12=new Regex("r12",r1.getReg()+r2.getReg());
+                                List<Match> totalMatches=r12.doMatch(inputString);
+                                int curOccur=-1;
+                                String sk1k2=inputString.substring(k1,k2);
+                                for (int i =0;i<totalMatches.size();i++){
+                                    if(sk1k2.equals(totalMatches.get(i).getMatchedString())){
+                                        curOccur=i+1;
+                                        break;
+                                    }
+                                }
+                                result.add(new RegPosExpression(r1,r2,curOccur));
+                                result.add(new RegPosExpression(r1,r2,-(totalMatches.size()-curOccur+1)));
+                            }
+                        }
+                    }
+                }
             }
         }
         return result;
+    }
+
+
+    private static List<Regex> usefulRegex=initUsefulRegex();
+
+    private static List<Regex> initUsefulRegex() {
+        List<Regex> regices=new ArrayList<Regex>();
+        regices.add(new Regex("NumToken","[0-9]+"));
+        regices.add(new Regex("LowerToken","[a-z]+"));
+        regices.add(new Regex("UpperToken","[A-Z]+"));
+        regices.add(new Regex("TestSymbolToken","[-]+"));
+
+        return regices;
+    }
+
+    /**
+     * 在每次有新的input时就调用此方法，可以返回 各个pos上所有能够和input匹配的集合
+     * 当generatePosition()需要时，直接根据match的pos(index)去查找使用，避免重复计算
+     */
+    private static List<Match> buildStringMatches(String inputString) {
+        List<Match> matches=new ArrayList<Match>();
+        for(int i =0;i<usefulRegex.size();i++){
+            Regex regex=usefulRegex.get(i);
+            List<Match> curMatcher=regex.doMatch(inputString);
+            // TODO: 2017/1/22 addAll时要做一个去重复
+            matches.addAll(curMatcher);
+        }
+        return matches;
     }
 
     /**
@@ -188,15 +230,20 @@ public class Main {
         HashMap<String,String> exampleSet=new HashMap<String, String>();
         exampleSet.put(inputString,outputString);
 
+
+        List<Match> matches=buildStringMatches(inputString);
+
+
         // TODO : 程序入口，根据examples求得expression
-        generateExpressionByExamples(exampleSet);
+//        generateExpressionByExamples(exampleSet);
 
         // TODO :每当有新的inputS，利用上面求得的expression将I->O
 
 
         // region # testCodeRegion
-        generateStr(inputString,outputString);
-
+//        generateStr(inputString,outputString);
+        generatePos(inputString,4);
+        generatePos(inputString,7);
 
         // endregion
 
