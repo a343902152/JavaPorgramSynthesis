@@ -1,5 +1,6 @@
 package com.zsf.interpreter.expressions.string;
 
+import com.sun.deploy.util.StringUtils;
 import com.zsf.interpreter.expressions.Expression;
 import com.zsf.interpreter.expressions.pos.PosExpression;
 import com.zsf.interpreter.token.Regex;
@@ -7,7 +8,7 @@ import com.zsf.interpreter.token.Regex;
 /**
  * Created by hasee on 2017/1/22.
  */
-public class SubStringExpression extends Expression{
+public class SubStringExpression extends StringExpression{
     private String inputString;
     private PosExpression posExpression1;
     private PosExpression posExpression2;
@@ -44,6 +45,6 @@ public class SubStringExpression extends Expression{
 
     @Override
     public String toString() {
-        return null;
+        return String.format("substr(%s,%s)",posExpression1.toString(),posExpression2.toString());
     }
 }

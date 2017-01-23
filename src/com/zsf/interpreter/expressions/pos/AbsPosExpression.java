@@ -13,6 +13,24 @@ public class AbsPosExpression extends PosExpression {
 
     @Override
     public String toString() {
-        return null;
+        return String.format("absPos(%d)",pos);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof AbsPosExpression){
+            if (((AbsPosExpression) obj).getPos()==this.getPos()){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public int getPos() {
+        return pos;
+    }
+
+    public void setPos(int pos) {
+        this.pos = pos;
     }
 }

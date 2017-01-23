@@ -23,6 +23,11 @@ public class Regex {
         this.pattern=Pattern.compile(reg);
     }
 
+    @Override
+    public String toString() {
+        return String.format("%s",regexName);
+    }
+
     public String getRegexName() {
         return regexName;
     }
