@@ -2,6 +2,9 @@ package com.zsf.interpreter.expressions.linking;
 
 import com.zsf.interpreter.expressions.Expression;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Created by hasee on 2017/1/23.
  */
@@ -13,6 +16,22 @@ public class ConcatenateExpression extends LinkingExpression {
     public ConcatenateExpression(Expression leftExp, Expression rightExp) {
         this.leftExp = leftExp;
         this.rightExp = rightExp;
+    }
+
+    /**
+     * 合并两个exp集合的工具函数
+     * @param expressions1
+     * @param expressions2
+     * @return
+     */
+    public static Set<Expression> concatenateExp(Set<Expression> expressions1, Set<Expression> expressions2) {
+        Set<Expression> linkedExpressions=new HashSet<Expression>();
+        for(Expression exp1:expressions1){
+            for (Expression exp2:expressions2){
+                linkedExpressions.add(new ConcatenateExpression(exp1,exp2));
+            }
+        }
+        return linkedExpressions;
     }
 
     @Override

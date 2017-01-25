@@ -86,30 +86,26 @@ public class Main {
     /**
      * 新方法：应对IBM这种跳跃式的output，可以先用Concate把o[0],o[1],o[2]连接起来
      * 之后generateLoop中只要把表达式全都一样的concate合并成一个Loop即可。
-     * 为避免重复计算，就需要倒序连接exp
+     *
+     * 算法思想：dfs
      */
     private static Set<Expression> concatResExp(HashMap<Pair<Integer, Integer>, Set<Expression>> w, int start,int end) {
         // TODO: 2017/1/25 需要修改concat的规则，比如两个constStr合并应该可以直接变成一个constStr
-//        for (int j = end; j >=end; j--) {
-//            for (int i = j - 2; i >= 0; i--) {
-//                // TODO: 2017/1/23 注意直接这样子做会导致W急剧爆炸，必须要去重
-//                Set<Expression> linkedExpressions = concatenateExp(w.get(new Pair<Integer, Integer>(i, i + 1)),
-//                        w.get(new Pair<Integer, Integer>(i + 1, j)));
-//
-//                w.put(new Pair<Integer, Integer>(i, j),
-//                        mergeSet(w.get(new Pair<Integer, Integer>(i, j)), linkedExpressions));
-//            }
-//        }
-        if (start+1>=end){
+
+        if (start+1==end){
             return w.get(new Pair<Integer, Integer>(start,end));
         }
-        int mid=(start+end)/2;
-//        concatResExp(w,start,mid);
-//        concatResExp(w,mid,end);
-        w.put(new Pair<Integer, Integer>(start,end),mergeSet(w.get(new Pair<Integer, Integer>(start,end)),
-                concatenateExp(concatResExp(w,start,mid),concatResExp(w,mid,end))));
+        Set<Expression> newExpressions=new HashSet<Expression>();
+        newExpressions=mergeSet(newExpressions,w.get(new Pair<Integer, Integer>(start,end)));
+        for (int j=start+1;j<end;j++){
+            Set<Expression> curExpressions=w.get(new Pair<Integer, Integer>(start,j));
+            if (curExpressions.size()>0){
+                Set<Expression> anss=ConcatenateExpression.concatenateExp(curExpressions,concatResExp(w,j,end));
+                newExpressions=mergeSet(newExpressions,anss);
+            }
+        }
 
-        return w.get(new Pair<Integer, Integer>(start,end));
+        return newExpressions;
     }
 
     /**
@@ -337,21 +333,6 @@ public class Main {
         return left.equals(right);
     }
 
-    /**
-     * 合并两个exp集合的工具函数
-     * @param expressions1
-     * @param expressions2
-     * @return
-     */
-    private static Set<Expression> concatenateExp(Set<Expression> expressions1, Set<Expression> expressions2) {
-        Set<Expression> linkedExpressions=new HashSet<Expression>();
-        for(Expression exp1:expressions1){
-            for (Expression exp2:expressions2){
-                linkedExpressions.add(new ConcatenateExpression(exp1,exp2));
-            }
-        }
-        return linkedExpressions;
-    }
 
     private static boolean needBeAddedIn(String subString, String inputString) {
         // 如果是原字符串中存在的str，那么就不需要添加(可能会有特例，需要注意一下)
@@ -405,7 +386,6 @@ public class Main {
         HashMap<String, String> exampleSet = new HashMap<String, String>();
         exampleSet.put(inputString, outputString);
 
-//        List<Match> matches=buildStringMatches(inputString);
 
         // TODO : 程序入口，根据examples求得expression
 //        generateExpressionByExamples(exampleSet);
