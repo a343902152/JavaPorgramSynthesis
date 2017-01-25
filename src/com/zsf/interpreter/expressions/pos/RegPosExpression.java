@@ -1,5 +1,6 @@
 package com.zsf.interpreter.expressions.pos;
 
+import com.zsf.interpreter.expressions.Expression;
 import com.zsf.interpreter.expressions.pos.PosExpression;
 import com.zsf.interpreter.token.Regex;
 
@@ -16,6 +17,27 @@ public class RegPosExpression extends PosExpression {
         this.r1 = r1;
         this.r2 = r2;
         this.c = c;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("regPos(%s,%s,%d)",r1.toString(),r2.toString(),c);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof RegPosExpression){
+            if (((RegPosExpression) obj).getR1().equals(this.getR1())
+                    && ((RegPosExpression) obj).getR2().equals(this.getR2())){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public Expression deepClone() {
+        return new RegPosExpression(r1,r2,c);
     }
 
     public Regex getR1() {
@@ -42,19 +64,5 @@ public class RegPosExpression extends PosExpression {
         this.c = c;
     }
 
-    @Override
-    public String toString() {
-        return String.format("regPos(%s,%s,%d)",r1.toString(),r2.toString(),c);
-    }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (obj instanceof RegPosExpression){
-            if (((RegPosExpression) obj).getR1().equals(this.getR1())
-                    && ((RegPosExpression) obj).getR2().equals(this.getR2())){
-                return true;
-            }
-        }
-        return false;
-    }
 }

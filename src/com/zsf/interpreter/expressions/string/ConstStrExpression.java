@@ -25,4 +25,8 @@ public class ConstStrExpression extends StringExpression {
         return String.format("constStr(%s)",constStr);
     }
 
+    @Override
+    public Expression deepClone() {
+        return new ConstStrExpression(constStr);
+    }
 }

@@ -42,10 +42,15 @@ public class LoopExpression extends Expression {
 
         // TODO: 2017/1/23 根据totalExpressions得到baseExp
         // TODO: 2017/1/23 下面的假设TotalExp全都是Concat，而且.leftExp()全都是substr2
+
+        // FIXME: 2017/1/25 现在的问题是，左右都有可能是concat，要用while判断，但是如果不实现clone，就会导致指针乱更新。
         if (totalExpressions instanceof ConcatenateExpression){
-            if (((ConcatenateExpression) totalExpressions).getLeftExp() instanceof SubString2Expression){
-                baseExpression=((ConcatenateExpression) totalExpressions).getLeftExp();
+
+            Expression leftExp=((ConcatenateExpression) totalExpressions).getLeftExp().deepClone();
+            while (leftExp instanceof ConcatenateExpression){
+                leftExp=((ConcatenateExpression) leftExp).getLeftExp().deepClone();
             }
+            baseExpression=leftExp;
         }
         // TODO: 2017/1/23 step
     }
@@ -55,6 +60,9 @@ public class LoopExpression extends Expression {
         // Loop(concat(subStr2(UpperTok,0,1,3)))
         // TODO: 2017/1/23 Loop是否只适用于substr2？如果不是的话，这个toString还有待斟酌
         String ans="";
+        if (baseExpression == null){
+            System.out.println("Loop(error)");
+        }
         if (baseExpression instanceof SubString2Expression){
             ans=String.format("Loop(%s(%s(%s,%d,%d,%d)))",linkingMode,
                     "subStr2",((SubString2Expression) baseExpression).getRegex().getRegexName(),
@@ -64,6 +72,12 @@ public class LoopExpression extends Expression {
         }
         return ans;
     }
+
+    @Override
+    public Expression deepClone() {
+        return new LoopExpression(linkingMode,totalExpressions.deepClone(),beginNode,endNode);
+    }
+
 
     public String getLinkingMode() {
         return linkingMode;

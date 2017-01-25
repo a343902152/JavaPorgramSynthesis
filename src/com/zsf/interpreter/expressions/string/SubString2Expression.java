@@ -1,5 +1,6 @@
 package com.zsf.interpreter.expressions.string;
 
+import com.zsf.interpreter.expressions.Expression;
 import com.zsf.interpreter.token.Regex;
 
 /**
@@ -24,6 +25,11 @@ public class SubString2Expression extends StringExpression {
             }
         }
         return false;
+    }
+
+    @Override
+    public Expression deepClone() {
+        return new SubString2Expression(inputString,regex,c);
     }
 
     @Override

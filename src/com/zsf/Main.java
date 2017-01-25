@@ -50,11 +50,19 @@ public class Main {
         int len = outputString.length();
         for (int i = 0; i < len; i++) {
             for (int j = i + 1; j <= len; j++) {
-                W.put(new Pair<Integer, Integer>(i, j), mergeSet(new ConstStrExpression(outputString.substring(i, j)),
-                        generateSubString(inputString, outputString.substring(i, j))));
+                String subString=outputString.substring(i,j);
+                if (needBeAddedIn(subString,inputString)){
+                    W.put(new Pair<Integer, Integer>(i, j), mergeSet(new ConstStrExpression(outputString.substring(i, j)),
+                            generateSubString(inputString, outputString.substring(i, j))));
+                }else{
+                    W.put(new Pair<Integer, Integer>(i,j),generateSubString(inputString,subString));
+                }
+
             }
         }
-        W=concatResExp(W, len);
+        W.put(new Pair<Integer, Integer>(0,len),concatResExp(W, 0,len));
+        // FIXME: 2017/1/25 BUG:如果类似IBMHW，输出为IBM,HW，其中IBM是一个Loop，HW是一个LOOP但是现在程序不能产生这种Loop
+        // FIXME 原因应该是处在generateLoop的位置，应该和论文一样把他放到generateStr的每个循环中
         for (int i=0;i<len;i++){
             for (int j=i+1;j<=len;j++){
                 W.put(new Pair<Integer, Integer>(i, j),
@@ -62,9 +70,11 @@ public class Main {
             }
         }
 
+        // TODO 输出所有结果，等待排序
         Set<Expression> resExps=W.get(new Pair<Integer, Integer>(0,len));
+        System.out.println(resExps.size());
         for (Expression exp:resExps){
-            if (exp instanceof LoopExpression)
+//            if (exp instanceof LoopExpression)
                 System.out.println(exp.toString());
         }
 
@@ -72,23 +82,34 @@ public class Main {
         return new DAG();
     }
 
+
     /**
      * 新方法：应对IBM这种跳跃式的output，可以先用Concate把o[0],o[1],o[2]连接起来
      * 之后generateLoop中只要把表达式全都一样的concate合并成一个Loop即可。
      * 为避免重复计算，就需要倒序连接exp
      */
-    private static HashMap<Pair<Integer, Integer>, Set<Expression>> concatResExp(HashMap<Pair<Integer, Integer>, Set<Expression>> w, int len) {
-        for (int j = len; j > 0; j--) {
-            for (int i = j - 2; i >= 0; i--) {
-                // TODO: 2017/1/23 注意直接这样子做会导致W急剧爆炸，必须要去重
-                Set<Expression> linkedExpressions = concatenateExp(w.get(new Pair<Integer, Integer>(i, i + 1)),
-                        w.get(new Pair<Integer, Integer>(i + 1, j)));
-
-                w.put(new Pair<Integer, Integer>(i, j),
-                        mergeSet(w.get(new Pair<Integer, Integer>(i, j)), linkedExpressions));
-            }
+    private static Set<Expression> concatResExp(HashMap<Pair<Integer, Integer>, Set<Expression>> w, int start,int end) {
+        // TODO: 2017/1/25 需要修改concat的规则，比如两个constStr合并应该可以直接变成一个constStr
+//        for (int j = end; j >=end; j--) {
+//            for (int i = j - 2; i >= 0; i--) {
+//                // TODO: 2017/1/23 注意直接这样子做会导致W急剧爆炸，必须要去重
+//                Set<Expression> linkedExpressions = concatenateExp(w.get(new Pair<Integer, Integer>(i, i + 1)),
+//                        w.get(new Pair<Integer, Integer>(i + 1, j)));
+//
+//                w.put(new Pair<Integer, Integer>(i, j),
+//                        mergeSet(w.get(new Pair<Integer, Integer>(i, j)), linkedExpressions));
+//            }
+//        }
+        if (start+1>=end){
+            return w.get(new Pair<Integer, Integer>(start,end));
         }
-        return w;
+        int mid=(start+end)/2;
+//        concatResExp(w,start,mid);
+//        concatResExp(w,mid,end);
+        w.put(new Pair<Integer, Integer>(start,end),mergeSet(w.get(new Pair<Integer, Integer>(start,end)),
+                concatenateExp(concatResExp(w,start,mid),concatResExp(w,mid,end))));
+
+        return w.get(new Pair<Integer, Integer>(start,end));
     }
 
     /**
@@ -184,8 +205,11 @@ public class Main {
     public static Set<PosExpression> generatePos(String inputString, int k) {
         Set<PosExpression> result = new HashSet<PosExpression>();
         // 首先把k这个位置(正向数底k个，逆向数第-(inputString.length()-k)个)加到res中
-        result.add(new AbsPosExpression(k));
-        result.add(new AbsPosExpression(-(inputString.length() - k)));
+        if (k==0){
+            result.add(new AbsPosExpression(k));
+            result.add(new AbsPosExpression(-(inputString.length() - k)));
+        }
+
 
         /**
          * 新方法：
@@ -232,11 +256,13 @@ public class Main {
 
     private static List<Regex> initUsefulRegex() {
         List<Regex> regices = new ArrayList<Regex>();
-        regices.add(new Regex("NumToken", "[0-9]+"));
+        regices.add(new Regex("DigitToken", "[-+]?(([0-9]+)([.]([0-9]+))?|([.]([0-9]+))?)"));
         regices.add(new Regex("LowerToken", "[a-z]+"));
         regices.add(new Regex("UpperToken", "[A-Z]+"));
+        regices.add(new Regex("AlphaToken", "[a-z A-Z]+"));
+//        regices.add(new Regex("AlphaNumToken", "[a-z A-Z 0-9]+"));
         regices.add(new Regex("TestSymbolToken", "[-]+"));
-
+        regices.add(new Regex("CommaToken", "[,]+"));
         return regices;
     }
 
@@ -311,6 +337,12 @@ public class Main {
         return left.equals(right);
     }
 
+    /**
+     * 合并两个exp集合的工具函数
+     * @param expressions1
+     * @param expressions2
+     * @return
+     */
     private static Set<Expression> concatenateExp(Set<Expression> expressions1, Set<Expression> expressions2) {
         Set<Expression> linkedExpressions=new HashSet<Expression>();
         for(Expression exp1:expressions1){
@@ -319,6 +351,15 @@ public class Main {
             }
         }
         return linkedExpressions;
+    }
+
+    private static boolean needBeAddedIn(String subString, String inputString) {
+        // 如果是原字符串中存在的str，那么就不需要添加(可能会有特例，需要注意一下)
+        boolean existedString = inputString.indexOf(subString) >= 0;
+
+        // 如果是分界符，那么就添加进去
+        String delimiterReg = "[-,]+";
+        return !existedString || subString.matches(delimiterReg);
     }
 
     /**
@@ -355,12 +396,14 @@ public class Main {
     }
 
     public static void main(String[] args) {
-//        String inputString="123-abc-456-zxc";
-        String inputString = "Hello World Zsf the Program Synthesis";
-        String outputString="HWZPS";
+        // 对于提取IBM形式的句子，最后W的规模大致为3*(len(o))^2
+        // 其他的subStr问题W的规模会小很多
+        String inputString="Electronics Store,40.74260751,73.99270535,Tue Apr 03 18:08:57 +0800 2012";
+//        String inputString = "Hello World Zsf the Program Synthesis Intellij Idea";
+//        String outputString="HWZPSII";
+        String outputString="Electronics Store,73.99270535";
         HashMap<String, String> exampleSet = new HashMap<String, String>();
         exampleSet.put(inputString, outputString);
-
 
 //        List<Match> matches=buildStringMatches(inputString);
 

@@ -20,6 +20,11 @@ public class ConcatenateExpression extends LinkingExpression {
         return String.format("concat(%s,%s)",leftExp.toString(),rightExp.toString());
     }
 
+    @Override
+    public Expression deepClone() {
+        return new ConcatenateExpression(leftExp.deepClone(),rightExp.deepClone());
+    }
+
     public Expression getLeftExp() {
         return leftExp;
     }
