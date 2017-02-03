@@ -84,7 +84,7 @@ public class RegPosExpression extends PosExpression {
                 return posList.get(contraPos);
             }
         }
-        return Integer.MIN_VALUE;
+        return PosExpression.ILLEGAL_POS;
     }
 
     @Override

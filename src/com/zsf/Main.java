@@ -1,5 +1,6 @@
 package com.zsf;
 
+import com.sun.org.apache.bcel.internal.generic.IF_ACMPEQ;
 import com.zsf.interpreter.expressions.*;
 import com.zsf.interpreter.expressions.linking.ConcatenateExpression;
 import com.zsf.interpreter.expressions.loop.LoopExpression;
@@ -217,9 +218,10 @@ public class Main {
         // 首先把k这个位置(正向数底k个，逆向数第-(inputString.length()-k)个)加到res中
         if (k==0){
             result.add(new AbsPosExpression(k));
-            result.add(new AbsPosExpression(-(inputString.length() - k)));
         }
-
+        if (k==inputString.length()){
+            result.add(new AbsPosExpression(PosExpression.END_POS));
+        }
 
         /**
          * 新方法：
@@ -266,7 +268,7 @@ public class Main {
 
     private static List<Regex> initUsefulRegex() {
         List<Regex> regices = new ArrayList<Regex>();
-        regices.add(new Regex("DigitToken", "[-+]?(([0-9]+)([.]([0-9]+))?|([.]([0-9]+))?)"));
+        regices.add(new Regex("DigitToken", "[-+]?(([0-9]+)([.]([0-9]+))?)"));
         regices.add(new Regex("LowerToken", "[a-z]+"));
         regices.add(new Regex("UpperToken", "[A-Z]+"));
         regices.add(new Regex("AlphaToken", "[a-zA-Z]+"));

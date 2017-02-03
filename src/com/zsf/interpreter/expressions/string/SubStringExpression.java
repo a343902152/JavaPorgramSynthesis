@@ -17,12 +17,16 @@ public class SubStringExpression extends StringExpression {
 
     @Override
     public String interpret(String inputString) {
+        int len=inputString.length();
+
         int pos1=posExpression1.interpret(inputString);
         int pos2=posExpression2.interpret(inputString);
         // pos=-1就表示len-1位，如input="abcde", input.subStr(1,-1)=input.subStr(1,4)="bcd"
-        // FIXME: 2017/2/3 现在还不能表示最后一位，不知道怎么办
-        pos1=pos1<0?pos1+inputString.length():pos1;
-        pos2=pos2<0?pos2+inputString.length():pos2;
+        // END_POS表示最后一位,如果如果碰到END_POS，就把pos转换为input.length
+        pos1=pos1<0?pos1+len:pos1;
+        pos1=pos1==PosExpression.END_POS?len:pos1;
+        pos2=pos2<0?pos2+len:pos2;
+        pos2=pos2==PosExpression.END_POS?len:pos2;
 
         if (isIllegalPos(inputString,pos1)||isIllegalPos(inputString,pos2)){
             return "illegalPos";
