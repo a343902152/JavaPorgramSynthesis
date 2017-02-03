@@ -31,7 +31,15 @@ public class SubStringExpression extends StringExpression {
         if (isIllegalPos(inputString,pos1)||isIllegalPos(inputString,pos2)){
             return "illegalPos";
         }else {
-            return inputString.substring(pos1,pos2);
+            // FIXME: 2017/2/3 这里经常出错
+            String ans="";
+            try {
+                ans=inputString.substring(pos1,pos2);
+            }catch (Exception e){
+                // FIXME: 2017/2/3 例：Input="bc abcd" output="abc" 现在的算法有时会导致index=4(a) 连接到index=0(bc)上去
+                System.out.println("解释SubString时出错");
+            }
+            return ans;
         }
     }
 

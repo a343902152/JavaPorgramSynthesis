@@ -12,6 +12,7 @@ import com.zsf.interpreter.expressions.string.SubString2Expression;
 import com.zsf.interpreter.expressions.string.SubStringExpression;
 import com.zsf.interpreter.model.Match;
 import com.zsf.interpreter.token.Regex;
+import com.zsf.interpreter.tool.RunTimeMeasurer;
 import javafx.util.Pair;
 
 import java.io.FileWriter;
@@ -46,10 +47,11 @@ public class Main {
      * @param inputString
      * @param outputString
      */
-    public static DAG generateStr(String inputString, String outputString) {
+    public static Set<Expression> generateStr(String inputString, String outputString) {
         // 论文中记作W W指能产生outputString[i，j]的所有方法集合,包括constStr[s[i,j]]以及动态获得子串方法generateSubString().
         HashMap<Pair<Integer, Integer>, Set<Expression>> W = new HashMap<Pair<Integer, Integer>, Set<Expression>>();
 
+        RunTimeMeasurer.startTiming();
         int len = outputString.length();
         for (int i = 0; i < len; i++) {
             for (int j = i + 1; j <= len; j++) {
@@ -63,43 +65,30 @@ public class Main {
 
             }
         }
+        RunTimeMeasurer.endTiming("generateSubString");
+
+        // FIXME: 2017/2/3 此方法过于耗时，当item数和每个item的长度增加时，解会爆炸增长
+        // FIXME: 2017/2/3 初步推测这和constStr过多有关
+        RunTimeMeasurer.startTiming();
         W.put(new Pair<Integer, Integer>(0,len),concatResExp(W, 0,len));
+        RunTimeMeasurer.endTiming("concatResExp");
+
+
+        RunTimeMeasurer.startTiming();
         // FIXME: 2017/1/25 BUG:如果类似IBMHW，输出为IBM,HW，其中IBM是一个Loop，HW是一个LOOP但是现在程序不能产生这种Loop
         // FIXME 原因应该是处在generateLoop的位置，应该和论文一样把他放到generateStr的每个循环中
+        // FIXME: 2017/2/3 当前的方法也比较耗时(约为concatRes的20%)
         for (int i=0;i<len;i++){
             for (int j=i+1;j<=len;j++){
                 W.put(new Pair<Integer, Integer>(i, j),
                         mergeSet(W.get(new Pair<Integer, Integer>(i, j)), generateLoop(i,j,W)));
             }
         }
-
-        String testString="Food & Drink Shop,40.87891103,74.08508939,Thu Feb 07 02:23:26 +0800 2013";
-        String target="Food & Drink Shop,02:23:26,Feb 07";
-        // TODO 输出所有结果，等待排序
-        Set<Expression> resExps=W.get(new Pair<Integer, Integer>(0,len));
-        System.out.println(resExps.size());
-        try {
-            FileWriter fileWriter = new FileWriter("C:\\Users\\hasee\\Desktop\\tempdata\\string-processor\\ans.txt");
-            for (Expression exp:resExps){
-//            if (exp instanceof LoopExpression)
-//                System.out.println(exp.toString());
-                if (exp instanceof NonTerminalExpression){
-                    String result=((NonTerminalExpression) exp).interpret(testString);
-                    if (result.equals(target)){
-                        if (exp.deepth()<=4)
-                        System.out.println(String.valueOf(exp.deepth())+"  "+exp.toString());
-                    }
-                }
-                fileWriter.write(exp.toString());
-                fileWriter.write("\n");
-            }
-            fileWriter.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        RunTimeMeasurer.endTiming("generateLoop");
 
         // TODO: 2016/12/27 return dag(....,W2)；
-        return new DAG();
+        Set<Expression> resExps=W.get(new Pair<Integer, Integer>(0,len));
+        return resExps;
     }
 
 
@@ -380,6 +369,7 @@ public class Main {
         boolean existedString = inputString.indexOf(subString) >= 0;
 
         // 如果是分界符，那么就添加进去
+        // FIXME: 2017/2/3 delimiterReg增大会导致答案急剧增多(比如在[-,]+时为10W个，增大到[-, ]+时可能就会有1000W个)，还不知道怎么解决
         String delimiterReg = "[-,]+";
         return !existedString || subString.matches(delimiterReg);
     }
@@ -425,23 +415,52 @@ public class Main {
 //        String inputString="(323)-708-7700";
 //        String outputString="HWZPSII";
 //        String outputString="323-708-7700";
-        String outputString="Electronics Store,18:08:57,Apr 03";
+        // FIXME 当前concatExp算法为指数型函数，一旦output中item数(比如用逗号隔开)增加以及每个item的长度变长，计算时间会爆炸增长。
+        // FIXME: 2017/2/3 初步估计每个item延长一位会让concatResExp耗时翻倍，每增加一个item，就会导致concatResExp耗时乘以n倍
+        String outputString="Electronics Store,18:08:57,abcd,Apr 03";
         HashMap<String, String> exampleSet = new HashMap<String, String>();
         exampleSet.put(inputString, outputString);
-
 
         // TODO : 程序入口，根据examples求得expression
 //        generateExpressionByExamples(exampleSet);
 
         // TODO :每当有新的inputS，利用上面求得的expression将I->O
-
-
         // region # testCodeRegion
-        generateStr(inputString, outputString);
+        Set<Expression> resExps=generateStr(inputString, outputString);
+        String testString="Food & Drink Shop,40.87891103,74.08508939,Thu Feb 07 02:23:26 +0800 2013";
+        String target="Food & Drink Shop,02:23:26 Feb 07,Thu";
+        // TODO 输出所有结果，等待排序
+        if (false){
+            verifyResult(resExps, testString, target);
+        }
+
 //        generatePos(inputString,4);
 //        generatePos(inputString,7);
 
         // endregion
 
+    }
+
+    private static void verifyResult(Set<Expression> resExps, String testString, String target) {
+        System.out.println(resExps.size());
+        try {
+            FileWriter fileWriter = new FileWriter("C:\\Users\\hasee\\Desktop\\tempdata\\string-processor\\ans.txt");
+            for (Expression exp:resExps){
+//            if (exp instanceof LoopExpression)
+//                System.out.println(exp.toString());
+                if (exp instanceof NonTerminalExpression){
+                    String result=((NonTerminalExpression) exp).interpret(testString);
+                    if (result.equals(target)){
+                        if (exp.deepth()<=4)
+                            System.out.println(String.valueOf(exp.deepth())+"  "+exp.toString());
+                    }
+                }
+                fileWriter.write(exp.toString());
+                fileWriter.write("\n");
+            }
+            fileWriter.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
