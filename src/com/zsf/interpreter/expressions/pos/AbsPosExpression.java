@@ -33,6 +33,11 @@ public class AbsPosExpression extends PosExpression {
         return false;
     }
 
+    @Override
+    public int interpret(String inputString) {
+        return pos;
+    }
+
 
     public int getPos() {
         return pos;

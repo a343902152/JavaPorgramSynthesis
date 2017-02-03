@@ -12,6 +12,11 @@ public class ConstStrExpression extends StringExpression {
         this.constStr = constStr;
     }
 
+    @Override
+    public String interpret(String inputString) {
+        return constStr;
+    }
+
     public String getConstStr() {
         return constStr;
     }
@@ -29,4 +34,6 @@ public class ConstStrExpression extends StringExpression {
     public Expression deepClone() {
         return new ConstStrExpression(constStr);
     }
+
+
 }

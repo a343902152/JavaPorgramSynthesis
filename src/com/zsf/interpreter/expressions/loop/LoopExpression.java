@@ -1,6 +1,7 @@
 package com.zsf.interpreter.expressions.loop;
 
 import com.zsf.interpreter.expressions.Expression;
+import com.zsf.interpreter.expressions.NonTerminalExpression;
 import com.zsf.interpreter.expressions.linking.ConcatenateExpression;
 import com.zsf.interpreter.expressions.linking.LinkingExpression;
 import com.zsf.interpreter.expressions.string.SubString2Expression;
@@ -8,7 +9,7 @@ import com.zsf.interpreter.expressions.string.SubString2Expression;
 /**
  * Created by hasee on 2017/1/23.
  */
-public class LoopExpression extends Expression {
+public class LoopExpression extends NonTerminalExpression {
 
     public static final String LINKING_MODE_CONCATENATE="concat";
 
@@ -121,5 +122,10 @@ public class LoopExpression extends Expression {
 
     public void setStepSize(int stepSize) {
         this.stepSize = stepSize;
+    }
+
+    @Override
+    public String interpret(String inputString) {
+        return "Loop_unhandled";
     }
 }

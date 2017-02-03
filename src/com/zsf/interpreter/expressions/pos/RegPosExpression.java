@@ -2,7 +2,11 @@ package com.zsf.interpreter.expressions.pos;
 
 import com.zsf.interpreter.expressions.Expression;
 import com.zsf.interpreter.expressions.pos.PosExpression;
+import com.zsf.interpreter.model.Match;
 import com.zsf.interpreter.token.Regex;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by hasee on 2017/1/22.
@@ -33,6 +37,54 @@ public class RegPosExpression extends PosExpression {
             }
         }
         return false;
+    }
+
+    /**
+     * 要找到第c个，左边是r1，右边是r2的位置。
+     * 如Input="Electronics Store"
+     * 有Exp="regPos(UpperToken,LowerToken,1)"
+     * 那么matches1能匹配到E和S
+     * matchers2能匹配到lectronics和tore
+     *
+     * 第一个m1的matchedIndex=0，length=1 ，第一个m2的matchedIndex=1，所以这就是第一个匹配(也是答案)
+     *
+     * @param inputString
+     * @return
+     */
+    @Override
+    public int interpret(String inputString) {
+        List<Match> matches1=r1.doMatch(inputString);
+        List<Match> matches2=r2.doMatch(inputString);
+        int count=0;
+        int total=0;
+        List<Integer> posList=new ArrayList<Integer>();
+        for (Match m1: matches1){
+            for (Match m2:matches2){
+                int leftEndPos=m1.getMatchedIndex()+m1.getMatchedString().length();
+                int rightBeginPos=m2.getMatchedIndex();
+                if(leftEndPos<rightBeginPos){
+                    break;
+                }
+                if (leftEndPos==rightBeginPos){
+                    count++;
+                    total++;
+                    if (count>0&&count==c){
+                        return rightBeginPos;
+                    }
+                    posList.add(rightBeginPos);
+                }
+            }
+        }
+        if (c<0){
+            // 假设 input="Hello World Zsf"
+            // 现有regPos(UpperToken,LowerToken,-3) ,total=3 所以regPos(UpperToken,LowerToken,-3)等价于regPos(UpperToken,LowerToken,1)
+            // 即第一个左侧(左开)为大写，右侧(右闭)为小写的位置，即index=1
+            int contraPos=c+(total);
+            if (contraPos>=0&&contraPos<posList.size()){
+                return posList.get(contraPos);
+            }
+        }
+        return Integer.MIN_VALUE;
     }
 
     @Override

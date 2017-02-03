@@ -13,6 +13,8 @@ import com.zsf.interpreter.model.Match;
 import com.zsf.interpreter.token.Regex;
 import javafx.util.Pair;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 
@@ -73,9 +75,21 @@ public class Main {
         // TODO 输出所有结果，等待排序
         Set<Expression> resExps=W.get(new Pair<Integer, Integer>(0,len));
         System.out.println(resExps.size());
-        for (Expression exp:resExps){
+        try {
+            FileWriter fileWriter = new FileWriter("C:\\Users\\hasee\\Desktop\\tempdata\\string-processor\\ans.txt");
+            for (Expression exp:resExps){
 //            if (exp instanceof LoopExpression)
-                System.out.println(exp.toString());
+//                System.out.println(exp.toString());
+                if (exp instanceof NonTerminalExpression){
+                    String result=((NonTerminalExpression) exp).interpret(inputString);
+                    System.out.println(result);
+                }
+                fileWriter.write(exp.toString());
+                fileWriter.write("\n");
+            }
+            fileWriter.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
         // TODO: 2016/12/27 return dag(....,W2)；
@@ -159,7 +173,7 @@ public class Main {
                 // 把找到的pos转换为subString
                 for (PosExpression expression1 : res1) {
                     for (PosExpression expression2 : res2) {
-                        mergeSet(new SubStringExpression(inputString, expression1, expression2),
+                        mergeSet(new SubStringExpression(expression1, expression2),
                                 result);
                     }
                 }
@@ -177,7 +191,7 @@ public class Main {
             while (matcher.find()){
                 count++;
                 if (matcher.group().equals(targetString)){
-                    res.add(new SubString2Expression(inputString,regex,count));
+                    res.add(new SubString2Expression(regex,count));
                 }
             }
         }
@@ -255,7 +269,7 @@ public class Main {
         regices.add(new Regex("DigitToken", "[-+]?(([0-9]+)([.]([0-9]+))?|([.]([0-9]+))?)"));
         regices.add(new Regex("LowerToken", "[a-z]+"));
         regices.add(new Regex("UpperToken", "[A-Z]+"));
-        regices.add(new Regex("AlphaToken", "[a-z A-Z]+"));
+        regices.add(new Regex("AlphaToken", "[a-zA-Z]+"));
 //        regices.add(new Regex("AlphaNumToken", "[a-z A-Z 0-9]+"));
         regices.add(new Regex("TestSymbolToken", "[-]+"));
         regices.add(new Regex("CommaToken", "[,]+"));
@@ -336,6 +350,7 @@ public class Main {
 
     private static boolean needBeAddedIn(String subString, String inputString) {
         // 如果是原字符串中存在的str，那么就不需要添加(可能会有特例，需要注意一下)
+        // TODO: 2017/2/2 (在最终调整之前不修改这个，以防万一)字符串是否存在要修改一下 ，去掉subString的分隔符，然后用LSC比较subString是否全都出现过
         boolean existedString = inputString.indexOf(subString) >= 0;
 
         // 如果是分界符，那么就添加进去
@@ -381,7 +396,9 @@ public class Main {
         // 其他的subStr问题W的规模会小很多
         String inputString="Electronics Store,40.74260751,73.99270535,Tue Apr 03 18:08:57 +0800 2012";
 //        String inputString = "Hello World Zsf the Program Synthesis Intellij Idea";
+//        String inputString="George Ciprian Necula";
 //        String outputString="HWZPSII";
+//        String outputString="Necula,G.";
         String outputString="Electronics Store,73.99270535";
         HashMap<String, String> exampleSet = new HashMap<String, String>();
         exampleSet.put(inputString, outputString);

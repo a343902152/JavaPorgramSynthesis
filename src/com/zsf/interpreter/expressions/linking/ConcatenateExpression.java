@@ -1,6 +1,7 @@
 package com.zsf.interpreter.expressions.linking;
 
 import com.zsf.interpreter.expressions.Expression;
+import com.zsf.interpreter.expressions.NonTerminalExpression;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -42,6 +43,15 @@ public class ConcatenateExpression extends LinkingExpression {
     @Override
     public Expression deepClone() {
         return new ConcatenateExpression(leftExp.deepClone(),rightExp.deepClone());
+    }
+
+    @Override
+    public String interpret(String inputString) {
+        String ans="null";
+        if (leftExp instanceof NonTerminalExpression && rightExp instanceof NonTerminalExpression){
+            ans=((NonTerminalExpression) leftExp).interpret(inputString)+((NonTerminalExpression) rightExp).interpret(inputString);
+        }
+        return ans;
     }
 
     public Expression getLeftExp() {
