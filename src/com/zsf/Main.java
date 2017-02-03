@@ -73,6 +73,8 @@ public class Main {
             }
         }
 
+        String testString="Food & Drink Shop,40.87891103,74.08508939,Thu Feb 07 02:23:26 +0800 2013";
+        String target="Food & Drink Shop,02:23:26,Feb 07";
         // TODO 输出所有结果，等待排序
         Set<Expression> resExps=W.get(new Pair<Integer, Integer>(0,len));
         System.out.println(resExps.size());
@@ -82,8 +84,11 @@ public class Main {
 //            if (exp instanceof LoopExpression)
 //                System.out.println(exp.toString());
                 if (exp instanceof NonTerminalExpression){
-                    String result=((NonTerminalExpression) exp).interpret(inputString);
-                    System.out.println(result);
+                    String result=((NonTerminalExpression) exp).interpret(testString);
+                    if (result.equals(target)){
+                        if (exp.deepth()<=4)
+                        System.out.println(String.valueOf(exp.deepth())+"  "+exp.toString());
+                    }
                 }
                 fileWriter.write(exp.toString());
                 fileWriter.write("\n");
@@ -266,16 +271,35 @@ public class Main {
 
     private static List<Regex> usefulRegex = initUsefulRegex();
 
+    /**
+     * 增加有效的token可以强化匹配能力
+     * @return
+     */
     private static List<Regex> initUsefulRegex() {
-        List<Regex> regices = new ArrayList<Regex>();
-        regices.add(new Regex("DigitToken", "[-+]?(([0-9]+)([.]([0-9]+))?)"));
-        regices.add(new Regex("LowerToken", "[a-z]+"));
-        regices.add(new Regex("UpperToken", "[A-Z]+"));
-        regices.add(new Regex("AlphaToken", "[a-zA-Z]+"));
+        List<Regex> regexList = new ArrayList<Regex>();
+        regexList.add(new Regex("DigitToken", "(([0-9]+)([.]([0-9]+))?)"));
+        regexList.add(new Regex("LowerToken", "[a-z]+"));
+        regexList.add(new Regex("UpperToken", "[A-Z]+"));
+        regexList.add(new Regex("AlphaToken", "[a-zA-Z]+"));
+
+        // TimeToken可匹配[12:15 | 10:26:59 PM| 22:01:15 aM]形式的时间数据
+        regexList.add(new Regex("TimeToken","(([0-1]?[0-9])|([2][0-3])):([0-5]?[0-9])(:([0-5]?[0-9]))?([ ]*[aApP][mM])?"));
+        // YMDToken可匹配[10/03/1979 | 1-1-02 | 01.1.2003]形式的年月日数据
+        regexList.add(new Regex("YMDToken","([0]?[1-9]|[1|2][0-9]|[3][0|1])[./-]([0]?[1-9]|[1][0-2])[./-]([0-9]{4}|[0-9]{2})"));
+        // YMDToken2可匹配[2004-04-30 | 2004-02-29],不匹配[2004-04-31 | 2004-02-30 | 2004-2-15 | 2004-5-7]
+        regexList.add(new Regex("YMDToken2","[0-9]{4}-(((0[13578]|(10|12))-(0[1-9]|[1-2][0-9]|3[0-1]))|(02-(0[1-9]|[1-2][0-9]))|((0[469]|11)-(0[1-9]|[1-2][0-9]|30)))"));
+        // TextDate可匹配[Apr 03 | February 28 | November 02] (PS:简化版，没处理日期的逻辑错误)
+        regexList.add(new Regex("TextDate","(Jan(uary)?|Feb(ruary)?|Ma(r(ch)?|y)|Apr(il)?|Jul(y)?|Ju((ly?)|(ne?))|Aug(ust)?|Oct(ober)?|(Sept|Nov|Dec)(ember)?)[ -]?(0[1-9]|[1-2][0-9]|3[01])"));
+        regexList.add(new Regex("WhichDayToken","(Mon|Tues|Fri|Sun)(day)?|Wed(nesday)?|(Thur|Tue)(sday)?|Sat(urday)?"));
 //        regices.add(new Regex("AlphaNumToken", "[a-z A-Z 0-9]+"));
-        regices.add(new Regex("TestSymbolToken", "[-]+"));
-        regices.add(new Regex("CommaToken", "[,]+"));
-        return regices;
+
+        // special tokens
+        regexList.add(new Regex("TestSymbolToken", "[-]+"));
+        regexList.add(new Regex("CommaToken", "[,]+"));
+//        regices.add(new Regex("SpaceToken", "[ ]+")); // 加上之后就出不了结果？？
+//        regexList.add(new Regex("spcialTokens","[-+()[],.:]+"));
+
+        return regexList;
     }
 
     /**
@@ -396,12 +420,12 @@ public class Main {
     public static void main(String[] args) {
         // 对于提取IBM形式的句子，最后W的规模大致为3*(len(o))^2
         // 其他的subStr问题W的规模会小很多
-        String inputString="Electronics Store,40.74260751,73.99270535,Tue Apr 03 18:08:57 +0800 2012";
+        String inputString="Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012";
 //        String inputString = "Hello World Zsf the Program Synthesis Intellij Idea";
-//        String inputString="George Ciprian Necula";
+//        String inputString="(323)-708-7700";
 //        String outputString="HWZPSII";
-//        String outputString="Necula,G.";
-        String outputString="Electronics Store,73.99270535";
+//        String outputString="323-708-7700";
+        String outputString="Electronics Store,18:08:57,Apr 03";
         HashMap<String, String> exampleSet = new HashMap<String, String>();
         exampleSet.put(inputString, outputString);
 

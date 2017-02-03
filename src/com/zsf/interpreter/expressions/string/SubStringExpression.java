@@ -24,7 +24,7 @@ public class SubStringExpression extends StringExpression {
         // pos=-1就表示len-1位，如input="abcde", input.subStr(1,-1)=input.subStr(1,4)="bcd"
         // END_POS表示最后一位,如果如果碰到END_POS，就把pos转换为input.length
         pos1=pos1<0?pos1+len:pos1;
-        pos1=pos1==PosExpression.END_POS?len:pos1;
+//        pos1=pos1==PosExpression.END_POS?len:pos1;
         pos2=pos2<0?pos2+len:pos2;
         pos2=pos2==PosExpression.END_POS?len:pos2;
 
@@ -50,6 +50,11 @@ public class SubStringExpression extends StringExpression {
     @Override
     public Expression deepClone() {
         return new SubStringExpression((PosExpression) posExpression1.deepClone(), (PosExpression) posExpression2.deepClone());
+    }
+
+    @Override
+    public int deepth() {
+        return 1;
     }
 
     @Override

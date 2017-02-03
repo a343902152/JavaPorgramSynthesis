@@ -79,6 +79,11 @@ public class LoopExpression extends NonTerminalExpression {
         return new LoopExpression(linkingMode,totalExpressions.deepClone(),beginNode,endNode);
     }
 
+    @Override
+    public int deepth() {
+        return 1;
+    }
+
 
     public String getLinkingMode() {
         return linkingMode;

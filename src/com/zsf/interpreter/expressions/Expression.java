@@ -9,4 +9,5 @@ public abstract class Expression implements Serializable {
 
     public abstract String toString();
     public abstract Expression deepClone();
+    public abstract int deepth();
 }

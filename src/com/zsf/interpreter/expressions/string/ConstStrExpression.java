@@ -35,5 +35,10 @@ public class ConstStrExpression extends StringExpression {
         return new ConstStrExpression(constStr);
     }
 
+    @Override
+    public int deepth() {
+        return 1;
+    }
+
 
 }

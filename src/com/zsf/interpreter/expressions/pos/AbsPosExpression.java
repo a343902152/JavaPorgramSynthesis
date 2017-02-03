@@ -24,6 +24,11 @@ public class AbsPosExpression extends PosExpression {
     }
 
     @Override
+    public int deepth() {
+        return 1;
+    }
+
+    @Override
     public boolean equals(Object obj) {
         if (obj instanceof AbsPosExpression){
             if (((AbsPosExpression) obj).getPos()==this.getPos()){

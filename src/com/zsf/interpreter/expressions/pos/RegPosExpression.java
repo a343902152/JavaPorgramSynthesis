@@ -92,6 +92,11 @@ public class RegPosExpression extends PosExpression {
         return new RegPosExpression(r1,r2,c);
     }
 
+    @Override
+    public int deepth() {
+        return 1;
+    }
+
     public Regex getR1() {
         return r1;
     }

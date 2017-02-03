@@ -46,6 +46,11 @@ public class ConcatenateExpression extends LinkingExpression {
     }
 
     @Override
+    public int deepth() {
+        return leftExp.deepth()+rightExp.deepth();
+    }
+
+    @Override
     public String interpret(String inputString) {
         String ans="null";
         if (leftExp instanceof NonTerminalExpression && rightExp instanceof NonTerminalExpression){

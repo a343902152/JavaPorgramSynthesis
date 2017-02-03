@@ -34,6 +34,11 @@ public class SubString2Expression extends StringExpression {
     }
 
     @Override
+    public int deepth() {
+        return 1;
+    }
+
+    @Override
     public String toString() {
         return String.format("subStr2(%s,%d)",regex.toString(),c);
     }
@@ -41,8 +46,10 @@ public class SubString2Expression extends StringExpression {
     @Override
     public String interpret(String inputString) {
         List<Match> matches=regex.doMatch(inputString);
-        String ans=matches.get(c-1).getMatchedString();
-        if (ans==null){
+        String ans="";
+        if (c-1<matches.size()){
+            ans=matches.get(c-1).getMatchedString();
+        }else {
             ans=toString()+" is null";
         }
         return ans;
