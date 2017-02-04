@@ -266,6 +266,7 @@ public class Main {
      */
     private static List<Regex> initUsefulRegex() {
         List<Regex> regexList = new ArrayList<Regex>();
+        regexList.add(new Regex("SimpleNumberTok","[0-9]+"));
         regexList.add(new Regex("DigitToken", "(([0-9]+)([.]([0-9]+))?)"));
         regexList.add(new Regex("LowerToken", "[a-z]+"));
         regexList.add(new Regex("UpperToken", "[A-Z]+"));
@@ -285,7 +286,7 @@ public class Main {
         // special tokens
         regexList.add(new Regex("TestSymbolToken", "[-]+"));
         regexList.add(new Regex("CommaToken", "[,]+"));
-//        regices.add(new Regex("SpaceToken", "[ ]+")); // 加上之后就出不了结果？？
+//        regexList.add(new Regex("SpaceToken", "[ ]+")); // 加上之后就出不了结果？？
 //        regexList.add(new Regex("spcialTokens","[-+()[],.:]+"));
 
         return regexList;
@@ -407,40 +408,6 @@ public class Main {
         return set;
     }
 
-    public static void main(String[] args) {
-        // 对于提取IBM形式的句子，最后W的规模大致为3*(len(o))^2
-        // 其他的subStr问题W的规模会小很多
-        String inputString="Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012";
-//        String inputString = "Hello World Zsf the Program Synthesis Intellij Idea";
-//        String inputString="(323)-708-7700";
-//        String outputString="HWZPSII";
-//        String outputString="323-708-7700";
-        // FIXME 当前concatExp算法为指数型函数，一旦output中item数(比如用逗号隔开)增加以及每个item的长度变长，计算时间会爆炸增长。
-        // FIXME: 2017/2/3 初步估计每个item延长一位会让concatResExp耗时翻倍，每增加一个item，就会导致concatResExp耗时乘以n倍
-        String outputString="Electronics Store,18:08:57,abcd,Apr 03";
-        HashMap<String, String> exampleSet = new HashMap<String, String>();
-        exampleSet.put(inputString, outputString);
-
-        // TODO : 程序入口，根据examples求得expression
-//        generateExpressionByExamples(exampleSet);
-
-        // TODO :每当有新的inputS，利用上面求得的expression将I->O
-        // region # testCodeRegion
-        Set<Expression> resExps=generateStr(inputString, outputString);
-        String testString="Food & Drink Shop,40.87891103,74.08508939,Thu Feb 07 02:23:26 +0800 2013";
-        String target="Food & Drink Shop,02:23:26 Feb 07,Thu";
-        // TODO 输出所有结果，等待排序
-        if (false){
-            verifyResult(resExps, testString, target);
-        }
-
-//        generatePos(inputString,4);
-//        generatePos(inputString,7);
-
-        // endregion
-
-    }
-
     private static void verifyResult(Set<Expression> resExps, String testString, String target) {
         System.out.println(resExps.size());
         try {
@@ -452,7 +419,7 @@ public class Main {
                     String result=((NonTerminalExpression) exp).interpret(testString);
                     if (result.equals(target)){
                         if (exp.deepth()<=4)
-                            System.out.println(String.valueOf(exp.deepth())+"  "+exp.toString());
+                            System.out.println(String.valueOf(exp.deepth())+" "+exp.toString());
                     }
                 }
                 fileWriter.write(exp.toString());
@@ -462,5 +429,35 @@ public class Main {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public static void main(String[] args) {
+        // 对于提取IBM形式的句子，最后W的规模大致为3*(len(o))^2
+        // 其他的subStr问题W的规模会小很多
+//        String inputString="Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012";
+//        String inputString = "Hello World Zsf the Program Synthesis Intellij Idea";
+        String inputString="2017年2月4日";
+//        String outputString="HWZPSII";
+        String outputString="2";
+        // FIXME 当前concatExp算法为指数型函数，一旦output中item数(比如用逗号隔开)增加以及每个item的长度变长，计算时间会爆炸增长。
+        // FIXME: 2017/2/3 初步估计每个item延长一位会让concatResExp耗时翻倍，每增加一个item，就会导致concatResExp耗时乘以n倍
+//        String outputString="Electronics Store,18:08:57,abcd,Apr 03";
+        HashMap<String, String> exampleSet = new HashMap<String, String>();
+        exampleSet.put(inputString, outputString);
+
+        // TODO : 程序入口，根据examples求得expression
+//        generateExpressionByExamples(exampleSet);
+
+        // TODO :每当有新的inputS，利用上面求得的expression将I->O
+        // region # testCodeRegion
+        Set<Expression> resExps=generateStr(inputString, outputString);
+        String testString="2002.02.28";
+        String target="02";
+        // TODO 输出所有结果，等待排序
+        if (true){
+            verifyResult(resExps, testString, target);
+        }
+        // endregion
+
     }
 }

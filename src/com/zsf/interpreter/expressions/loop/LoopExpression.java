@@ -131,6 +131,7 @@ public class LoopExpression extends NonTerminalExpression {
 
     @Override
     public String interpret(String inputString) {
+        System.out.println("LOOP_UNHANDLED");
         return "Loop_unhandled";
     }
 }

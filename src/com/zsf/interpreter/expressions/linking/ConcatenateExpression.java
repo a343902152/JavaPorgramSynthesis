@@ -54,7 +54,11 @@ public class ConcatenateExpression extends LinkingExpression {
     public String interpret(String inputString) {
         String ans="null";
         if (leftExp instanceof NonTerminalExpression && rightExp instanceof NonTerminalExpression){
-            ans=((NonTerminalExpression) leftExp).interpret(inputString)+((NonTerminalExpression) rightExp).interpret(inputString);
+            try {
+                ans=((NonTerminalExpression) leftExp).interpret(inputString)+((NonTerminalExpression) rightExp).interpret(inputString);
+            }catch (Exception e){
+                return null;
+            }
         }
         return ans;
     }

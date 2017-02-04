@@ -50,7 +50,8 @@ public class SubString2Expression extends StringExpression {
         if (c-1<matches.size()){
             ans=matches.get(c-1).getMatchedString();
         }else {
-            ans=toString()+" is null";
+//            System.out.println("substr2超出索引范围");
+            ans=null;
         }
         return ans;
     }

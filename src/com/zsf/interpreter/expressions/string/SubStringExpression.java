@@ -28,8 +28,9 @@ public class SubStringExpression extends StringExpression {
         pos2=pos2<0?pos2+len:pos2;
         pos2=pos2==PosExpression.END_POS?len:pos2;
 
-        if (isIllegalPos(inputString,pos1)||isIllegalPos(inputString,pos2)){
-            return "illegalPos";
+        if (isIllegalPos(inputString,pos1,pos2)){
+//            System.out.println("ILLEGAL_POS");
+            return null;
         }else {
             // FIXME: 2017/2/3 这里经常出错
             String ans="";
@@ -37,14 +38,18 @@ public class SubStringExpression extends StringExpression {
                 ans=inputString.substring(pos1,pos2);
             }catch (Exception e){
                 // FIXME: 2017/2/3 例：Input="bc abcd" output="abc" 现在的算法有时会导致index=4(a) 连接到index=0(bc)上去
-                System.out.println("解释SubString时出错");
+//                System.out.println("SubString发生未知错误");
+                return null;
             }
             return ans;
         }
     }
 
-    private boolean isIllegalPos(String inputString, int pos) {
-        if (pos<0||pos>inputString.length()){
+    private boolean isIllegalPos(String inputString, int pos1, int pos2) {
+        if (pos1<0||pos1>inputString.length() && pos2<0||pos2>inputString.length()){
+            return true;
+        }
+        if (pos1>=pos2){
             return true;
         }
         return false;
