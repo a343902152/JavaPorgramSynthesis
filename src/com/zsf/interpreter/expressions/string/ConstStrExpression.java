@@ -26,6 +26,14 @@ public class ConstStrExpression extends StringExpression {
     }
 
     @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof ConstStrExpression){
+            return constStr.equals(((ConstStrExpression) obj).getConstStr());
+        }
+        return false;
+    }
+
+    @Override
     public String toString() {
         return String.format("constStr(%s)",constStr);
     }

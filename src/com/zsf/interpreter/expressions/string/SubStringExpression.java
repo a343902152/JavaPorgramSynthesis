@@ -75,6 +75,15 @@ public class SubStringExpression extends StringExpression {
         return super.clone();
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof SubStringExpression){
+            return posExpression1.equals(((SubStringExpression) obj).getPosExpression1())
+                    && posExpression2.equals(((SubStringExpression) obj).getPosExpression2());
+        }
+        return false;
+    }
+
     public PosExpression getPosExpression1() {
         return posExpression1;
     }

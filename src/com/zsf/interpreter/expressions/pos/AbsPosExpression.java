@@ -31,9 +31,7 @@ public class AbsPosExpression extends PosExpression {
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof AbsPosExpression){
-            if (((AbsPosExpression) obj).getPos()==this.getPos()){
-                return true;
-            }
+            return ((AbsPosExpression) obj).getPos()==this.getPos();
         }
         return false;
     }

@@ -31,10 +31,8 @@ public class RegPosExpression extends PosExpression {
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof RegPosExpression){
-            if (((RegPosExpression) obj).getR1().equals(this.getR1())
-                    && ((RegPosExpression) obj).getR2().equals(this.getR2())){
-                return true;
-            }
+            // FIXME: 2017/2/5 equal判定加上c可能会导致无法生成Loop，需要注意
+            return r1.equals(((RegPosExpression) obj).getR1())&&r2.equals(((RegPosExpression) obj).getR2())&&c==((RegPosExpression) obj).getC();
         }
         return false;
     }

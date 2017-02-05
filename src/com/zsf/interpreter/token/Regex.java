@@ -24,6 +24,14 @@ public class Regex {
     }
 
     @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Regex){
+            return this.reg.equals(((Regex) obj).getReg());
+        }
+        return false;
+    }
+
+    @Override
     public String toString() {
         return String.format("%s",regexName);
     }

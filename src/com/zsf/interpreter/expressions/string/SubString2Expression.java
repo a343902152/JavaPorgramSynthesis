@@ -21,9 +21,8 @@ public class SubString2Expression extends StringExpression {
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof SubString2Expression){
-            if (((SubString2Expression) obj).getRegex().getReg().equals(this.getRegex().getReg())){
-                return true;
-            }
+            // FIXME: 2017/2/5 equals判定加上c可能会导致无法正常生成Loop
+            return regex.equals(((SubString2Expression) obj).getRegex()) && c==((SubString2Expression) obj).getC();
         }
         return false;
     }

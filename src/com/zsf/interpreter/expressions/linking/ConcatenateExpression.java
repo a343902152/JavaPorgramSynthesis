@@ -63,6 +63,15 @@ public class ConcatenateExpression extends LinkingExpression {
         return ans;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof ConcatenateExpression){
+            return (leftExp.equals(((ConcatenateExpression) obj).getLeftExp())&&rightExp.equals(((ConcatenateExpression) obj).getRightExp()))
+                    ||(leftExp.equals(((ConcatenateExpression) obj).getRightExp())&&rightExp.equals(((ConcatenateExpression) obj).leftExp));
+        }
+        return false;
+    }
+
     public Expression getLeftExp() {
         return leftExp;
     }

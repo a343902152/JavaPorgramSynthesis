@@ -258,6 +258,24 @@ public class Main {
     }
 
 
+    /**
+     * 当有多个IOPair时，每个IOPair都会对应一组解，但是实际上很多例子属于同一类别
+     * generatePartition就是为所有IOPairs做一个划分，将相同类别的例子归到同一类(然后配合Classifier就可以做switch了)
+     *
+     * 基本思想：
+     * 1. while所有pairs中存在某两个pair相互兼容(难点1.相互兼容的定义)
+     * 2. 找到所有配对中CS(Compatibility Score)最高的一对(难点2.CS分的定义 难点3.快速求最高分的方法,可用模拟退火？)
+     * 3. T=T-(原有两个pairs)+(pairs合并后的结果)(小难点.合并？)
+     *
+     * 改进：
+     * 1. 上面的基本思想是基于贪心的，可以改成启发式搜索
+     * 2. 类似试卷分配，可以改成基于swap的模拟退火
+     */
+    private static void generatePartition() {
+
+
+    }
+
     private static List<Regex> usefulRegex = initUsefulRegex();
 
     /**
@@ -331,11 +349,16 @@ public class Main {
      * constStr要求str相同
      * 普通Expression要求token相同
      * linkingExpression要求左右两边的普通Expression相同(如果linkingExpression左右均为LinkingExpression，)
+     *
+     * FIXME: 现在只做了substr2的equals
+     *
      * @param leftExp
      * @param rightExp
      * @return
      */
     private static boolean isSameExpression(Expression leftExp, Expression rightExp) {
+        // FIXME: 2017/2/5 现在(包括论文里)不能处理以下 这种LOOP:
+        // FIXME concat(subStr2(SimpleNumberTok,1),concat(constStr(-),concat(subStr2(SimpleNumberTok,2),concat(constStr(-),subStr2(SimpleNumberTok,3)))))
         Expression left=leftExp;
         Expression right=rightExp;
         if (leftExp instanceof ConcatenateExpression){
@@ -409,55 +432,114 @@ public class Main {
     }
 
     private static void verifyResult(Set<Expression> resExps, String testString, String target) {
-        System.out.println(resExps.size());
         try {
             FileWriter fileWriter = new FileWriter("C:\\Users\\hasee\\Desktop\\tempdata\\string-processor\\ans.txt");
-            for (Expression exp:resExps){
+            for (Expression exp : resExps) {
 //            if (exp instanceof LoopExpression)
 //                System.out.println(exp.toString());
-                if (exp instanceof NonTerminalExpression){
-                    String result=((NonTerminalExpression) exp).interpret(testString);
-                    if (result.equals(target)){
-                        if (exp.deepth()<=4)
-                            System.out.println(String.valueOf(exp.deepth())+" "+exp.toString());
+                if (exp instanceof NonTerminalExpression) {
+                    String result = ((NonTerminalExpression) exp).interpret(testString);
+                    if (result == null) {
+                        System.out.println("null");
+                    } else if (exp.deepth() <= 6) {
+                        if (result.equals(target))
+                            System.out.println(String.valueOf(exp.deepth()) + " " + exp.toString());
                     }
                 }
                 fileWriter.write(exp.toString());
                 fileWriter.write("\n");
+                fileWriter.flush();
             }
-            fileWriter.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
 
     public static void main(String[] args) {
         // 对于提取IBM形式的句子，最后W的规模大致为3*(len(o))^2
         // 其他的subStr问题W的规模会小很多
 //        String inputString="Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012";
 //        String inputString = "Hello World Zsf the Program Synthesis Intellij Idea";
-        String inputString="2017年2月4日";
+//        String inputString="2017年2月4日";
 //        String outputString="HWZPSII";
-        String outputString="2";
+//        String outputString="2";
+
+        String inputString="01/21/2001";
+        String outputString="01";
+        String inputString2="2003-03-23";
+        String outputString2="03";
         // FIXME 当前concatExp算法为指数型函数，一旦output中item数(比如用逗号隔开)增加以及每个item的长度变长，计算时间会爆炸增长。
         // FIXME: 2017/2/3 初步估计每个item延长一位会让concatResExp耗时翻倍，每增加一个item，就会导致concatResExp耗时乘以n倍
 //        String outputString="Electronics Store,18:08:57,abcd,Apr 03";
         HashMap<String, String> exampleSet = new HashMap<String, String>();
-        exampleSet.put(inputString, outputString);
+//        exampleSet.put(inputString, outputString);
+//        exampleSet.put(inputString2,outputString2);
+//        exampleSet.put("12-23-34","12-23-34");
+//        exampleSet.put("12.3.4","12-3-4");
+//        exampleSet.put("74-12","abc-74-12");
+        exampleSet.put("Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012","Electronics Store,Apr 03");
+        exampleSet.put("Airport,40.77446436,-73.86970997,Sun Jul 15 14:51:15 +0800 2012","Airport,Jul 15");
+
+
+        String testString="Food & Drink Shop,40.69990191,-74.2342329,Sat Nov 17 20:36:26 +0800 2012";
+        String target="Food & Drink Shop,Nov 17";
+
+        boolean needVerifyResult=false;
+        List<Set<Expression>> expressionList=new ArrayList<Set<Expression>>();
+        Iterator entries = exampleSet.entrySet().iterator();
+        while (entries.hasNext()) {
+            Map.Entry entry = (Map.Entry) entries.next();
+
+            String input = (String)entry.getKey();
+            String output = (String)entry.getValue();
+
+            Set<Expression> resExps=generateStr(input, output);
+            System.out.println(String.format("Input=%s  Output=%s",input,output));
+            System.out.println(resExps.size());
+            if (resExps!=null){
+                expressionList.add(resExps);
+            }
+            if (needVerifyResult){
+                System.out.println("--------------------------------------------");
+                verifyResult(resExps, testString, target);
+                System.out.println("============================================\n");
+            }
+        }
+        for (int i=0;i<expressionList.size();i++){
+            Set<Expression> expressions1=expressionList.get(i);
+            for (int j=i+1;j<expressionList.size();j++){
+                List<Expression> theSameExpressions=new ArrayList<Expression>();
+                Set<Expression> expressions2=expressionList.get(j);
+                for (Expression e1:expressions1){
+                    for (Expression e2:expressions2){
+                        if (e1.equals(e2)){
+                            theSameExpressions.add(e1);
+                            System.out.println(String.format("i=%d j=%d: e1=%s ; e2=%s",i,j,e1.toString(),e2.toString()));
+                        }
+                    }
+                }
+                System.out.println(theSameExpressions.size());
+            }
+        }
+
 
         // TODO : 程序入口，根据examples求得expression
 //        generateExpressionByExamples(exampleSet);
 
         // TODO :每当有新的inputS，利用上面求得的expression将I->O
         // region # testCodeRegion
-        Set<Expression> resExps=generateStr(inputString, outputString);
-        String testString="2002.02.28";
-        String target="02";
-        // TODO 输出所有结果，等待排序
-        if (true){
-            verifyResult(resExps, testString, target);
-        }
+//        Set<Expression> resExps=generateStr(inputString, outputString);
+//        Set<Expression> resExps2=generateStr(inputString2,outputString2);
+//
+//        // TODO 输出所有结果，等待排序
+//        if (true){
+//            verifyResult(resExps, testString, target);
+//            System.out.println("========================test2====================");
+//            verifyResult(resExps2,testString,target);
+//        }
         // endregion
 
+        generatePartition();
     }
 }
