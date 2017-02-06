@@ -10,15 +10,15 @@ import java.util.*;
  */
 public class ExamplePartition {
     private List<ExamplePair> examplePairs=new ArrayList<ExamplePair>();
-    private List<Expression> usefulExpression=new ArrayList<Expression>();
+    private ExpressionGroup usefulExpression=new ExpressionGroup();
     private int maxWordLength=0;
 
-    public ExamplePartition(ExamplePair examplePair,List<Expression> usefulExpression) {
+    public ExamplePartition(ExamplePair examplePair,ExpressionGroup usefulExpression) {
         examplePairs.add(examplePair);
         this.usefulExpression = usefulExpression;
     }
 
-    public ExamplePartition(List<ExamplePair> examplePairs, List<Expression> usefulExpression) {
+    public ExamplePartition(List<ExamplePair> examplePairs, ExpressionGroup usefulExpression) {
         this.examplePairs = examplePairs;
         this.usefulExpression = usefulExpression;
     }
@@ -30,7 +30,7 @@ public class ExamplePartition {
             }
         }
         if (showExpressions){
-            for (Expression expression:usefulExpression){
+            for (Expression expression:usefulExpression.getExpressions()){
                 System.out.println(expression.toString());
             }
         }
@@ -95,11 +95,11 @@ public class ExamplePartition {
         this.examplePairs = examplePairs;
     }
 
-    public List<Expression> getUsefulExpression() {
+    public ExpressionGroup getUsefulExpression() {
         return usefulExpression;
     }
 
-    public void setUsefulExpression(List<Expression> usefulExpression) {
+    public void setUsefulExpression(ExpressionGroup usefulExpression) {
         this.usefulExpression = usefulExpression;
     }
 }

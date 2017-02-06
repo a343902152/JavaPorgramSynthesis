@@ -9,12 +9,8 @@ import com.zsf.interpreter.expressions.pos.RegPosExpression;
 import com.zsf.interpreter.expressions.string.ConstStrExpression;
 import com.zsf.interpreter.expressions.string.SubString2Expression;
 import com.zsf.interpreter.expressions.string.SubStringExpression;
-import com.zsf.interpreter.model.ExamplePair;
-import com.zsf.interpreter.model.ExamplePartition;
-import com.zsf.interpreter.model.Match;
-import com.zsf.interpreter.model.ValidationPair;
+import com.zsf.interpreter.model.*;
 import com.zsf.interpreter.token.Regex;
-import com.zsf.interpreter.tool.MergeSetTool;
 import com.zsf.interpreter.tool.RunTimeMeasurer;
 import javafx.util.Pair;
 
@@ -38,17 +34,17 @@ public class Main {
      * generateExpressionByEaxmples求得expression之后返回这个表达式，之后的所有I利用这个E来求得O即可
      *
      */
-    private static List<List<Expression>> generateExpressionsByExamples(List<ExamplePair> examplePairs) {
-        List<List<Expression>> expressionList = new ArrayList<List<Expression>>();
+    private static List<ExpressionGroup> generateExpressionsByExamples(List<ExamplePair> examplePairs) {
+        List<ExpressionGroup> expressionList = new ArrayList<ExpressionGroup>();
         for (ExamplePair pair : examplePairs) {
             String input = pair.getInputString();
             String output = pair.getOutputString();
 
-            List<Expression> resExps = generateStr(input, output);
+            ExpressionGroup expressionGroup = generateStr(input, output);
             System.out.println(String.format("Input=%s  Output=%s", input, output));
-            System.out.println(resExps.size());
-            if (resExps != null) {
-                expressionList.add(resExps);
+            System.out.println(expressionGroup.size());
+            if (expressionGroup != null) {
+                expressionList.add(expressionGroup);
             }
         }
         return expressionList;
@@ -62,9 +58,9 @@ public class Main {
      * @param inputString
      * @param outputString
      */
-    public static List<Expression> generateStr(String inputString, String outputString) {
+    public static ExpressionGroup generateStr(String inputString, String outputString) {
         // 论文中记作W W指能产生outputString[i，j]的所有方法集合,包括constStr[s[i,j]]以及动态获得子串方法generateSubString().
-        HashMap<Pair<Integer, Integer>, List<Expression>> resultExpressionsMap = new HashMap<Pair<Integer, Integer>, List<Expression>>();
+        HashMap<Pair<Integer, Integer>, ExpressionGroup> expressionsMap = new HashMap<Pair<Integer, Integer>, ExpressionGroup>();
 
         RunTimeMeasurer.startTiming();
         int len = outputString.length();
@@ -72,10 +68,12 @@ public class Main {
             for (int j = i + 1; j <= len; j++) {
                 String subString = outputString.substring(i, j);
                 if (needBeAddedIn(subString, inputString)) {
-                    resultExpressionsMap.put(new Pair<Integer, Integer>(i, j), MergeSetTool.mergeSet(new ConstStrExpression(outputString.substring(i, j)),
-                            generateSubString(inputString, outputString.substring(i, j))));
+                    ExpressionGroup expressionGroup=new ExpressionGroup();
+                    expressionGroup.insert(new ConstStrExpression(outputString.substring(i, j)));
+                    expressionGroup.insert(generateSubString(inputString, outputString.substring(i, j)));
+                    expressionsMap.put(new Pair<Integer, Integer>(i,j),expressionGroup);
                 } else {
-                    resultExpressionsMap.put(new Pair<Integer, Integer>(i, j), generateSubString(inputString, subString));
+                    expressionsMap.put(new Pair<Integer, Integer>(i, j), generateSubString(inputString, subString));
                 }
 
             }
@@ -85,7 +83,7 @@ public class Main {
         // FIXME: 2017/2/3 此方法过于耗时，当item数和每个item的长度增加时，解会爆炸增长
         // FIXME: 2017/2/3 初步推测这和constStr过多有关
         RunTimeMeasurer.startTiming();
-        resultExpressionsMap.put(new Pair<Integer, Integer>(0, len), concatResExp(resultExpressionsMap, 0, len));
+        expressionsMap.put(new Pair<Integer, Integer>(0, len), concatResExp(expressionsMap, 0, len));
         RunTimeMeasurer.endTiming("concatResExp");
 
 
@@ -95,14 +93,13 @@ public class Main {
         // FIXME: 2017/2/3 当前的方法也比较耗时(约为concatRes的20%)
         for (int i = 0; i < len; i++) {
             for (int j = i + 1; j <= len; j++) {
-                resultExpressionsMap.put(new Pair<Integer, Integer>(i, j),
-                        MergeSetTool.mergeSet(resultExpressionsMap.get(new Pair<Integer, Integer>(i, j)), generateLoop(i, j, resultExpressionsMap)));
+                expressionsMap.get(new Pair<Integer, Integer>(i,j)).insert(generateLoop(i,j,expressionsMap));
             }
         }
         RunTimeMeasurer.endTiming("generateLoop");
 
         // TODO: 2016/12/27 return dag(....,W2)；
-        List<Expression> resExps = resultExpressionsMap.get(new Pair<Integer, Integer>(0, len));
+        ExpressionGroup resExps = expressionsMap.get(new Pair<Integer, Integer>(0, len));
         return resExps;
     }
 
@@ -113,19 +110,18 @@ public class Main {
      * <p>
      * 算法思想：dfs
      */
-    private static List<Expression> concatResExp(HashMap<Pair<Integer, Integer>, List<Expression>> w, int start, int end) {
+    private static ExpressionGroup concatResExp(HashMap<Pair<Integer, Integer>, ExpressionGroup> w, int start, int end) {
         // TODO: 2017/1/25 需要修改concat的规则，比如两个constStr合并应该可以直接变成一个constStr
 
         if (start + 1 == end) {
             return w.get(new Pair<Integer, Integer>(start, end));
         }
-        List<Expression> newExpressions = new ArrayList<Expression>();
-        newExpressions = MergeSetTool.mergeSet(newExpressions, w.get(new Pair<Integer, Integer>(start, end)));
+        ExpressionGroup newExpressions = w.get(new Pair<Integer, Integer>(start,end)).deepClone();
         for (int j = start + 1; j < end; j++) {
-            List<Expression> curExpressions = w.get(new Pair<Integer, Integer>(start, j));
+            ExpressionGroup curExpressions = w.get(new Pair<Integer, Integer>(start, j));
             if (curExpressions.size() > 0) {
-                List<Expression> anss = ConcatenateExpression.concatenateExp(curExpressions, concatResExp(w, j, end));
-                newExpressions = MergeSetTool.mergeSet(newExpressions, anss);
+                ExpressionGroup anss = ConcatenateExpression.concatenateExp(curExpressions, concatResExp(w, j, end));
+                newExpressions.insert(anss);
             }
         }
 
@@ -136,19 +132,19 @@ public class Main {
      * 已经在concatResExp()中处理过跳跃性的res(如首字母提取)
      * generateLoop()中只要找到是拼接起来的，而且左右表达式一致的exp即可。
      */
-    private static List<Expression> generateLoop(int passbyNode, int endNode, HashMap<Pair<Integer, Integer>, List<Expression>> W) {
+    private static ExpressionGroup generateLoop(int passbyNode, int endNode, HashMap<Pair<Integer, Integer>, ExpressionGroup> W) {
         // TODO: 2017/1/23 效率存在问题，output一旦变长，程序就运行不出来了
 
-        List<Expression> outputExpressions = W.get(new Pair<Integer, Integer>(passbyNode, endNode));
-        List<Expression> loopExpressions = new ArrayList<Expression>();
-        for (Expression exp : outputExpressions) {
+        ExpressionGroup outputExpressions = W.get(new Pair<Integer, Integer>(passbyNode, endNode));
+        ExpressionGroup loopExpressions = new ExpressionGroup();
+        for (Expression exp : outputExpressions.getExpressions()) {
             if (exp instanceof ConcatenateExpression) {
                 if (isSameExpression(((ConcatenateExpression) exp).getLeftExp(), ((ConcatenateExpression) exp).getRightExp())) {
 //                    System.out.println("same:");
 //                    System.out.println(exp);
                     LoopExpression loop = new LoopExpression(LoopExpression.LINKING_MODE_CONCATENATE, exp, passbyNode, endNode);
 //                    System.out.println(loop.toString());
-                    loopExpressions.add(loop);
+                    loopExpressions.insert(loop);
                 }
             }
         }
@@ -166,11 +162,11 @@ public class Main {
      * @param inputString  输入数据
      * @param targetString 要从intputString中截取的字符串
      */
-    public static List<Expression> generateSubString(String inputString, String targetString) {
-        List<Expression> result = new ArrayList<Expression>();
+    public static ExpressionGroup generateSubString(String inputString, String targetString) {
+        ExpressionGroup result = new ExpressionGroup();
 
-        List<Expression> substr2Expressions = generateSubStr2(inputString, targetString);
-        MergeSetTool.mergeSet(result, substr2Expressions);
+        ExpressionGroup substr2Expressions = generateSubStr2(inputString, targetString);
+        result.insert(substr2Expressions);
 
         int targetLen = targetString.length();
         for (int k = 0; k <= inputString.length() - targetLen; k++) {
@@ -183,8 +179,7 @@ public class Main {
                 // 把找到的pos转换为subString
                 for (PosExpression expression1 : res1) {
                     for (PosExpression expression2 : res2) {
-                        MergeSetTool.mergeSet(new SubStringExpression(expression1, expression2),
-                                result);
+                        result.insert(new SubStringExpression(expression1, expression2));
                     }
                 }
                 break;
@@ -193,8 +188,8 @@ public class Main {
         return result;
     }
 
-    private static List<Expression> generateSubStr2(String inputString, String targetString) {
-        List<Expression> res = new ArrayList<Expression>();
+    private static ExpressionGroup generateSubStr2(String inputString, String targetString) {
+        ExpressionGroup res = new ExpressionGroup();
         for (int i = 0; i < usefulRegex.size(); i++) {
             Regex regex = usefulRegex.get(i);
             Matcher matcher = regex.getPattern().matcher(inputString);
@@ -202,7 +197,7 @@ public class Main {
             while (matcher.find()) {
                 count++;
                 if (matcher.group().equals(targetString)) {
-                    res.add(new SubString2Expression(regex, count));
+                    res.insert(new SubString2Expression(regex, count));
                 }
             }
         }
@@ -293,7 +288,7 @@ public class Main {
      * @param expressionList
      * @param examplePairs
      */
-    private static List<ExamplePartition> generatePartition(List<List<Expression>> expressionList, List<ExamplePair> examplePairs) {
+    private static List<ExamplePartition> generatePartition(List<ExpressionGroup> expressionList, List<ExamplePair> examplePairs) {
         // init
         RunTimeMeasurer.startTiming();
         List<ExamplePartition> partitions = new ArrayList<ExamplePartition>();
@@ -308,13 +303,13 @@ public class Main {
             // findPartitions
             ExamplePartition partition1 = null;
             ExamplePartition partition2 = null;
-            List<Expression> p12TheSameExpressions = null;
+            ExpressionGroup p12TheSameExpressions = null;
 
             int index1 = 0;
             int index2 = 0;
             for (int i = 0; i < partitions.size(); i++) {
                 for (int j = i + 1; j < partitions.size(); j++) {
-                    List<Expression> theSameExpressions = findSameExpSet(partitions.get(i), partitions.get(j));
+                    ExpressionGroup theSameExpressions = findSameExpSet(partitions.get(i), partitions.get(j));
                     if (theSameExpressions.size() > max) {
                         max = theSameExpressions.size();
                         partition1 = partitions.get(i);
@@ -355,17 +350,17 @@ public class Main {
      * @param partition2
      * @return
      */
-    private static List<Expression> findSameExpSet(ExamplePartition partition1, ExamplePartition partition2) {
+    private static ExpressionGroup findSameExpSet(ExamplePartition partition1, ExamplePartition partition2) {
         // FIXME: 2017/2/6 这个函数运行时间较长，根本原因应该还是partition中的expression过于庞大
-        List<Expression> expressions1 = partition1.getUsefulExpression();
-        List<Expression> expressions2 = partition2.getUsefulExpression();
+        ExpressionGroup expressions1 = partition1.getUsefulExpression();
+        ExpressionGroup expressions2 = partition2.getUsefulExpression();
 
         List<ExamplePair> pairs1 = partition1.getExamplePairs();
         List<ExamplePair> pairs2 = partition2.getExamplePairs();
 
-        List<Expression> theSameExpressions = new ArrayList<Expression>();
-        for (Expression e1 : expressions1) {
-            for (Expression e2 : expressions2) {
+        ExpressionGroup theSameExpressions = new ExpressionGroup();
+        for (Expression e1 : expressions1.getExpressions()) {
+            for (Expression e2 : expressions2.getExpressions()) {
                 if (e1.equals(e2)) {
                     boolean isTwoExpSame = true;
                     if (e1 instanceof NonTerminalExpression && e2 instanceof NonTerminalExpression) {
@@ -384,7 +379,7 @@ public class Main {
                             }
                         }
                         if (isTwoExpSame) {
-                            theSameExpressions.add(e1);
+                            theSameExpressions.insert(e1);
                         }
                     }
                 }
@@ -613,13 +608,13 @@ public class Main {
      * @param newInput
      * @param partitions
      */
-    private static List<Expression> predictOutput(String newInput, List<ExamplePartition> partitions) {
+    private static ExpressionGroup predictOutput(String newInput, List<ExamplePartition> partitions) {
         int partitionIndex=lookupPartitionIndex(newInput,partitions);
 
         System.out.println("==========所属partition="+partitionIndex+" ==========");
         ExamplePartition partition=partitions.get(partitionIndex);
 
-        List<Expression> topNExpression=getTopNExpressions(partition,newInput,5);
+        ExpressionGroup topNExpression=getTopNExpressions(partition,newInput,5);
 
         return topNExpression;
     }
@@ -632,12 +627,12 @@ public class Main {
      * @param n 取出rank前n的结果
      * @return
      */
-    private static List<Expression> getTopNExpressions(ExamplePartition partition, String testString, int n) {
-        List<Expression> topN=new ArrayList<Expression>();
+    private static ExpressionGroup getTopNExpressions(ExamplePartition partition, String testString, int n) {
+        ExpressionGroup topN=new ExpressionGroup();
         // TODO: 2017/2/6 等待rank算法
         int count=1;
-        for (Expression exp:partition.getUsefulExpression()){
-            topN.add(exp);
+        for (Expression exp:partition.getUsefulExpression().getExpressions()){
+            topN.insert(exp);
             if (count++>n){
                 break;
             }
@@ -652,7 +647,7 @@ public class Main {
      */
     private static void handleNewInput(List<ValidationPair> validationPairs, List<ExamplePartition> partitions) {
         for (ValidationPair v:validationPairs){
-            List<Expression> topNExpression=predictOutput(v.getInputString(),partitions);
+            ExpressionGroup topNExpression=predictOutput(v.getInputString(),partitions);
             displayOutput(v, topNExpression);
         }
     }
@@ -663,8 +658,8 @@ public class Main {
      * @param v
      * @param topNExpression
      */
-    private static void displayOutput(ValidationPair v, List<Expression> topNExpression) {
-        for (Expression expression:topNExpression){
+    private static void displayOutput(ValidationPair v, ExpressionGroup topNExpression) {
+        for (Expression expression:topNExpression.getExpressions()){
             if (expression instanceof NonTerminalExpression){
                 System.out.println(((NonTerminalExpression) expression).interpret(v.getInputString())+" , "+expression.toString());
             }
@@ -702,14 +697,15 @@ public class Main {
 //        examplePairs.add(new ExamplePair("74-12", "abc-74-12"));
 
         List<ExamplePair> examplePairs = new ArrayList<ExamplePair>();
-        examplePairs.add(new ExamplePair("Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012", "Electronics Store,Apr 03"));
-        examplePairs.add(new ExamplePair("Airport,40.77446436,-73.86970997,Sun Jul 15 14:51:15 +0800 2012", "Airport,Jul 15"));
-        examplePairs.add(new ExamplePair("Bridge,Tue Apr 03 18:00:25 +0800 2012", "Bridge,Apr 03"));
-        examplePairs.add(new ExamplePair("Arts & Crafts Store,40.71981038,-74.00258103,Tue Apr 03 18:00:09 +0800 2012", "Arts & Crafts Store,Apr 03"));
+//        examplePairs.add(new ExamplePair("Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012", "Electronics Store,Apr 03"));
+//        examplePairs.add(new ExamplePair("Airport,40.77446436,-73.86970997,Sun Jul 15 14:51:15 +0800 2012", "Airport,Jul 15"));
+//        examplePairs.add(new ExamplePair("Bridge,Tue Apr 03 18:00:25 +0800 2012", "Bridge,Apr 03"));
+//        examplePairs.add(new ExamplePair("Arts & Crafts Store,40.71981038,-74.00258103,Tue Apr 03 18:00:09 +0800 2012", "Arts & Crafts Store,Apr 03"));
+//
+//        examplePairs.add(new ExamplePair("Wed Jul 11 11:17:44 +0800 2012,40.23213,German Restaurant", "German Restaurant,Jul 11"));
+//        examplePairs.add(new ExamplePair("40.7451638,-73.98251878,Tue Apr 03 18:02:41 +0800 2012,Medical Center", "Medical Center,Apr 03"));
 
-        examplePairs.add(new ExamplePair("Wed Jul 11 11:17:44 +0800 2012,40.23213,German Restaurant", "German Restaurant,Jul 11"));
-        examplePairs.add(new ExamplePair("40.7451638,-73.98251878,Tue Apr 03 18:02:41 +0800 2012,Medical Center", "Medical Center,Apr 03"));
-//        examplePairs.add(new ExamplePair("Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012", "Electronics Store,Apr 03,Tue"));
+        examplePairs.add(new ExamplePair("Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012", "Electronics Store,Apr 03,Tue"));
         return examplePairs;
     }
 
@@ -727,7 +723,7 @@ public class Main {
         List<ValidationPair> validationPairs = getValidationPairs();
 
 
-        List<List<Expression>> expressionList = generateExpressionsByExamples(examplePairs);
+        List<ExpressionGroup> expressionList = generateExpressionsByExamples(examplePairs);
 
 //        boolean needVerifyResult = false;
 //        boolean needToString = false;
