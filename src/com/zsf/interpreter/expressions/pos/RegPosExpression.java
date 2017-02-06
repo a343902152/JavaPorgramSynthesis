@@ -1,9 +1,8 @@
 package com.zsf.interpreter.expressions.pos;
 
 import com.zsf.interpreter.expressions.Expression;
-import com.zsf.interpreter.expressions.pos.PosExpression;
 import com.zsf.interpreter.model.Match;
-import com.zsf.interpreter.token.Regex;
+import com.zsf.interpreter.model.Regex;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -10,9 +10,8 @@ import com.zsf.interpreter.expressions.string.ConstStrExpression;
 import com.zsf.interpreter.expressions.string.SubString2Expression;
 import com.zsf.interpreter.expressions.string.SubStringExpression;
 import com.zsf.interpreter.model.*;
-import com.zsf.interpreter.token.Regex;
+import com.zsf.interpreter.model.Regex;
 import com.zsf.interpreter.tool.RunTimeMeasurer;
-import javafx.util.Pair;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -60,11 +59,10 @@ public class Main {
      */
     public static ExpressionGroup generateStr(String inputString, String outputString) {
         // 论文中记作W W指能产生outputString[i，j]的所有方法集合,包括constStr[s[i,j]]以及动态获得子串方法generateSubString().
-        HashMap<Pair<Integer, Integer>, ExpressionGroup> expressionsMap = new HashMap<Pair<Integer, Integer>, ExpressionGroup>();
+        int len = outputString.length();
+        ResultMap resultMap=new ResultMap(len,len);
 
         RunTimeMeasurer.startTiming();
-        int len = outputString.length();
-
         List<Match> matches = buildStringMatches(inputString);
         for (int i = 0; i < len; i++) {
             for (int j = i + 1; j <= len; j++) {
@@ -75,8 +73,7 @@ public class Main {
                 if (needBeAddedIn(subString, inputString)) {
                     expressionGroup.insert(new ConstStrExpression(outputString.substring(i, j)));
                 }
-
-                expressionsMap.put(new Pair<Integer, Integer>(i,j),expressionGroup);
+                resultMap.setData(i,j,expressionGroup);
             }
         }
         RunTimeMeasurer.endTiming("generateSubString");
@@ -84,7 +81,8 @@ public class Main {
         // FIXME: 2017/2/3 此方法过于耗时，当item数和每个item的长度增加时，解会爆炸增长
         // FIXME: 2017/2/3 初步推测这和constStr过多有关
         RunTimeMeasurer.startTiming();
-        expressionsMap.put(new Pair<Integer, Integer>(0, len), generateJumpingExps(expressionsMap, 0, len));
+        resultMap.setData(0,len,generateJumpingExps(resultMap,0,len));
+//        expressionsMap.put(new Pair<Integer, Integer>(0, len), generateJumpingExps(expressionsMap, 0, len));
         RunTimeMeasurer.endTiming("generateJumpingExps");
 
 
@@ -94,12 +92,14 @@ public class Main {
         // FIXME: 2017/2/3 当前的方法也比较耗时(约为concatRes的20%)
         for (int i = 0; i < len; i++) {
             for (int j = i + 1; j <= len; j++) {
-                expressionsMap.get(new Pair<Integer, Integer>(i,j)).insert(generateLoop(i,j,expressionsMap));
+                resultMap.getData(i,j).insert(generateLoop(i,j,resultMap));
+//                expressionsMap.getData(new Pair<Integer, Integer>(i,j)).insert(generateLoop(i,j,expressionsMap));
             }
         }
         RunTimeMeasurer.endTiming("generateLoop");
 
-        ExpressionGroup usefulExpressions = expressionsMap.get(new Pair<Integer, Integer>(0, len));
+//        ExpressionGroup usefulExpressions = expressionsMap.getData(new Pair<Integer, Integer>(0, len));
+        ExpressionGroup usefulExpressions=resultMap.getData(0,len);
         return usefulExpressions;
     }
 
@@ -110,16 +110,16 @@ public class Main {
      * <p>
      * 算法思想：dfs
      */
-    private static ExpressionGroup generateJumpingExps(HashMap<Pair<Integer, Integer>, ExpressionGroup> w, int start, int end) {
+    private static ExpressionGroup generateJumpingExps(ResultMap resultMap, int start, int end) {
         // TODO: 2017/1/25 需要修改concat的规则，比如两个constStr合并应该可以直接变成一个constStr
         if (start + 1 == end) {
-            return w.get(new Pair<Integer, Integer>(start, end));
+            return resultMap.getData(start,end);
         }
-        ExpressionGroup newExpressions = w.get(new Pair<Integer, Integer>(start,end)).deepClone();
+        ExpressionGroup newExpressions = resultMap.getData(start,end).deepClone();
         for (int j = start + 1; j < end; j++) {
-            ExpressionGroup curExpressions = w.get(new Pair<Integer, Integer>(start, j));
+            ExpressionGroup curExpressions = resultMap.getData(start,j);
             if (curExpressions.size() > 0) {
-                ExpressionGroup tmpConcatedExps = ConcatenateExpression.concatenateExp(curExpressions, generateJumpingExps(w, j, end));
+                ExpressionGroup tmpConcatedExps = ConcatenateExpression.concatenateExp(curExpressions, generateJumpingExps(resultMap, j, end));
                 newExpressions.insert(tmpConcatedExps);
             }
         }
@@ -131,10 +131,10 @@ public class Main {
      * 已经在concatResExp()中处理过跳跃性的res(如首字母提取)
      * generateLoop()中只要找到是拼接起来的，而且左右表达式一致的exp即可。
      */
-    private static ExpressionGroup generateLoop(int passbyNode, int endNode, HashMap<Pair<Integer, Integer>, ExpressionGroup> W) {
+    private static ExpressionGroup generateLoop(int passbyNode, int endNode,ResultMap resultMap) {
         // TODO: 2017/1/23 效率存在问题，output一旦变长，程序就运行不出来了
 
-        ExpressionGroup outputExpressions = W.get(new Pair<Integer, Integer>(passbyNode, endNode));
+        ExpressionGroup outputExpressions = resultMap.getData(passbyNode,endNode);
         ExpressionGroup loopExpressions = new ExpressionGroup();
         for (Expression exp : outputExpressions.getExpressions()) {
             if (exp instanceof ConcatenateExpression) {
@@ -437,7 +437,6 @@ public class Main {
         for (int i = 0; i < usefulRegex.size(); i++) {
             Regex regex = usefulRegex.get(i);
             List<Match> curMatcher = regex.doMatch(inputString);
-            // TODO: 2017/1/22 addAll时要做一个去重复
             matches.addAll(curMatcher);
         }
         return matches;
@@ -666,15 +665,15 @@ public class Main {
 //        examplePairs.add(new ExamplePair("74-12", "abc-74-12"));
 
         List<ExamplePair> examplePairs = new ArrayList<ExamplePair>();
-//        examplePairs.add(new ExamplePair("Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012", "Electronics Store,Apr 03"));
-//        examplePairs.add(new ExamplePair("Airport,40.77446436,-73.86970997,Sun Jul 15 14:51:15 +0800 2012", "Airport,Jul 15"));
-//        examplePairs.add(new ExamplePair("Bridge,Tue Apr 03 18:00:25 +0800 2012", "Bridge,Apr 03"));
-//        examplePairs.add(new ExamplePair("Arts & Crafts Store,40.71981038,-74.00258103,Tue Apr 03 18:00:09 +0800 2012", "Arts & Crafts Store,Apr 03"));
-//
-//        examplePairs.add(new ExamplePair("Wed Jul 11 11:17:44 +0800 2012,40.23213,German Restaurant", "German Restaurant,Jul 11"));
-//        examplePairs.add(new ExamplePair("40.7451638,-73.98251878,Tue Apr 03 18:02:41 +0800 2012,Medical Center", "Medical Center,Apr 03"));
+        examplePairs.add(new ExamplePair("Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012", "Electronics Store,Apr 03"));
+        examplePairs.add(new ExamplePair("Airport,40.77446436,-73.86970997,Sun Jul 15 14:51:15 +0800 2012", "Airport,Jul 15"));
+        examplePairs.add(new ExamplePair("Bridge,Tue Apr 03 18:00:25 +0800 2012", "Bridge,Apr 03"));
+        examplePairs.add(new ExamplePair("Arts & Crafts Store,40.71981038,-74.00258103,Tue Apr 03 18:00:09 +0800 2012", "Arts & Crafts Store,Apr 03"));
 
-        examplePairs.add(new ExamplePair("Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012", "Electronics Store,Apr 03,Tue"));
+        examplePairs.add(new ExamplePair("Wed Jul 11 11:17:44 +0800 2012,40.23213,German Restaurant", "German Restaurant,Jul 11"));
+        examplePairs.add(new ExamplePair("40.7451638,-73.98251878,Tue Apr 03 18:02:41 +0800 2012,Medical Center", "Medical Center,Apr 03"));
+
+//        examplePairs.add(new ExamplePair("Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012", "Electronics Store,Apr 03,Tue"));
         return examplePairs;
     }
 
@@ -690,7 +689,6 @@ public class Main {
     public static void main(String[] args) {
         List<ExamplePair> examplePairs = getExamplePairs();
         List<ValidationPair> validationPairs = getValidationPairs();
-
 
         List<ExpressionGroup> expressionList = generateExpressionsByExamples(examplePairs);
 

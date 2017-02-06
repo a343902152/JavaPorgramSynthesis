@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * 表达式集合
  * Created by hasee on 2017/2/6.
  */
 public class ExpressionGroup {

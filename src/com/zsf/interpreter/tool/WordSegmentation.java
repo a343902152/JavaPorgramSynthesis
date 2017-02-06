@@ -1,7 +1,7 @@
 package com.zsf.interpreter.tool;
 
 import com.zsf.interpreter.model.Match;
-import com.zsf.interpreter.token.Regex;
+import com.zsf.interpreter.model.Regex;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -209,7 +209,7 @@ public class WordSegmentation {
 //        segmentationList.add(getSegmentationByRMM("2003-03-23"));
 //        segmentationList.add(getSegmentationByRMM("2003.03.23"));
 
-        // TODO: 2017/2/5 计算编辑距离
+        // 计算编辑距离
         for (int i = 0; i < inputStringList.size(); i++) {
             for (int j = i + 1; j < inputStringList.size(); j++) {
                 System.out.println(i+" "+j);

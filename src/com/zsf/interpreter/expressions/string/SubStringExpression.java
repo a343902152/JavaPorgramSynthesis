@@ -32,7 +32,6 @@ public class SubStringExpression extends StringExpression {
 //            System.out.println("ILLEGAL_POS");
             return null;
         }else {
-            // FIXME: 2017/2/3 这里经常出错
             String ans="";
             try {
                 ans=inputString.substring(pos1,pos2);
