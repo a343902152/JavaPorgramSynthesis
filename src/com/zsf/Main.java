@@ -35,7 +35,7 @@ public class Main {
      *
      */
     private static List<ExpressionGroup> generateExpressionsByExamples(List<ExamplePair> examplePairs) {
-        List<ExpressionGroup> expressionList = new ArrayList<ExpressionGroup>();
+        List<ExpressionGroup> expressionGroups = new ArrayList<ExpressionGroup>();
         for (ExamplePair pair : examplePairs) {
             String input = pair.getInputString();
             String output = pair.getOutputString();
@@ -44,10 +44,10 @@ public class Main {
             System.out.println(String.format("Input=%s  Output=%s", input, output));
             System.out.println(expressionGroup.size());
             if (expressionGroup != null) {
-                expressionList.add(expressionGroup);
+                expressionGroups.add(expressionGroup);
             }
         }
-        return expressionList;
+        return expressionGroups;
     }
 
 
@@ -64,18 +64,19 @@ public class Main {
 
         RunTimeMeasurer.startTiming();
         int len = outputString.length();
+
+        List<Match> matches = buildStringMatches(inputString);
         for (int i = 0; i < len; i++) {
             for (int j = i + 1; j <= len; j++) {
                 String subString = outputString.substring(i, j);
+
+                ExpressionGroup expressionGroup=new ExpressionGroup();
+                expressionGroup.insert(generateSubString(inputString, outputString.substring(i, j),matches));
                 if (needBeAddedIn(subString, inputString)) {
-                    ExpressionGroup expressionGroup=new ExpressionGroup();
                     expressionGroup.insert(new ConstStrExpression(outputString.substring(i, j)));
-                    expressionGroup.insert(generateSubString(inputString, outputString.substring(i, j)));
-                    expressionsMap.put(new Pair<Integer, Integer>(i,j),expressionGroup);
-                } else {
-                    expressionsMap.put(new Pair<Integer, Integer>(i, j), generateSubString(inputString, subString));
                 }
 
+                expressionsMap.put(new Pair<Integer, Integer>(i,j),expressionGroup);
             }
         }
         RunTimeMeasurer.endTiming("generateSubString");
@@ -83,8 +84,8 @@ public class Main {
         // FIXME: 2017/2/3 此方法过于耗时，当item数和每个item的长度增加时，解会爆炸增长
         // FIXME: 2017/2/3 初步推测这和constStr过多有关
         RunTimeMeasurer.startTiming();
-        expressionsMap.put(new Pair<Integer, Integer>(0, len), concatResExp(expressionsMap, 0, len));
-        RunTimeMeasurer.endTiming("concatResExp");
+        expressionsMap.put(new Pair<Integer, Integer>(0, len), generateJumpingExps(expressionsMap, 0, len));
+        RunTimeMeasurer.endTiming("generateJumpingExps");
 
 
         RunTimeMeasurer.startTiming();
@@ -98,9 +99,8 @@ public class Main {
         }
         RunTimeMeasurer.endTiming("generateLoop");
 
-        // TODO: 2016/12/27 return dag(....,W2)；
-        ExpressionGroup resExps = expressionsMap.get(new Pair<Integer, Integer>(0, len));
-        return resExps;
+        ExpressionGroup usefulExpressions = expressionsMap.get(new Pair<Integer, Integer>(0, len));
+        return usefulExpressions;
     }
 
 
@@ -110,9 +110,8 @@ public class Main {
      * <p>
      * 算法思想：dfs
      */
-    private static ExpressionGroup concatResExp(HashMap<Pair<Integer, Integer>, ExpressionGroup> w, int start, int end) {
+    private static ExpressionGroup generateJumpingExps(HashMap<Pair<Integer, Integer>, ExpressionGroup> w, int start, int end) {
         // TODO: 2017/1/25 需要修改concat的规则，比如两个constStr合并应该可以直接变成一个constStr
-
         if (start + 1 == end) {
             return w.get(new Pair<Integer, Integer>(start, end));
         }
@@ -120,8 +119,8 @@ public class Main {
         for (int j = start + 1; j < end; j++) {
             ExpressionGroup curExpressions = w.get(new Pair<Integer, Integer>(start, j));
             if (curExpressions.size() > 0) {
-                ExpressionGroup anss = ConcatenateExpression.concatenateExp(curExpressions, concatResExp(w, j, end));
-                newExpressions.insert(anss);
+                ExpressionGroup tmpConcatedExps = ConcatenateExpression.concatenateExp(curExpressions, generateJumpingExps(w, j, end));
+                newExpressions.insert(tmpConcatedExps);
             }
         }
 
@@ -158,11 +157,11 @@ public class Main {
      * 那么就返回s[0：3]+s[-3：-1]...
      * <p>
      * 返回一组对subStr(s,p1,p2)方法的引用，其中p1,p2则是通过generatePos()得到。
-     *
-     * @param inputString  输入数据
+     *  @param inputString  输入数据
      * @param targetString 要从intputString中截取的字符串
+     * @param matches
      */
-    public static ExpressionGroup generateSubString(String inputString, String targetString) {
+    public static ExpressionGroup generateSubString(String inputString, String targetString, List<Match> matches) {
         ExpressionGroup result = new ExpressionGroup();
 
         ExpressionGroup substr2Expressions = generateSubStr2(inputString, targetString);
@@ -173,8 +172,8 @@ public class Main {
             // 如果input中的某一段能够和target匹配(因为target定长，所以遍历input，每次抽取I中长度为targetLen的一段进行比较)，那么就把此时的posExpression添加到res中
             // TODO: 2017/1/22 这里可能也可以利用matches加速处理
             if (inputString.substring(k, k + targetLen).equals(targetString)) {
-                Set<PosExpression> res1 = generatePos(inputString, k);
-                Set<PosExpression> res2 = generatePos(inputString, k + targetLen);
+                List<PosExpression> res1 = generatePos(inputString, k,matches);
+                List<PosExpression> res2 = generatePos(inputString, k + targetLen, matches);
 
                 // 把找到的pos转换为subString
                 for (PosExpression expression1 : res1) {
@@ -214,12 +213,13 @@ public class Main {
      *
      * @param inputString
      * @param k
+     * @param matches
      * @return 一个表示能够从input中截取出targetString的位置集合。
      * 如：input=“123-abc-456-zxc" target="abc" 那么一个有效的起点pos(即a的位置)=POS(hyphenTok(即‘-’),letterTok,1||-2)
      * 这个POS表示第一个或倒数第二个左侧为‘-’，右侧为字母的符号的位置
      */
-    public static Set<PosExpression> generatePos(String inputString, int k) {
-        Set<PosExpression> result = new HashSet<PosExpression>();
+    public static List<PosExpression> generatePos(String inputString, int k, List<Match> matches) {
+        List<PosExpression> result = new ArrayList<PosExpression>();
         // 首先把k这个位置(正向数底k个，逆向数第-(inputString.length()-k)个)加到res中
         if (k == 0) {
             result.add(new AbsPosExpression(k));
@@ -232,7 +232,6 @@ public class Main {
          * 新方法：
          * TODO 重构代码
          */
-        List<Match> matches = buildStringMatches(inputString);
         for (int k1 = k - 1; k1 >= 0; k1--) {
             for (int m1 = 0; m1 < matches.size(); m1++) {
                 Match match1 = matches.get(m1);
@@ -309,7 +308,7 @@ public class Main {
             int index2 = 0;
             for (int i = 0; i < partitions.size(); i++) {
                 for (int j = i + 1; j < partitions.size(); j++) {
-                    ExpressionGroup theSameExpressions = findSameExpSet(partitions.get(i), partitions.get(j));
+                    ExpressionGroup theSameExpressions = findSameExps(partitions.get(i), partitions.get(j));
                     if (theSameExpressions.size() > max) {
                         max = theSameExpressions.size();
                         partition1 = partitions.get(i);
@@ -350,7 +349,7 @@ public class Main {
      * @param partition2
      * @return
      */
-    private static ExpressionGroup findSameExpSet(ExamplePartition partition1, ExamplePartition partition2) {
+    private static ExpressionGroup findSameExps(ExamplePartition partition1, ExamplePartition partition2) {
         // FIXME: 2017/2/6 这个函数运行时间较长，根本原因应该还是partition中的expression过于庞大
         ExpressionGroup expressions1 = partition1.getUsefulExpression();
         ExpressionGroup expressions2 = partition2.getUsefulExpression();
@@ -388,37 +387,7 @@ public class Main {
         return theSameExpressions;
     }
 
-    /**
-     * @param positiveExampleSet
-     * @param negativeExampleSet
-     */
-    private static void generateClassifier(List<ExamplePair> positiveExampleSet, List<ExamplePair> negativeExampleSet) {
-
-        // uncoveredEaxmpleSet表示未被分类器覆盖到的exampleSet,初始化为所有positiveEaxmple
-        // 本函数目标之一就是清空此集合
-//        HashMap<String, String> uncoveredEaxmpleSet=new HashMap<String, String>();
-//        uncoveredEaxmpleSet.putAll(positiveExampleSet);
-//
-//        while (uncoveredEaxmpleSet.size()>0){
-//            HashMap<String,String> unnamedNegativeExampleSet2=new HashMap<String, String>();
-//            unnamedNegativeExampleSet2.putAll(negativeExampleSet);
-//
-//            while (unnamedNegativeExampleSet2.size()>0){
-//                // TODO: 2017/2/5 找到一个得分最高的match，把他添加到表达式b中。表达式b的形势为match(r1,c1) || match(r2,c2).....|| match(rn,cn)
-//
-//                double bestScore=0;
-//
-//
-//            }
-//
-//        }
-
-
-    }
-
-
     public static List<Regex> usefulRegex = initUsefulRegex();
-
     /**
      * 增加有效的token可以强化匹配能力
      * <p>
@@ -463,7 +432,7 @@ public class Main {
      */
     private static List<Match> buildStringMatches(String inputString) {
         // TODO: 2017/2/5 加入match次数的能力
-        // TODO: 2017/2/5 加入！match的能力
+        // TODO: 2017/2/5 加入不match的能力
         List<Match> matches = new ArrayList<Match>();
         for (int i = 0; i < usefulRegex.size(); i++) {
             Regex regex = usefulRegex.get(i);
