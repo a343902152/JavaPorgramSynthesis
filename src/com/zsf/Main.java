@@ -12,6 +12,7 @@ import com.zsf.interpreter.expressions.string.SubStringExpression;
 import com.zsf.interpreter.model.ExamplePair;
 import com.zsf.interpreter.model.ExamplePartition;
 import com.zsf.interpreter.model.Match;
+import com.zsf.interpreter.model.ValidationPair;
 import com.zsf.interpreter.token.Regex;
 import com.zsf.interpreter.tool.MergeSetTool;
 import com.zsf.interpreter.tool.RunTimeMeasurer;
@@ -41,6 +42,7 @@ public class Main {
     public static void generateExpressionByExamples(HashMap<String, String> exampleSet) {
 
     }
+
 
     /**
      * generate阶段要调用的函数
@@ -264,18 +266,18 @@ public class Main {
     /**
      * 当有多个IOPair时，每个IOPair都会对应一组解，但是实际上很多例子属于同一类别
      * generatePartition就是为所有IOPairs做一个划分，将相同类别的例子归到同一类(然后配合Classifier就可以做switch了)
-     * <p>
+     *
      * 基本思想：
      * 1. while所有pairs中存在某两个pair相互兼容(难点1.相互兼容的定义)
      * 2. 找到所有配对中CS(Compatibility Score)最高的一对(难点2.CS分的定义 难点3.快速求最高分的方法,可用模拟退火？)
      * 3. T=T-(原有两个pairs)+(pairs合并后的结果)(小难点.合并？)
-     * <p>
+     *
      * 改进：
      * 1. 上面的基本思想是基于贪心的，可以改成启发式搜索
      * 2. 类似试卷分配，可以改成基于swap的模拟退火
-     * <p>
-     * 备注
-     * partition是examples比较多时才要用到，实际上examples一般在2-3个以内，所以这块可以暂时先不做处理
+     *
+     * 备注:
+     * 如果当前的lookupPartition所用的str相似度方法靠谱的话，就可以把generatePartition改造成聚类算法
      *
      * @param expressionList
      * @param examplePairs
@@ -343,6 +345,7 @@ public class Main {
      * @return
      */
     private static Set<Expression> findSameExpSet(ExamplePartition partition1, ExamplePartition partition2) {
+        // FIXME: 2017/2/6 这个函数运行时间较长，根本原因应该还是partition中的expression过于庞大
         Set<Expression> expressions1 = partition1.getUsefulExpression();
         Set<Expression> expressions2 = partition2.getUsefulExpression();
 
@@ -408,7 +411,7 @@ public class Main {
     }
 
 
-    private static List<Regex> usefulRegex = initUsefulRegex();
+    public static List<Regex> usefulRegex = initUsefulRegex();
 
     /**
      * 增加有效的token可以强化匹配能力
@@ -421,7 +424,7 @@ public class Main {
     private static List<Regex> initUsefulRegex() {
         List<Regex> regexList = new ArrayList<Regex>();
         regexList.add(new Regex("SimpleNumberTok", "[0-9]+"));
-        regexList.add(new Regex("DigitToken", "(([0-9]+)([.]([0-9]+))?)"));
+        regexList.add(new Regex("DigitToken", "[-+]?(([0-9]+)([.]([0-9]+))?)"));
         regexList.add(new Regex("LowerToken", "[a-z]+"));
         regexList.add(new Regex("UpperToken", "[A-Z]+"));
         regexList.add(new Regex("AlphaToken", "[a-zA-Z]+"));
@@ -442,7 +445,8 @@ public class Main {
         regexList.add(new Regex("TestSymbolToken", "[-]+"));
         regexList.add(new Regex("CommaToken", "[,]+"));
 //        regexList.add(new Regex("SpaceToken", "[ ]+")); // 加上之后就出不了结果？？
-//        regexList.add(new Regex("spcialTokens","[-+()[],.:]+"));
+        // FIXME: 2017/2/5 如果开启这个SpTok在当前算法下会导致解过于庞大
+//        regexList.add(new Regex("SpecialTokens","[ -+()\\[\\],.:]+"));
 
         return regexList;
     }
@@ -563,7 +567,78 @@ public class Main {
         }
     }
 
-    public static void main(String[] args) {
+    private static void showPartitions(List<ExamplePartition> partitions) {
+        for (int i=0;i<partitions.size();i++){
+            System.out.println(String.format("Partition %d :",i+1));
+            partitions.get(i).showDetails(true,false);
+        }
+    }
+
+    /**
+     * 找到当前String应该所属的分类(取代了论文中的classifier)
+     * @param string
+     * @param partitions
+     * @return
+     */
+    private static int lookupPartitionIndex(String string, List<ExamplePartition> partitions) {
+        int index=-1;
+        double maxScore=-1;
+        for (int i=0;i<partitions.size();i++){
+            Double curScore=partitions.get(i).calculateSimilarity(string);
+            if (curScore>maxScore){
+                maxScore=curScore;
+                index=i;
+            }
+        }
+        return index;
+    }
+
+    /**
+     * 根据example得到partitions之后可以开始处理新的输入
+     * 首先在partition找到newInput所属的分类
+     * 然后再此分类中找出topN的表达式
+     *
+     * 然后输出执行结果(以及用这个公式的概率)
+     * @param newInput
+     * @param partitions
+     */
+    private static void handleNewInput(String newInput, List<ExamplePartition> partitions) {
+        int partitionIndex=lookupPartitionIndex(newInput,partitions);
+
+        System.out.println("==========所属partition="+partitionIndex+" ==========");
+        ExamplePartition partition=partitions.get(partitionIndex);
+
+        List<Expression> topNExpression=getTopNExpressions(partition,newInput,5);
+        for (Expression expression:topNExpression){
+            if (expression instanceof NonTerminalExpression){
+                System.out.println(((NonTerminalExpression) expression).interpret(newInput)+" , "+expression.toString());
+            }
+        }
+    }
+
+    /**
+     * 找出rank得分最高的n个Expression，从前往后排序
+     * 【需要一个有效的rank】
+     * @param partition
+     * @param testString
+     * @param n 取出rank前n的结果
+     * @return
+     */
+    private static List<Expression> getTopNExpressions(ExamplePartition partition, String testString, int n) {
+        List<Expression> topN=new ArrayList<Expression>();
+        // TODO: 2017/2/6 等待rank算法
+        int count=1;
+        for (Expression exp:partition.getUsefulExpression()){
+            topN.add(exp);
+            if (count++>n){
+                break;
+            }
+        }
+        return topN;
+    }
+
+    private static List<ExamplePair> getExamplePairs() {
+
         // 对于提取IBM形式的句子，最后W的规模大致为3*(len(o))^2
         // 其他的subStr问题W的规模会小很多
 //        String inputString="Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012";
@@ -585,6 +660,13 @@ public class Main {
 //        exampleSet.put("12-23-34","12-23-34");
 //        exampleSet.put("12.3.4","12-3-4");
 //        exampleSet.put("74-12","abc-74-12");
+
+        //        examplePairs.add(new ExamplePair("12-23-34", "12-23-34"));
+//        examplePairs.add(new ExamplePair("12.3.4", "12-3-4"));
+//        examplePairs.add(new ExamplePair("(123)-84-122", "123-84-122"));
+//
+//        examplePairs.add(new ExamplePair("74-12", "abc-74-12"));
+
         List<ExamplePair> examplePairs = new ArrayList<ExamplePair>();
         examplePairs.add(new ExamplePair("Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012", "Electronics Store,Apr 03"));
         examplePairs.add(new ExamplePair("Airport,40.77446436,-73.86970997,Sun Jul 15 14:51:15 +0800 2012", "Airport,Jul 15"));
@@ -593,11 +675,22 @@ public class Main {
 
         examplePairs.add(new ExamplePair("Wed Jul 11 11:17:44 +0800 2012,40.23213,German Restaurant", "German Restaurant,Jul 11"));
         examplePairs.add(new ExamplePair("40.7451638,-73.98251878,Tue Apr 03 18:02:41 +0800 2012,Medical Center", "Medical Center,Apr 03"));
+        return examplePairs;
+    }
 
-//        String testString="Food & Drink Shop,40.69990191,-74.2342329,Sat Nov 17 20:36:26 +0800 2012";
-//        String target="Food & Drink Shop,Nov 17";
-        String testString = "Wed Apr 12 11:18:40 +0800 2012,Bus Station";
-        String target = "Bus Station,Apr 12";
+    private static List<ValidationPair> getValidationPairs() {
+        List<ValidationPair> validationPairs=new ArrayList<ValidationPair>();
+        validationPairs.add(new ValidationPair("40.74218831,-73.98792419,Park,Wed Jul 11 11:42:00 +0800 2012","Park,Jul 11"));
+        validationPairs.add(new ValidationPair("Coffee Shop,40.73340972,-74.00285648,Wed Jul 13 12:27:07 +0800 2012","Coffee Shop,Jul 13"));
+        validationPairs.add(new ValidationPair("40.69990191,,Sat Nov 17 20:36:26 +0800,Food & Drink Shop","Food & Drink Shop,Nov 17"));
+
+        return validationPairs;
+    }
+
+    public static void main(String[] args) {
+
+        List<ExamplePair> examplePairs = getExamplePairs();
+        List<ValidationPair> validationPairs = getValidationPairs();
 
         boolean needVerifyResult = false;
         boolean needToString = false;
@@ -615,7 +708,9 @@ public class Main {
             }
             if (needVerifyResult) {
                 System.out.println("--------------------------------------------");
-                verifyResult(resExps, testString, target, needToString, deepth);
+                for (ValidationPair v:validationPairs){
+                    verifyResult(resExps, v.getInputString(), v.getTargetString(), needToString, deepth);
+                }
                 System.out.println("============================================\n");
             }
         }
@@ -623,14 +718,8 @@ public class Main {
         List<ExamplePartition> partitions = generatePartition(expressionList, examplePairs);
         showPartitions(partitions);
 
-        List<ExamplePair> negativeExampleSet = new ArrayList<ExamplePair>();
-        generateClassifier(examplePairs, negativeExampleSet);
-    }
-
-    private static void showPartitions(List<ExamplePartition> partitions) {
-        for (int i=0;i<partitions.size();i++){
-            System.out.println(String.format("Partition %d :",i+1));
-            partitions.get(i).showDetails(true,false);
+        for (ValidationPair v:validationPairs){
+            handleNewInput(v.getInputString(),partitions);
         }
     }
 }
