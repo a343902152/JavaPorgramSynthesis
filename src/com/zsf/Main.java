@@ -20,7 +20,6 @@ import java.util.regex.Matcher;
 
 public class Main {
 
-
     /**
      * 根据I->O的examples，利用generateStr()+generatePatrition()...得到能够正确处理I->0转换的表达式
      * 整个过程类似中缀表达式求值：中缀表达式->后缀表达式->求值
@@ -82,9 +81,7 @@ public class Main {
         // FIXME: 2017/2/3 初步推测这和constStr过多有关
         RunTimeMeasurer.startTiming();
         resultMap.setData(0,len,generateJumpingExps(resultMap,0,len));
-//        expressionsMap.put(new Pair<Integer, Integer>(0, len), generateJumpingExps(expressionsMap, 0, len));
         RunTimeMeasurer.endTiming("generateJumpingExps");
-
 
         RunTimeMeasurer.startTiming();
         // FIXME: 2017/1/25 BUG:如果类似IBMHW，输出为IBM,HW，其中IBM是一个Loop，HW是一个LOOP但是现在程序不能产生这种Loop
@@ -93,12 +90,10 @@ public class Main {
         for (int i = 0; i < len; i++) {
             for (int j = i + 1; j <= len; j++) {
                 resultMap.getData(i,j).insert(generateLoop(i,j,resultMap));
-//                expressionsMap.getData(new Pair<Integer, Integer>(i,j)).insert(generateLoop(i,j,expressionsMap));
             }
         }
         RunTimeMeasurer.endTiming("generateLoop");
 
-//        ExpressionGroup usefulExpressions = expressionsMap.getData(new Pair<Integer, Integer>(0, len));
         ExpressionGroup usefulExpressions=resultMap.getData(0,len);
         return usefulExpressions;
     }
@@ -209,7 +204,6 @@ public class Main {
      * 注：r=TokenSeq(T1,T2..Tn)表示Str要符合[T1]+[T2]+...[Tn]+这种形式
      * 如：r=TokenSea(num，letter)，那么str必须是123abc或1Abb这种形式才能和r匹配
      * <p>
-     * 所以
      *
      * @param inputString
      * @param k
@@ -665,15 +659,15 @@ public class Main {
 //        examplePairs.add(new ExamplePair("74-12", "abc-74-12"));
 
         List<ExamplePair> examplePairs = new ArrayList<ExamplePair>();
-        examplePairs.add(new ExamplePair("Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012", "Electronics Store,Apr 03"));
-        examplePairs.add(new ExamplePair("Airport,40.77446436,-73.86970997,Sun Jul 15 14:51:15 +0800 2012", "Airport,Jul 15"));
-        examplePairs.add(new ExamplePair("Bridge,Tue Apr 03 18:00:25 +0800 2012", "Bridge,Apr 03"));
-        examplePairs.add(new ExamplePair("Arts & Crafts Store,40.71981038,-74.00258103,Tue Apr 03 18:00:09 +0800 2012", "Arts & Crafts Store,Apr 03"));
+//        examplePairs.add(new ExamplePair("Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012", "Electronics Store,Apr 03"));
+//        examplePairs.add(new ExamplePair("Airport,40.77446436,-73.86970997,Sun Jul 15 14:51:15 +0800 2012", "Airport,Jul 15"));
+//        examplePairs.add(new ExamplePair("Bridge,Tue Apr 03 18:00:25 +0800 2012", "Bridge,Apr 03"));
+//        examplePairs.add(new ExamplePair("Arts & Crafts Store,40.71981038,-74.00258103,Tue Apr 03 18:00:09 +0800 2012", "Arts & Crafts Store,Apr 03"));
+//
+//        examplePairs.add(new ExamplePair("Wed Jul 11 11:17:44 +0800 2012,40.23213,German Restaurant", "German Restaurant,Jul 11"));
+//        examplePairs.add(new ExamplePair("40.7451638,-73.98251878,Tue Apr 03 18:02:41 +0800 2012,Medical Center", "Medical Center,Apr 03"));
 
-        examplePairs.add(new ExamplePair("Wed Jul 11 11:17:44 +0800 2012,40.23213,German Restaurant", "German Restaurant,Jul 11"));
-        examplePairs.add(new ExamplePair("40.7451638,-73.98251878,Tue Apr 03 18:02:41 +0800 2012,Medical Center", "Medical Center,Apr 03"));
-
-//        examplePairs.add(new ExamplePair("Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012", "Electronics Store,Apr 03,Tue"));
+        examplePairs.add(new ExamplePair("Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012", "Electronics Store,Apr 03,Tue"));
         return examplePairs;
     }
 

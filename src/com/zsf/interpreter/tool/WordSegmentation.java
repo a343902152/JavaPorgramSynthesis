@@ -197,8 +197,6 @@ public class WordSegmentation {
 //        segmentationList.add(getSegmentationByRMM(",40.88729679,Wed Jul 11 11:44:23 +0800 2012,Home (private)", maxWordLength));
 
 
-
-
 //        segmentationList.add(getSegmentationByRMM("12-23-34"));
 //        segmentationList.add(getSegmentationByRMM("12.3.4"));
 //        segmentationList.add(getSegmentationByRMM("(123)-84-122"));

@@ -2,6 +2,7 @@ package com.zsf.interpreter.expressions.linking;
 
 import com.zsf.interpreter.expressions.Expression;
 import com.zsf.interpreter.expressions.NonTerminalExpression;
+import com.zsf.interpreter.expressions.string.ConstStrExpression;
 import com.zsf.interpreter.model.ExpressionGroup;
 
 import java.util.ArrayList;
@@ -32,7 +33,11 @@ public class ConcatenateExpression extends LinkingExpression {
         ExpressionGroup linkedExpressions=new ExpressionGroup();
         for(Expression exp1:expressions1.getExpressions()){
             for (Expression exp2:expressions2.getExpressions()){
-                linkedExpressions.insert(new ConcatenateExpression(exp1,exp2));
+                if (exp1 instanceof ConstStrExpression && exp2 instanceof ConstStrExpression){
+                    linkedExpressions.insert(new ConstStrExpression(((ConstStrExpression) exp1).getConstStr()+((ConstStrExpression) exp2).getConstStr()));
+                }else {
+                    linkedExpressions.insert(new ConcatenateExpression(exp1,exp2));
+                }
             }
         }
         return linkedExpressions;
