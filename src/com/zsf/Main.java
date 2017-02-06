@@ -37,10 +37,21 @@ public class Main {
      * <p>
      * generateExpressionByEaxmples求得expression之后返回这个表达式，之后的所有I利用这个E来求得O即可
      *
-     * @param exampleSet
      */
-    public static void generateExpressionByExamples(HashMap<String, String> exampleSet) {
+    private static List<Set<Expression>> generateExpressionsByExamples(List<ExamplePair> examplePairs) {
+        List<Set<Expression>> expressionList = new ArrayList<Set<Expression>>();
+        for (ExamplePair pair : examplePairs) {
+            String input = pair.getInputString();
+            String output = pair.getOutputString();
 
+            Set<Expression> resExps = generateStr(input, output);
+            System.out.println(String.format("Input=%s  Output=%s", input, output));
+            System.out.println(resExps.size());
+            if (resExps != null) {
+                expressionList.add(resExps);
+            }
+        }
+        return expressionList;
     }
 
 
@@ -53,7 +64,7 @@ public class Main {
      */
     public static Set<Expression> generateStr(String inputString, String outputString) {
         // 论文中记作W W指能产生outputString[i，j]的所有方法集合,包括constStr[s[i,j]]以及动态获得子串方法generateSubString().
-        HashMap<Pair<Integer, Integer>, Set<Expression>> W = new HashMap<Pair<Integer, Integer>, Set<Expression>>();
+        HashMap<Pair<Integer, Integer>, Set<Expression>> resultExpressionsMap = new HashMap<Pair<Integer, Integer>, Set<Expression>>();
 
         RunTimeMeasurer.startTiming();
         int len = outputString.length();
@@ -61,10 +72,10 @@ public class Main {
             for (int j = i + 1; j <= len; j++) {
                 String subString = outputString.substring(i, j);
                 if (needBeAddedIn(subString, inputString)) {
-                    W.put(new Pair<Integer, Integer>(i, j), MergeSetTool.mergeSet(new ConstStrExpression(outputString.substring(i, j)),
+                    resultExpressionsMap.put(new Pair<Integer, Integer>(i, j), MergeSetTool.mergeSet(new ConstStrExpression(outputString.substring(i, j)),
                             generateSubString(inputString, outputString.substring(i, j))));
                 } else {
-                    W.put(new Pair<Integer, Integer>(i, j), generateSubString(inputString, subString));
+                    resultExpressionsMap.put(new Pair<Integer, Integer>(i, j), generateSubString(inputString, subString));
                 }
 
             }
@@ -74,7 +85,7 @@ public class Main {
         // FIXME: 2017/2/3 此方法过于耗时，当item数和每个item的长度增加时，解会爆炸增长
         // FIXME: 2017/2/3 初步推测这和constStr过多有关
         RunTimeMeasurer.startTiming();
-        W.put(new Pair<Integer, Integer>(0, len), concatResExp(W, 0, len));
+        resultExpressionsMap.put(new Pair<Integer, Integer>(0, len), concatResExp(resultExpressionsMap, 0, len));
         RunTimeMeasurer.endTiming("concatResExp");
 
 
@@ -84,14 +95,14 @@ public class Main {
         // FIXME: 2017/2/3 当前的方法也比较耗时(约为concatRes的20%)
         for (int i = 0; i < len; i++) {
             for (int j = i + 1; j <= len; j++) {
-                W.put(new Pair<Integer, Integer>(i, j),
-                        MergeSetTool.mergeSet(W.get(new Pair<Integer, Integer>(i, j)), generateLoop(i, j, W)));
+                resultExpressionsMap.put(new Pair<Integer, Integer>(i, j),
+                        MergeSetTool.mergeSet(resultExpressionsMap.get(new Pair<Integer, Integer>(i, j)), generateLoop(i, j, resultExpressionsMap)));
             }
         }
         RunTimeMeasurer.endTiming("generateLoop");
 
         // TODO: 2016/12/27 return dag(....,W2)；
-        Set<Expression> resExps = W.get(new Pair<Integer, Integer>(0, len));
+        Set<Expression> resExps = resultExpressionsMap.get(new Pair<Integer, Integer>(0, len));
         return resExps;
     }
 
@@ -602,18 +613,15 @@ public class Main {
      * @param newInput
      * @param partitions
      */
-    private static void handleNewInput(String newInput, List<ExamplePartition> partitions) {
+    private static List<Expression> predictOutput(String newInput, List<ExamplePartition> partitions) {
         int partitionIndex=lookupPartitionIndex(newInput,partitions);
 
         System.out.println("==========所属partition="+partitionIndex+" ==========");
         ExamplePartition partition=partitions.get(partitionIndex);
 
         List<Expression> topNExpression=getTopNExpressions(partition,newInput,5);
-        for (Expression expression:topNExpression){
-            if (expression instanceof NonTerminalExpression){
-                System.out.println(((NonTerminalExpression) expression).interpret(newInput)+" , "+expression.toString());
-            }
-        }
+
+        return topNExpression;
     }
 
     /**
@@ -635,6 +643,32 @@ public class Main {
             }
         }
         return topN;
+    }
+
+    /**
+     * 在得到partitions划分之后，依次处理每一个input并显示
+     * @param validationPairs
+     * @param partitions
+     */
+    private static void handleNewInput(List<ValidationPair> validationPairs, List<ExamplePartition> partitions) {
+        for (ValidationPair v:validationPairs){
+            List<Expression> topNExpression=predictOutput(v.getInputString(),partitions);
+            displayOutput(v, topNExpression);
+        }
+    }
+
+    /**
+     * 显示预测的结果
+     * 根据需要可以切换
+     * @param v
+     * @param topNExpression
+     */
+    private static void displayOutput(ValidationPair v, List<Expression> topNExpression) {
+        for (Expression expression:topNExpression){
+            if (expression instanceof NonTerminalExpression){
+                System.out.println(((NonTerminalExpression) expression).interpret(v.getInputString())+" , "+expression.toString());
+            }
+        }
     }
 
     private static List<ExamplePair> getExamplePairs() {
@@ -668,13 +702,14 @@ public class Main {
 //        examplePairs.add(new ExamplePair("74-12", "abc-74-12"));
 
         List<ExamplePair> examplePairs = new ArrayList<ExamplePair>();
-        examplePairs.add(new ExamplePair("Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012", "Electronics Store,Apr 03"));
-        examplePairs.add(new ExamplePair("Airport,40.77446436,-73.86970997,Sun Jul 15 14:51:15 +0800 2012", "Airport,Jul 15"));
-        examplePairs.add(new ExamplePair("Bridge,Tue Apr 03 18:00:25 +0800 2012", "Bridge,Apr 03"));
-        examplePairs.add(new ExamplePair("Arts & Crafts Store,40.71981038,-74.00258103,Tue Apr 03 18:00:09 +0800 2012", "Arts & Crafts Store,Apr 03"));
-
-        examplePairs.add(new ExamplePair("Wed Jul 11 11:17:44 +0800 2012,40.23213,German Restaurant", "German Restaurant,Jul 11"));
-        examplePairs.add(new ExamplePair("40.7451638,-73.98251878,Tue Apr 03 18:02:41 +0800 2012,Medical Center", "Medical Center,Apr 03"));
+//        examplePairs.add(new ExamplePair("Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012", "Electronics Store,Apr 03"));
+//        examplePairs.add(new ExamplePair("Airport,40.77446436,-73.86970997,Sun Jul 15 14:51:15 +0800 2012", "Airport,Jul 15"));
+//        examplePairs.add(new ExamplePair("Bridge,Tue Apr 03 18:00:25 +0800 2012", "Bridge,Apr 03"));
+//        examplePairs.add(new ExamplePair("Arts & Crafts Store,40.71981038,-74.00258103,Tue Apr 03 18:00:09 +0800 2012", "Arts & Crafts Store,Apr 03"));
+//
+//        examplePairs.add(new ExamplePair("Wed Jul 11 11:17:44 +0800 2012,40.23213,German Restaurant", "German Restaurant,Jul 11"));
+//        examplePairs.add(new ExamplePair("40.7451638,-73.98251878,Tue Apr 03 18:02:41 +0800 2012,Medical Center", "Medical Center,Apr 03"));
+        examplePairs.add(new ExamplePair("Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012", "Electronics Store,Apr 03,Tue"));
         return examplePairs;
     }
 
@@ -688,38 +723,27 @@ public class Main {
     }
 
     public static void main(String[] args) {
-
         List<ExamplePair> examplePairs = getExamplePairs();
         List<ValidationPair> validationPairs = getValidationPairs();
 
-        boolean needVerifyResult = false;
-        boolean needToString = false;
-        int deepth = 4;
-        List<Set<Expression>> expressionList = new ArrayList<Set<Expression>>();
-        for (ExamplePair pair : examplePairs) {
-            String input = pair.getInputString();
-            String output = pair.getOutputString();
 
-            Set<Expression> resExps = generateStr(input, output);
-            System.out.println(String.format("Input=%s  Output=%s", input, output));
-            System.out.println(resExps.size());
-            if (resExps != null) {
-                expressionList.add(resExps);
-            }
-            if (needVerifyResult) {
-                System.out.println("--------------------------------------------");
-                for (ValidationPair v:validationPairs){
-                    verifyResult(resExps, v.getInputString(), v.getTargetString(), needToString, deepth);
-                }
-                System.out.println("============================================\n");
-            }
-        }
+        List<Set<Expression>> expressionList = generateExpressionsByExamples(examplePairs);
+
+//        boolean needVerifyResult = false;
+//        boolean needToString = false;
+//        int deepth = 4;
+//        if (needVerifyResult) {
+//            System.out.println("--------------------------------------------");
+//            for (ValidationPair v:validationPairs){
+//                verifyResult(resExps, v.getInputString(), v.getTargetString(), needToString, deepth);
+//            }
+//            System.out.println("============================================\n");
+//        }
 
         List<ExamplePartition> partitions = generatePartition(expressionList, examplePairs);
         showPartitions(partitions);
 
-        for (ValidationPair v:validationPairs){
-            handleNewInput(v.getInputString(),partitions);
-        }
+        handleNewInput(validationPairs,partitions);
+
     }
 }
