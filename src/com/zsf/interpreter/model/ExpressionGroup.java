@@ -31,6 +31,7 @@ public class ExpressionGroup {
      * @param expressionGroup
      */
     public void insert(ExpressionGroup expressionGroup) {
+        // TODO: 2017/2/6 去重复
         expressions.addAll(expressionGroup.getExpressions());
     }
 
@@ -40,6 +41,7 @@ public class ExpressionGroup {
      * @param expressions
      */
     private void insert(List<Expression> expressions) {
+        // TODO: 2017/2/6 去重复
         this.expressions.addAll(expressions);
     }
 

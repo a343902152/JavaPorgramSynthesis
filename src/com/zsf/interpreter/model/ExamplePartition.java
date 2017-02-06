@@ -43,7 +43,7 @@ public class ExamplePartition {
      * @return
      */
     public void calculateMaxWordLength() {
-        // TODO: 2017/2/6 这里的拆词还没有做
+        // TODO: 2017/2/6 这里的拆词还没有做,用哪种拆分方法需要看过数据才能确定。
         this.maxWordLength=12;
     }
 
@@ -101,5 +101,9 @@ public class ExamplePartition {
 
     public void setUsefulExpression(ExpressionGroup usefulExpression) {
         this.usefulExpression = usefulExpression;
+    }
+
+    public void insert(ExamplePartition partition2) {
+
     }
 }

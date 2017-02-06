@@ -1,6 +1,4 @@
-package com.zsf.interpreter.token;
-
-import com.zsf.interpreter.model.Match;
+package com.zsf.interpreter.model;
 
 import java.util.ArrayList;
 import java.util.List;
