@@ -3,7 +3,9 @@ package com.zsf.interpreter.expressions.linking;
 import com.zsf.interpreter.expressions.Expression;
 import com.zsf.interpreter.expressions.NonTerminalExpression;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -25,8 +27,8 @@ public class ConcatenateExpression extends LinkingExpression {
      * @param expressions2
      * @return
      */
-    public static Set<Expression> concatenateExp(Set<Expression> expressions1, Set<Expression> expressions2) {
-        Set<Expression> linkedExpressions=new HashSet<Expression>();
+    public static List<Expression> concatenateExp(List<Expression> expressions1, List<Expression> expressions2) {
+        List<Expression> linkedExpressions=new ArrayList<Expression>();
         for(Expression exp1:expressions1){
             for (Expression exp2:expressions2){
                 linkedExpressions.add(new ConcatenateExpression(exp1,exp2));

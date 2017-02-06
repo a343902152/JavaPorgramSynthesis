@@ -2,6 +2,7 @@ package com.zsf.interpreter.tool;
 
 import com.zsf.interpreter.expressions.Expression;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -19,7 +20,7 @@ public class MergeSetTool {
      * @param set2
      * @return 合并后的集合
      */
-    public static Set<Expression> mergeSet(Set<Expression> set1, Set<Expression> set2) {
+    public static List<Expression> mergeSet(List<Expression> set1, List<Expression> set2) {
         // TODO: 2017/1/23 null还没彻底检查，现在默认set1不为空，set2有可能为空
         if (set1 != null && set2 != null) {
             set1.addAll(set2);
@@ -34,7 +35,7 @@ public class MergeSetTool {
      * @param set        已有的表达式集合
      * @return
      */
-    public static Set<Expression> mergeSet(Expression expression, Set<Expression> set) {
+    public static List<Expression> mergeSet(Expression expression, List<Expression> set) {
         if (expression != null) {
             set.add(expression);
         }

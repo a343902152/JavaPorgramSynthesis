@@ -10,15 +10,15 @@ import java.util.*;
  */
 public class ExamplePartition {
     private List<ExamplePair> examplePairs=new ArrayList<ExamplePair>();
-    private Set<Expression> usefulExpression=new HashSet<Expression>();
+    private List<Expression> usefulExpression=new ArrayList<Expression>();
     private int maxWordLength=0;
 
-    public ExamplePartition(ExamplePair examplePair,Set<Expression> usefulExpression) {
+    public ExamplePartition(ExamplePair examplePair,List<Expression> usefulExpression) {
         examplePairs.add(examplePair);
         this.usefulExpression = usefulExpression;
     }
 
-    public ExamplePartition(List<ExamplePair> examplePairs, Set<Expression> usefulExpression) {
+    public ExamplePartition(List<ExamplePair> examplePairs, List<Expression> usefulExpression) {
         this.examplePairs = examplePairs;
         this.usefulExpression = usefulExpression;
     }
@@ -95,11 +95,11 @@ public class ExamplePartition {
         this.examplePairs = examplePairs;
     }
 
-    public Set<Expression> getUsefulExpression() {
+    public List<Expression> getUsefulExpression() {
         return usefulExpression;
     }
 
-    public void setUsefulExpression(Set<Expression> usefulExpression) {
+    public void setUsefulExpression(List<Expression> usefulExpression) {
         this.usefulExpression = usefulExpression;
     }
 }
