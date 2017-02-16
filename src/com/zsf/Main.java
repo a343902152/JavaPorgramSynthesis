@@ -41,6 +41,9 @@ public class Main {
             ExpressionGroup expressionGroup = generateStr(input, output);
             System.out.println(String.format("Input=%s  Output=%s", input, output));
             System.out.println(expressionGroup.size());
+            for (Expression exp:expressionGroup.getExpressions()){
+                System.out.println(exp.toString());
+            }
             if (expressionGroup != null) {
                 expressionGroups.add(expressionGroup);
             }
@@ -89,7 +92,7 @@ public class Main {
         // FIXME: 2017/2/3 当前的方法也比较耗时(约为concatRes的20%)
         for (int i = 0; i < len; i++) {
             for (int j = i + 1; j <= len; j++) {
-                resultMap.getData(i,j).insert(generateLoop(i,j,resultMap));
+                resultMap.getData(i,j).insert(generateLoop(i,j,resultMap,len));
             }
         }
         RunTimeMeasurer.endTiming("generateLoop");
@@ -126,19 +129,24 @@ public class Main {
      * 已经在concatResExp()中处理过跳跃性的res(如首字母提取)
      * generateLoop()中只要找到是拼接起来的，而且左右表达式一致的exp即可。
      */
-    private static ExpressionGroup generateLoop(int passbyNode, int endNode,ResultMap resultMap) {
+    private static ExpressionGroup generateLoop(int passbyNode, int endNode, ResultMap resultMap, int outputLen) {
         // TODO: 2017/1/23 效率存在问题，output一旦变长，程序就运行不出来了
 
         ExpressionGroup outputExpressions = resultMap.getData(passbyNode,endNode);
         ExpressionGroup loopExpressions = new ExpressionGroup();
         for (Expression exp : outputExpressions.getExpressions()) {
             if (exp instanceof ConcatenateExpression) {
+                // TODO: 2017/2/16 这里也许可以改为：1. 左做loop 2. 右做loop 3. 合并左右 ，这样可以解决类似“1 2 3 Bank Of China”->"1-2-3 BOC"之类的问题
                 if (isSameExpression(((ConcatenateExpression) exp).getLeftExp(), ((ConcatenateExpression) exp).getRightExp())) {
 //                    System.out.println("same:");
 //                    System.out.println(exp);
                     LoopExpression loop = new LoopExpression(LoopExpression.LINKING_MODE_CONCATENATE, exp, passbyNode, endNode);
 //                    System.out.println(loop.toString());
                     loopExpressions.insert(loop);
+                    if (endNode==outputLen){
+                        LoopExpression loopToEnd = new LoopExpression(LoopExpression.LINKING_MODE_CONCATENATE, exp, passbyNode, PosExpression.END_POS);
+                        loopExpressions.insert(loopToEnd);
+                    }
                 }
             }
         }
@@ -470,15 +478,15 @@ public class Main {
     private static boolean isSameExpression(Expression leftExp, Expression rightExp) {
         // FIXME: 2017/2/5 现在(包括论文里)不能处理以下 这种LOOP:
         // FIXME concat(subStr2(SimpleNumberTok,1),concat(constStr(-),concat(subStr2(SimpleNumberTok,2),concat(constStr(-),subStr2(SimpleNumberTok,3)))))
-        Expression left = leftExp;
-        Expression right = rightExp;
+        Expression left = leftExp.deepClone();
+        Expression right = rightExp.deepClone();
         if (leftExp instanceof ConcatenateExpression) {
             if (isSameExpression(((ConcatenateExpression) leftExp).getLeftExp(),
                     ((ConcatenateExpression) leftExp).getRightExp())) {
                 while (((ConcatenateExpression) leftExp).getLeftExp() instanceof ConcatenateExpression) {
                     leftExp = ((ConcatenateExpression) leftExp).getLeftExp();
                 }
-                left = ((ConcatenateExpression) leftExp).getLeftExp();
+                left = ((ConcatenateExpression) leftExp).getLeftExp().deepClone();
             } else {
                 return false;
             }
@@ -489,12 +497,16 @@ public class Main {
                 while (((ConcatenateExpression) rightExp).getLeftExp() instanceof ConcatenateExpression) {
                     rightExp = ((ConcatenateExpression) rightExp).getLeftExp();
                 }
-                right = ((ConcatenateExpression) rightExp).getLeftExp();
+                right = ((ConcatenateExpression) rightExp).getLeftExp().deepClone();
             } else {
                 return false;
             }
         }
-        return left.equals(right);
+        if (left instanceof SubString2Expression){
+            return ((SubString2Expression) left).loopEquals(right);
+        }else {
+            return false;
+        }
     }
 
 
@@ -510,10 +522,10 @@ public class Main {
     }
 
 
-    private static void verifyResult(Set<Expression> resExps, String testString, String target, boolean needToString, int deepth) {
+    private static void verifyResult(ExpressionGroup resExps, String testString, String target, boolean needToString, int deepth) {
         try {
             FileWriter fileWriter = new FileWriter("C:\\Users\\hasee\\Desktop\\tempdata\\string-processor\\ans.txt");
-            for (Expression exp : resExps) {
+            for (Expression exp : resExps.getExpressions()) {
 //            if (exp instanceof LoopExpression)
                 if (needToString)
                     System.out.println(String.valueOf(exp.deepth()) + " " + exp.toString());
@@ -537,7 +549,7 @@ public class Main {
 
     private static void showPartitions(List<ExamplePartition> partitions) {
         for (int i=0;i<partitions.size();i++){
-            System.out.println(String.format("Partition %d :",i+1));
+            System.out.println(String.format("Partition %d :",i));
             partitions.get(i).showDetails(true,false);
         }
     }
@@ -576,7 +588,7 @@ public class Main {
         System.out.println("==========所属partition="+partitionIndex+" ==========");
         ExamplePartition partition=partitions.get(partitionIndex);
 
-        ExpressionGroup topNExpression=getTopNExpressions(partition,newInput,5);
+        ExpressionGroup topNExpression=getTopNExpressions(partition,newInput,300);
 
         return topNExpression;
     }
@@ -621,6 +633,7 @@ public class Main {
      * @param topNExpression
      */
     private static void displayOutput(ValidationPair v, ExpressionGroup topNExpression) {
+        System.out.println("期望输出："+v.getTargetString());
         for (Expression expression:topNExpression.getExpressions()){
             if (expression instanceof NonTerminalExpression){
                 System.out.println(((NonTerminalExpression) expression).interpret(v.getInputString())+" , "+expression.toString());
@@ -632,33 +645,11 @@ public class Main {
 
         // 对于提取IBM形式的句子，最后W的规模大致为3*(len(o))^2
         // 其他的subStr问题W的规模会小很多
-//        String inputString="Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012";
-//        String inputString = "Hello World Zsf the Program Synthesis Intellij Idea";
-//        String inputString="2017年2月4日";
-//        String outputString="HWZPSII";
-//        String outputString="2";
 
-        String inputString = "01/21/2001";
-        String outputString = "01";
-        String inputString2 = "2003-03-23";
-        String outputString2 = "03";
         // FIXME 当前concatExp算法为指数型函数，一旦output中item数(比如用逗号隔开)增加以及每个item的长度变长，计算时间会爆炸增长。
         // FIXME: 2017/2/3 初步估计每个item延长一位会让concatResExp耗时翻倍，每增加一个item，就会导致concatResExp耗时乘以n倍
-//        String outputString="Electronics Store,18:08:57,abcd,Apr 03";
-//        HashMap<String, String> exampleSet = new HashMap<String, String>();
-//        exampleSet.put(inputString, outputString);
-//        exampleSet.put(inputString2,outputString2);
-//        exampleSet.put("12-23-34","12-23-34");
-//        exampleSet.put("12.3.4","12-3-4");
-//        exampleSet.put("74-12","abc-74-12");
-
-        //        examplePairs.add(new ExamplePair("12-23-34", "12-23-34"));
-//        examplePairs.add(new ExamplePair("12.3.4", "12-3-4"));
-//        examplePairs.add(new ExamplePair("(123)-84-122", "123-84-122"));
-//
-//        examplePairs.add(new ExamplePair("74-12", "abc-74-12"));
-
         List<ExamplePair> examplePairs = new ArrayList<ExamplePair>();
+        // region # success
 //        examplePairs.add(new ExamplePair("Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012", "Electronics Store,Apr 03"));
 //        examplePairs.add(new ExamplePair("Airport,40.77446436,-73.86970997,Sun Jul 15 14:51:15 +0800 2012", "Airport,Jul 15"));
 //        examplePairs.add(new ExamplePair("Bridge,Tue Apr 03 18:00:25 +0800 2012", "Bridge,Apr 03"));
@@ -667,16 +658,55 @@ public class Main {
 //        examplePairs.add(new ExamplePair("Wed Jul 11 11:17:44 +0800 2012,40.23213,German Restaurant", "German Restaurant,Jul 11"));
 //        examplePairs.add(new ExamplePair("40.7451638,-73.98251878,Tue Apr 03 18:02:41 +0800 2012,Medical Center", "Medical Center,Apr 03"));
 
-        examplePairs.add(new ExamplePair("Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012", "Electronics Store,Apr 03,Tue"));
+//        examplePairs.add(new ExamplePair("Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012", "Electronics Store,Apr 03,Tue"));
+        // endregion
+
+
+        // region # error
+        // FIXME: 2017/2/16 错误原因初步判定为相似度(classifier)错误
+//        examplePairs.add(new ExamplePair("01/21/2001","01"));
+//        examplePairs.add(new ExamplePair("2003-03-23","03"));
+
+        // FIXME: 2017/2/16 未知错误，运行时很久没有结果，可能在哪里死循环了，需要debug
+//        examplePairs.add(new ExamplePair("12-23-34","12-23-34"));
+//        examplePairs.add(new ExamplePair("12.3.4","12-3-4"));
+//        examplePairs.add(new ExamplePair("74-12","abc-74-12"));
+//        examplePairs.add(new ExamplePair("(123)-84-122","123-84-122"));
+
+        // FIXME: 2017/2/16 还未加入interpret Loop的能力
+        examplePairs.add(new ExamplePair("Hello World Zsf the Program Synthesis Intellij Idea","HWZPSII"));
+
+        // endregion
+
+
         return examplePairs;
     }
 
     private static List<ValidationPair> getValidationPairs() {
         List<ValidationPair> validationPairs=new ArrayList<ValidationPair>();
-        validationPairs.add(new ValidationPair("40.74218831,-73.98792419,Park,Wed Jul 11 11:42:00 +0800 2012","Park,Jul 11"));
-        validationPairs.add(new ValidationPair("Coffee Shop,40.73340972,-74.00285648,Wed Jul 13 12:27:07 +0800 2012","Coffee Shop,Jul 13"));
-        validationPairs.add(new ValidationPair("40.69990191,,Sat Nov 17 20:36:26 +0800,Food & Drink Shop","Food & Drink Shop,Nov 17"));
 
+        // region # success
+//        validationPairs.add(new ValidationPair("40.74218831,-73.98792419,Park,Wed Jul 11 11:42:00 +0800 2012","Park,Jul 11"));
+//        validationPairs.add(new ValidationPair("Coffee Shop,40.73340972,-74.00285648,Wed Jul 13 12:27:07 +0800 2012","Coffee Shop,Jul 13"));
+//        validationPairs.add(new ValidationPair("40.69990191,,Sat Nov 17 20:36:26 +0800,Food & Drink Shop","Food & Drink Shop,Nov 17"));
+
+        // endregion
+
+
+        // region # error
+        // FIXME: 2017/2/16 错误原因初步判定为相似度(classifier)错误
+//        validationPairs.add(new ValidationPair("2014年3月23日","3"));
+//        validationPairs.add(new ValidationPair("9/23/2012","09"));
+
+        // FIXME: 2017/2/16 未知错误，运行时很久没有结果，可能在哪里死循环了，需要debug
+//        validationPairs.add(new ValidationPair("1234-2345-23", "1234-2345-23"));
+//        validationPairs.add(new ValidationPair("1.3213.02", "1-3213-02"));
+
+        // FIXME: 2017/2/16 还未加入interpret Loop的能力
+        validationPairs.add(new ValidationPair("Foundation of Software Engineering","FSE"));
+        validationPairs.add(new ValidationPair("European Software Engineering Conference","ESEC"));
+        validationPairs.add(new ValidationPair("International Conference on Software Engineering","ICSE"));
+        // endregion
         return validationPairs;
     }
 

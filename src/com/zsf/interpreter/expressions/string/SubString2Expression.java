@@ -26,6 +26,13 @@ public class SubString2Expression extends StringExpression {
         }
         return false;
     }
+    public boolean loopEquals(Object obj) {
+        if (obj instanceof SubString2Expression){
+            // FIXME: 2017/2/5 equals判定加上c可能会导致无法正常生成Loop
+            return regex.equals(((SubString2Expression) obj).getRegex());
+        }
+        return false;
+    }
 
     @Override
     public Expression deepClone() {

@@ -4,7 +4,12 @@ import com.zsf.interpreter.expressions.Expression;
 import com.zsf.interpreter.expressions.NonTerminalExpression;
 import com.zsf.interpreter.expressions.linking.ConcatenateExpression;
 import com.zsf.interpreter.expressions.linking.LinkingExpression;
+import com.zsf.interpreter.expressions.pos.PosExpression;
 import com.zsf.interpreter.expressions.string.SubString2Expression;
+import com.zsf.interpreter.model.Match;
+import com.zsf.interpreter.model.Regex;
+
+import java.util.List;
 
 /**
  * Created by hasee on 2017/1/23.
@@ -32,7 +37,7 @@ public class LoopExpression extends NonTerminalExpression {
 
     // 因为for的index通常是一个等差数列，下面3个就代表了begin:stepsize:end
     private int beginNode=0;
-    private int stepSize=0;
+    private int stepSize=1;
     private int endNode=0;
 
     public LoopExpression(String linkingMode, Expression totalExpressions, int beginNode, int endNode) {
@@ -65,9 +70,15 @@ public class LoopExpression extends NonTerminalExpression {
             System.out.println("Loop(error)");
         }
         if (baseExpression instanceof SubString2Expression){
-            ans=String.format("Loop(%s(%s(%s,%d,%d,%d)))",linkingMode,
-                    "subStr2",((SubString2Expression) baseExpression).getRegex().getRegexName(),
-                    beginNode,stepSize,endNode);
+            if(endNode== PosExpression.END_POS){
+                ans=String.format("Loop(%s(%s(%s,%d,%d,%s)))",linkingMode,
+                        "subStr2",((SubString2Expression) baseExpression).getRegex().getRegexName(),
+                        beginNode,stepSize,"END");
+            }else {
+                ans=String.format("Loop(%s(%s(%s,%d,%d,%d)))",linkingMode,
+                        "subStr2",((SubString2Expression) baseExpression).getRegex().getRegexName(),
+                        beginNode,stepSize,endNode);
+            }
         }else {
             ans=String.format("Loop(%s(%s))",linkingMode,baseExpression.toString());
         }
@@ -77,6 +88,36 @@ public class LoopExpression extends NonTerminalExpression {
     @Override
     public Expression deepClone() {
         return new LoopExpression(linkingMode,totalExpressions.deepClone(),beginNode,endNode);
+    }
+
+    @Override
+    public String interpret(String inputString) {
+        String ans="";
+        if (baseExpression instanceof SubString2Expression){
+            // TODO: 2017/2/16 ans+=的方式有问题，改成linkedExp
+            Regex regex=((SubString2Expression) baseExpression).getRegex();
+            List<Match> matches=regex.doMatch(inputString);
+            if (endNode==PosExpression.END_POS){
+                for (Match match:matches){
+                    ans+=match.getMatchedString();
+                }
+            }else {
+                // FIXME: 2017/2/16 begin endNode用法错误
+                try {
+                    for (int i=0;i<endNode;i+=stepSize){
+                        ans+=matches.get(i).getMatchedString();
+                    }
+
+//                for (int i=beginNode;i<endNode;i+=stepSize){
+//                    ans+=matches.get(i).getMatchedString();
+//                }
+                }catch (IndexOutOfBoundsException e){
+                    ans=null;
+                }
+
+            }
+        }
+        return ans;
     }
 
     @Override
@@ -129,9 +170,5 @@ public class LoopExpression extends NonTerminalExpression {
         this.stepSize = stepSize;
     }
 
-    @Override
-    public String interpret(String inputString) {
-        System.out.println("LOOP_UNHANDLED");
-        return "Loop_unhandled";
-    }
+
 }
