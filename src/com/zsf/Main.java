@@ -11,6 +11,7 @@ import com.zsf.interpreter.expressions.string.SubString2Expression;
 import com.zsf.interpreter.expressions.string.SubStringExpression;
 import com.zsf.interpreter.model.*;
 import com.zsf.interpreter.model.Regex;
+import com.zsf.interpreter.tool.ExpressionComparator;
 import com.zsf.interpreter.tool.RunTimeMeasurer;
 
 import java.io.FileWriter;
@@ -588,7 +589,7 @@ public class Main {
         System.out.println("==========所属partition="+partitionIndex+" ==========");
         ExamplePartition partition=partitions.get(partitionIndex);
 
-        ExpressionGroup topNExpression=getTopNExpressions(partition,newInput,300);
+        ExpressionGroup topNExpression=getTopNExpressions(partition,newInput,5);
 
         return topNExpression;
     }
@@ -604,8 +605,10 @@ public class Main {
     private static ExpressionGroup getTopNExpressions(ExamplePartition partition, String testString, int n) {
         ExpressionGroup topN=new ExpressionGroup();
         // TODO: 2017/2/6 等待rank算法
+        List<Expression> expressions=partition.getUsefulExpression().getExpressions();
+        Collections.sort(expressions,new ExpressionComparator());
         int count=1;
-        for (Expression exp:partition.getUsefulExpression().getExpressions()){
+        for (Expression exp:expressions){
             topN.insert(exp);
             if (count++>n){
                 break;
@@ -650,15 +653,20 @@ public class Main {
         // FIXME: 2017/2/3 初步估计每个item延长一位会让concatResExp耗时翻倍，每增加一个item，就会导致concatResExp耗时乘以n倍
         List<ExamplePair> examplePairs = new ArrayList<ExamplePair>();
         // region # success
-//        examplePairs.add(new ExamplePair("Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012", "Electronics Store,Apr 03"));
-//        examplePairs.add(new ExamplePair("Airport,40.77446436,-73.86970997,Sun Jul 15 14:51:15 +0800 2012", "Airport,Jul 15"));
-//        examplePairs.add(new ExamplePair("Bridge,Tue Apr 03 18:00:25 +0800 2012", "Bridge,Apr 03"));
-//        examplePairs.add(new ExamplePair("Arts & Crafts Store,40.71981038,-74.00258103,Tue Apr 03 18:00:09 +0800 2012", "Arts & Crafts Store,Apr 03"));
-//
-//        examplePairs.add(new ExamplePair("Wed Jul 11 11:17:44 +0800 2012,40.23213,German Restaurant", "German Restaurant,Jul 11"));
-//        examplePairs.add(new ExamplePair("40.7451638,-73.98251878,Tue Apr 03 18:02:41 +0800 2012,Medical Center", "Medical Center,Apr 03"));
+        // 提取结构化数据能力
+        examplePairs.add(new ExamplePair("Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012", "Electronics Store,Apr 03"));
+        examplePairs.add(new ExamplePair("Airport,40.77446436,-73.86970997,Sun Jul 15 14:51:15 +0800 2012", "Airport,Jul 15"));
+        examplePairs.add(new ExamplePair("Bridge,Tue Apr 03 18:00:25 +0800 2012", "Bridge,Apr 03"));
+        examplePairs.add(new ExamplePair("Arts & Crafts Store,40.71981038,-74.00258103,Tue Apr 03 18:00:09 +0800 2012", "Arts & Crafts Store,Apr 03"));
 
+        examplePairs.add(new ExamplePair("Wed Jul 11 11:17:44 +0800 2012,40.23213,German Restaurant", "German Restaurant,Jul 11"));
+        examplePairs.add(new ExamplePair("40.7451638,-73.98251878,Tue Apr 03 18:02:41 +0800 2012,Medical Center", "Medical Center,Apr 03"));
+
+        // 单个较长output
 //        examplePairs.add(new ExamplePair("Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012", "Electronics Store,Apr 03,Tue"));
+
+        // 初级Loop能力
+//        examplePairs.add(new ExamplePair("Hello World Zsf the Program Synthesis","HWZPS"));
         // endregion
 
 
@@ -672,10 +680,6 @@ public class Main {
 //        examplePairs.add(new ExamplePair("12.3.4","12-3-4"));
 //        examplePairs.add(new ExamplePair("74-12","abc-74-12"));
 //        examplePairs.add(new ExamplePair("(123)-84-122","123-84-122"));
-
-        // FIXME: 2017/2/16 还未加入interpret Loop的能力
-        examplePairs.add(new ExamplePair("Hello World Zsf the Program Synthesis Intellij Idea","HWZPSII"));
-
         // endregion
 
 
@@ -686,10 +690,15 @@ public class Main {
         List<ValidationPair> validationPairs=new ArrayList<ValidationPair>();
 
         // region # success
+        // 提取结构化数据
 //        validationPairs.add(new ValidationPair("40.74218831,-73.98792419,Park,Wed Jul 11 11:42:00 +0800 2012","Park,Jul 11"));
 //        validationPairs.add(new ValidationPair("Coffee Shop,40.73340972,-74.00285648,Wed Jul 13 12:27:07 +0800 2012","Coffee Shop,Jul 13"));
 //        validationPairs.add(new ValidationPair("40.69990191,,Sat Nov 17 20:36:26 +0800,Food & Drink Shop","Food & Drink Shop,Nov 17"));
 
+        // 初级Loop
+        validationPairs.add(new ValidationPair("Foundation of Software Engineering","FSE"));
+        validationPairs.add(new ValidationPair("European Software Engineering Conference","ESEC"));
+        validationPairs.add(new ValidationPair("International Conference on Software Engineering","ICSE"));
         // endregion
 
 
@@ -702,10 +711,6 @@ public class Main {
 //        validationPairs.add(new ValidationPair("1234-2345-23", "1234-2345-23"));
 //        validationPairs.add(new ValidationPair("1.3213.02", "1-3213-02"));
 
-        // FIXME: 2017/2/16 还未加入interpret Loop的能力
-        validationPairs.add(new ValidationPair("Foundation of Software Engineering","FSE"));
-        validationPairs.add(new ValidationPair("European Software Engineering Conference","ESEC"));
-        validationPairs.add(new ValidationPair("International Conference on Software Engineering","ICSE"));
         // endregion
         return validationPairs;
     }
