@@ -17,6 +17,7 @@ public class Match {
         this.regex = regex;
     }
 
+
     public String getInputString() {
         return inputString;
     }
