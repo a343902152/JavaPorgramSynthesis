@@ -1,5 +1,6 @@
 package com.zsf.flashextract;
 
+import com.zsf.flashextract.region.Region;
 import com.zsf.interpreter.expressions.Expression;
 import com.zsf.interpreter.model.Match;
 import com.zsf.interpreter.model.Regex;
@@ -7,12 +8,16 @@ import com.zsf.interpreter.model.Regex;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.zsf.interpreter.tool.StringTools.getCommonStr;
+import static com.zsf.interpreter.tool.StringTools.getReversedStr;
+
 /**
  * Created by zsf on 2017/2/26.
  */
 public class FEMain {
 
     public static List<Regex> usefulRegex = initUsefulRegex();
+
     /**
      * 增加有效的token可以强化匹配能力
      * <p>
@@ -44,9 +49,9 @@ public class FEMain {
         // special tokens
         regexList.add(new Regex("TestSymbolToken", "[-]+"));
         regexList.add(new Regex("CommaToken", "[,]+"));
-        regexList.add(new Regex("<","[<]+"));
-        regexList.add(new Regex(">","[>]+"));
-        regexList.add(new Regex("/","[/]+"));
+        regexList.add(new Regex("<", "[<]+"));
+        regexList.add(new Regex(">", "[>]+"));
+        regexList.add(new Regex("/", "[/]+"));
 //        regexList.add(new Regex("SpaceToken", "[ ]+")); // 加上之后就出不了结果？？
         // FIXME: 2017/2/5 如果开启这个SpTok在当前算法下会导致解过于庞大
 //        regexList.add(new Regex("SpecialTokens","[ -+()\\[\\],.:]+"));
@@ -72,72 +77,191 @@ public class FEMain {
 
     public static void main(String[] args) {
         // TODO: 2017/2/26 FilterBool的测试
-        String inputDocument="<HTML>\n" +
-                "<body>\n" +
-                "<table>\n" +
-                "<tr><td>Name</td><td>Email</td><td>Office</td></tr>\n" +
-                "<tr><td>Russell Smith</td><td>Russell.Smith@contoso.com</td><td>London</td></tr>\n" +
-                "<tr><td>David Jones</td><td>David.Jones@contoso.com</td><td>Manchester</td></tr>\n" +
-                "<tr><td>John Cameron</td><td>John.Cameron@contoso.com</td><td>New York</td></tr>\n" +
-                "</table>\n" +
-                "</body>\n" +
-                "</HTML>";
-        List<String> targetLines=new ArrayList<String>();
-        targetLines.add("姓名：<span class=\"name\">Ran Liu</span> <br> 职称：<span class=\"zc\">Associate Professor/Senior Engineer</span><br> 联系方式：<span class=\"lxfs\">ran.liu_cqu@qq.com</span><br> 主要研究方向:<span class=\"major\">Medical and stereo image processing; IC design; Biomedical Engineering</span><br>");
-//        targetLines.add("<tr><td>David Jones</td><td>David.Jones@contoso.com</td><td>Manchester</td></tr>");
+//        String inputDocument="<HTML>\n" +
+//                "<body>\n" +
+//                "<table>\n" +
+//                "<tr><td>Name</td><td>Email</td><td>Office</td></tr>\n" +
+//                "<tr><td>Russell Smith</td><td>Russell.Smith@contoso.com</td><td>London</td></tr>\n" +
+//                "<tr><td>David Jones</td><td>David.Jones@contoso.com</td><td>Manchester</td></tr>\n" +
+//                "<tr><td>John Cameron</td><td>John.Cameron@contoso.com</td><td>New York</td></tr>\n" +
+//                "</table>\n" +
+//                "</body>\n" +
+//                "</HTML>";
+//        List<Region> baseRegions=new ArrayList<Region>();
+//        String[] splitedLines=inputDocument.split("\n");
+//        for (String line:splitedLines){
+//            baseRegions.add(new Region(null,0,-1,line));
+//        }
+//        List<Region> newSelectedRegions=new ArrayList<Region>();
+//        newSelectedRegions.add(new Region(baseRegions.get(4),7,21,"Russell Smith"));
+//        newSelectedRegions.add(new Region(baseRegions.get(5),7,19,"John Cameron"));
 
-        List<Expression> expForExtractingLine=testBoolFilter(inputDocument,targetLines);
+        String inputDocument = "<div class=\"teacherdiv\">\n" +
+                "                    <div style=\"position: relative;float:left;width:100px;height:140px;margin: 5px 5px\">\n" +
+                "                        <a href=\"/public/tindex/30452\"><img src=\"/uploaded/filename/public/teacherportrait/30452.jpg?id=F856496028532ICUJO3\" style=\"width:100%;\"></a>\n" +
+                "                    </div>\n" +
+                "                    <div style=\"position: relative;float:left;width:220px;height:100%;padding-top: 20px;\">\n" +
+                "                        姓名：<span class=\"name\">Ran Liu</span> <br> 职称：<span class=\"zc\">Associate Professor/Senior Engineer</span><br> 联系方式：<span class=\"lxfs\">ran.liu_cqu@qq.com</span><br> 主要研究方向:<span class=\"major\">Medical and stereo image processing; IC design; Biomedical Engineering</span><br>\n" +
+                "                    </div>\n" +
+                "                </div>\n" +
+                "<div class=\"teacherdiv\">\n" +
+                "                    <div style=\"position: relative;float:left;width:100px;height:140px;margin: 5px 5px\">\n" +
+                "                        <a href=\"/public/tindex/30500\"><img src=\"/images/nophoto.jpg\" style=\"width:100%;\"></a>\n" +
+                "                    </div>\n" +
+                "                    <div style=\"position: relative;float:left;width:220px;height:100%;padding-top: 20px;\">\n" +
+                "                        姓名：<span class=\"name\">陈波</span> <br> 职称：<span class=\"zc\"></span><br> 联系方式：<span class=\"lxfs\"></span><br> 主要研究方向:<span class=\"major\"></span><br>\n" +
+                "                    </div>\n" +
+                "                </div>\n" +
+                "<div class=\"teacherdiv\">\n" +
+                "                    <div style=\"position: relative;float:left;width:100px;height:140px;margin: 5px 5px\">\n" +
+                "                        <a href=\"/public/tindex/06013\"><img src=\"/images/nophoto.jpg\" style=\"width:100%;\"></a>\n" +
+                "                    </div>\n" +
+                "                    <div style=\"position: relative;float:left;width:220px;height:100%;padding-top: 20px;\">\n" +
+                "                        姓名：<span class=\"name\">陈自郁</span> <br> 职称：<span class=\"zc\">讲师</span><br> 联系方式：<span class=\"lxfs\">chenziyu@cqu.edu.cn</span><br> 主要研究方向:<span class=\"major\">群智能、图像处理和智能控制</span><br>\n" +
+                "                    </div>\n" +
+                "                </div>\n" +
+                "<div class=\"teacherdiv\">\n" +
+                "                    <div style=\"position: relative;float:left;width:100px;height:140px;margin: 5px 5px\">\n" +
+                "                        <a href=\"/public/tindex/06167\"><img src=\"/uploaded/filename/public/teacherportrait/06167.jpg?id=F856496028533QU5XNG\" style=\"width:100%;\"></a>\n" +
+                "                    </div>\n" +
+                "                    <div style=\"position: relative;float:left;width:220px;height:100%;padding-top: 20px;\">\n" +
+                "                        姓名：<span class=\"name\">但静培</span> <br> 职称：<span class=\"zc\">讲师</span><br> 联系方式：<span class=\"lxfs\"></span><br> 主要研究方向:<span class=\"major\">时间序列数据挖掘、计算智能、神经网络等</span><br>\n" +
+                "                    </div>\n" +
+                "                </div>\n" +
+                "<div class=\"teacherdiv\">\n" +
+                "                    <div style=\"position: relative;float:left;width:100px;height:140px;margin: 5px 5px\">\n" +
+                "                        <a href=\"/public/tindex/30733\"><img src=\"/uploaded/filename/public/teacherportrait/30733.jpg?id=F856496028534QUAOIB\" style=\"width:100%;\"></a>\n" +
+                "                    </div>\n" +
+                "                    <div style=\"position: relative;float:left;width:220px;height:100%;padding-top: 20px;\">\n" +
+                "                        姓名：<span class=\"name\">房斌</span> <br> 职称：<span class=\"zc\">教授　博士生导师</span><br> 联系方式：<span class=\"lxfs\"></span><br> 主要研究方向:<span class=\"major\">模式识别与图像处理</span><br>\n" +
+                "                    </div>\n" +
+                "                </div>\n" +
+                "<div class=\"teacherdiv\">\n" +
+                "                    <div style=\"position: relative;float:left;width:100px;height:140px;margin: 5px 5px\">\n" +
+                "                        <a href=\"/public/tindex/30651\"><img src=\"/uploaded/filename/public/teacherportrait/30651.jpg?id=F856496028535AIQV0Y\" style=\"width:100%;\"></a>\n" +
+                "                    </div>\n" +
+                "                    <div style=\"position: relative;float:left;width:220px;height:100%;padding-top: 20px;\">\n" +
+                "                        姓名：<span class=\"name\">葛亮</span> <br> 职称：<span class=\"zc\">副教授</span><br> 联系方式：<span class=\"lxfs\">geliang@cqu.edu.cn</span><br> 主要研究方向:<span class=\"major\">计算机视觉，数据挖据，Web应用技术</span><br>\n" +
+                "                    </div>\n" +
+                "                </div>";
+        List<Region> baseRegions = new ArrayList<Region>();
+        String[] splitedLines = inputDocument.split("\n");
+        for (String line : splitedLines) {
+            baseRegions.add(new Region(null, 0, -1, line));
+        }
+        List<Region> newSelectedRegions = new ArrayList<Region>();
+        newSelectedRegions.add(new Region(baseRegions.get(5), 45, 53, "Ran Liu"));
+        newSelectedRegions.add(new Region(baseRegions.get(13), 45, 48, "陈波"));
+//
+        List<Expression> expForExtractingLine = testBoolFilter(inputDocument, newSelectedRegions);
 
     }
 
-    private static List<Expression> testBoolFilter(String inputDocument, List<String> targetLines) {
+    private static List<Expression> testBoolFilter(String inputDocument, List<Region> newSelectedRegion) {
 
-        for (String str:targetLines){
-            List<Match> matches=buildStringMatches(str);
+        addDynamicToken(newSelectedRegion);
+
+        for (Region region : newSelectedRegion) {
+            List<Match> matches = buildStringMatches(region.getParentRegion().getText());
             System.out.println("start with:");
-            buildStartWith(1,3,matches,0,"");
+            buildStartWith(1, 3, matches, 0, "");
             System.out.println("end with:");
-            buildEndWith(1,3,matches,str.length(),"");
+            buildEndWith(1, 3, matches, region.getParentRegion().getText().length(), "");
             // TODO: 2017/2/26 dynamicToken
         }
 
         return null;
     }
 
+    /**
+     * 从当前新选择的区域出发，分别向左&向右匹配相同str作为dynamicToken添加到usefulRegex中
+     *
+     * @param targetLines
+     */
+    private static void addDynamicToken(List<Region> targetLines) {
+        Region region = targetLines.get(0);
+
+        String textBeforeSelected = region.getParentRegion().getText().substring(0, region.getBeginPos() + 1);
+        String leftCommonStr = textBeforeSelected;
+        System.out.println(textBeforeSelected);
+        for (int i = 1; i < targetLines.size(); i++) {
+            Region curRegion = targetLines.get(i);
+            leftCommonStr = getCommonStr(getReversedStr(leftCommonStr),
+                    getReversedStr(curRegion.getParentRegion().getText().substring(0, curRegion.getBeginPos() + 1)));
+            leftCommonStr = getReversedStr(leftCommonStr);
+            System.out.println("leftCommonStr:  " + leftCommonStr);
+        }
+
+
+        String textAfterSelected = region.getParentRegion().getText().substring(region.getEndPos());
+        String rightCommonStr = textAfterSelected;
+        System.out.println(textAfterSelected);
+        for (int i = 1; i < targetLines.size(); i++) {
+            Region curRegion = targetLines.get(i);
+            rightCommonStr = getCommonStr(rightCommonStr,
+                    curRegion.getParentRegion().getText().substring(curRegion.getEndPos()));
+            System.out.println("rightCommonStr:  " + rightCommonStr);
+        }
+
+        Regex leftRegex = new Regex("DynamicTok(" + leftCommonStr + ")", leftCommonStr);
+        Regex rightRegex = new Regex("DynamicTok(" + rightCommonStr + ")", rightCommonStr);
+
+        usefulRegex.add(leftRegex);
+        usefulRegex.add(rightRegex);
+    }
+
+    /**
+     * 获得符合所有examples的endWith语法
+     *
+     * @param curDeepth
+     * @param maxDeepth
+     * @param matches
+     * @param endNode
+     * @param curExpression
+     */
     private static void buildEndWith(int curDeepth, int maxDeepth,
                                      List<Match> matches, int endNode, String curExpression) {
-        if (curDeepth>maxDeepth){
+        if (curDeepth > maxDeepth) {
             return;
         }
-        for (int i=matches.size()-1;i>=0;i--){
-            Match match=matches.get(i);
-            if ((match.getMatchedIndex()+match.getMatchedString().length())==endNode){
-                String curExpressionBack=curExpression;
-                curExpression=match.getRegex().toString()+curExpression;
-                System.out.println((curDeepth+" ")+curExpression);
-                buildEndWith(curDeepth+1,maxDeepth,
-                        matches,match.getMatchedIndex(),
+        for (int i = matches.size() - 1; i >= 0; i--) {
+            Match match = matches.get(i);
+            if ((match.getMatchedIndex() + match.getMatchedString().length()) == endNode) {
+                String curExpressionBack = curExpression;
+                curExpression = match.getRegex().toString() + curExpression;
+                System.out.println((curDeepth + " ") + curExpression);
+                buildEndWith(curDeepth + 1, maxDeepth,
+                        matches, match.getMatchedIndex(),
                         curExpression);
-                curExpression=curExpressionBack;
+                curExpression = curExpressionBack;
             }
         }
     }
 
+    /**
+     * 获得符合所有examples的startWith语法
+     *
+     * @param curDeepth
+     * @param maxDeepth
+     * @param matches
+     * @param beginNode
+     * @param curExpression
+     */
     private static void buildStartWith(int curDeepth, int maxDeepth,
-                                       List<Match> matches, int beginNode,String curExpression) {
-        if (curDeepth>maxDeepth){
+                                       List<Match> matches, int beginNode, String curExpression) {
+        if (curDeepth > maxDeepth) {
             return;
         }
-        for (int i=0;i<matches.size();i++){
-            Match match=matches.get(i);
-            if (match.getMatchedIndex()==beginNode){
-                String curExpressionBack=curExpression;
-                curExpression+=match.getRegex().toString();
-                System.out.println((curDeepth+" ")+curExpression);
-                buildStartWith(curDeepth+1,maxDeepth,
-                        matches,match.getMatchedIndex()+match.getMatchedString().length(),
+        for (int i = 0; i < matches.size(); i++) {
+            Match match = matches.get(i);
+            if (match.getMatchedIndex() == beginNode) {
+                String curExpressionBack = curExpression;
+                curExpression += match.getRegex().toString();
+                System.out.println((curDeepth + " ") + curExpression);
+                buildStartWith(curDeepth + 1, maxDeepth,
+                        matches, match.getMatchedIndex() + match.getMatchedString().length(),
                         curExpression);
-                curExpression=curExpressionBack;
+                curExpression = curExpressionBack;
             }
         }
 

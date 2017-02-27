@@ -290,7 +290,7 @@ public class Main {
      * @param expressionList
      * @param examplePairs
      */
-    private static List<ExamplePartition> generatePartition(List<ExpressionGroup> expressionList, List<ExamplePair> examplePairs) {
+    private static List<ExamplePartition> generatePartitions(List<ExpressionGroup> expressionList, List<ExamplePair> examplePairs) {
         // init
         RunTimeMeasurer.startTiming();
         List<ExamplePartition> partitions = new ArrayList<ExamplePartition>();
@@ -616,7 +616,7 @@ public class Main {
         int count=1;
         for (Expression exp:expressions){
             topN.insert(exp);
-            if (count++>n){
+            if (count++>=n){
                 break;
             }
         }
@@ -687,46 +687,55 @@ public class Main {
 //        examplePairs.add(new ExamplePair("12.3.4","12-3-4"));
 //        examplePairs.add(new ExamplePair("74-12","abc-74-12"));
 //        examplePairs.add(new ExamplePair("(123)-84-122","123-84-122"));
+
+        // FIXME: 2017/2/21 去掉注释
+//        examplePairs.add(new ExamplePair("System.out.println(\"hello\");//hello", "System.out.println(\"hello\");"));
+//        examplePairs.add(new ExamplePair("Hello World// Zsf the Program Synthesis","Hello World"));
         // endregion
 
 
         return examplePairs;
     }
 
-    private static List<ValidationPair> getValidationPairs() {
-        List<ValidationPair> validationPairs=new ArrayList<ValidationPair>();
+    private static List<ValidationPair> getTestPairs() {
+        List<ValidationPair> testPairs=new ArrayList<ValidationPair>();
 
         // region # success
         // 提取结构化数据
-//        validationPairs.add(new ValidationPair("40.74218831,-73.98792419,Park,Wed Jul 11 11:42:00 +0800 2012","Park,Jul 11"));
-//        validationPairs.add(new ValidationPair("Coffee Shop,40.73340972,-74.00285648,Wed Jul 13 12:27:07 +0800 2012","Coffee Shop,Jul 13"));
-//        validationPairs.add(new ValidationPair("40.69990191,,Sat Nov 17 20:36:26 +0800,Food & Drink Shop","Food & Drink Shop,Nov 17"));
+        testPairs.add(new ValidationPair("Coffee Shop,40.73340972,-74.00285648,Wed Jul 13 12:27:07 +0800 2012","Coffee Shop,Jul 13"));
+        testPairs.add(new ValidationPair("40.69990191,,Sat Nov 17 20:36:26 +0800,Food & Drink Shop","Food & Drink Shop,Nov 17"));
+        testPairs.add(new ValidationPair("40.74218831,-73.98792419,Park,Wed Jul 11 11:42:00 +0800 2012","Park,Jul 11"));
 
         // 初级Loop
-//        validationPairs.add(new ValidationPair("Foundation of Software Engineering","FSE"));
-//        validationPairs.add(new ValidationPair("European Software Engineering Conference","ESEC"));
-//        validationPairs.add(new ValidationPair("International Conference on Software Engineering","ICSE"));
+//        testPairs.add(new ValidationPair("Foundation of Software Engineering","FSE"));
+//        testPairs.add(new ValidationPair("European Software Engineering Conference","ESEC"));
+//        testPairs.add(new ValidationPair("International Conference on Software Engineering","ICSE"));
         // endregion
 
 
         // region # error
-        validationPairs.add(new ValidationPair("姓名：<span class=\"name\">陈波</span> <br> 职称：<span class=\"zc\"></span><br> 联系方式：<span class=\"lxfs\"></span><br> 主要研究方向:<span class=\"major\"></span><br>","陈波"));
+        testPairs.add(new ValidationPair("姓名：<span class=\"name\">陈波</span> <br> 职称：<span class=\"zc\"></span><br> 联系方式：<span class=\"lxfs\"></span><br> 主要研究方向:<span class=\"major\"></span><br>","陈波"));
 
         // FIXME: 2017/2/16 错误原因初步判定为相似度(classifier)错误
-//        validationPairs.add(new ValidationPair("2014年3月23日","3"));
-//        validationPairs.add(new ValidationPair("9/23/2012","09"));
+//        testPairs.add(new ValidationPair("2014年3月23日","3"));
+//        testPairs.add(new ValidationPair("9/23/2012","09"));
 
         // FIXME: 2017/2/16 未知错误，运行时很久没有结果，可能在哪里死循环了，需要debug
-//        validationPairs.add(new ValidationPair("1234-2345-23", "1234-2345-23"));
-//        validationPairs.add(new ValidationPair("1.3213.02", "1-3213-02"));
+//        testPairs.add(new ValidationPair("1234-2345-23", "1234-2345-23"));
+//        testPairs.add(new ValidationPair("1.3213.02", "1-3213-02"));
+
+        // FIXME: 2017/2/21 去掉注释
+//        testPairs.add(new ValidationPair("testPairs.add(new ValidationPair(\"Foundation of Software Engineering\",\"FSE\")); //测试","Coffee Shop,Jul 13"));
+//        testPairs.add(new ValidationPair("40.69990191,//,Sat Nov 17 20:36:26 +0800,Food & Drink Shop","Food & Drink Shop,Nov 17"));
+//        testPairs.add(new ValidationPair("40.74218831,-73.9879//2419,Park,Wed Jul 11 11:42:00 +0800 2012","Park,Jul 11"));
 
         // endregion
-        return validationPairs;
+        return testPairs;
     }
 
     public static void main(String[] args) {
         List<ExamplePair> examplePairs = getExamplePairs();
-        List<ValidationPair> validationPairs = getValidationPairs();
+        List<ValidationPair> testPairs = getTestPairs();
 
         List<ExpressionGroup> expressionList = generateExpressionsByExamples(examplePairs);
 
@@ -741,10 +750,10 @@ public class Main {
 //            System.out.println("============================================\n");
 //        }
 
-        List<ExamplePartition> partitions = generatePartition(expressionList, examplePairs);
+        List<ExamplePartition> partitions = generatePartitions(expressionList, examplePairs);
         showPartitions(partitions);
 
-        handleNewInput(validationPairs,partitions);
+        handleNewInput(testPairs,partitions);
 
     }
 }
