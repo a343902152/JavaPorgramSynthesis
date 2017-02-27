@@ -1,7 +1,6 @@
 package com.zsf.flashextract;
 
 import com.zsf.flashextract.region.Region;
-import com.zsf.interpreter.expressions.Expression;
 import com.zsf.interpreter.model.Match;
 import com.zsf.interpreter.model.Regex;
 
@@ -64,8 +63,6 @@ public class FEMain {
      * 当generatePosition()需要时，直接根据match的pos(index)去查找使用，避免重复计算
      */
     private static List<Match> buildStringMatches(String inputString) {
-        // TODO: 2017/2/5 加入match次数的能力
-        // TODO: 2017/2/5 加入不match的能力
         List<Match> matches = new ArrayList<Match>();
         for (int i = 0; i < usefulRegex.size(); i++) {
             Regex regex = usefulRegex.get(i);
@@ -151,49 +148,121 @@ public class FEMain {
         List<Region> newSelectedRegions = new ArrayList<Region>();
         newSelectedRegions.add(new Region(documentRegions.get(5), 45, 53, "Ran Liu"));
         newSelectedRegions.add(new Region(documentRegions.get(13), 45, 48, "陈波"));
-//
-        List<Expression> expForExtractingLine = testBoolFilter(documentRegions, newSelectedRegions);
+
+        List<Integer> positiveLineIndex = getPositiveLineIndexes();
+        List<Integer> negataiveLineIndex = getNegativeLineIndex(positiveLineIndex);
+
+        List<Regex> boolLineSelector = getLineSelector(documentRegions, newSelectedRegions,
+                positiveLineIndex, negataiveLineIndex);
+        System.out.println(boolLineSelector);
+
+        // TODO: 2017/2/27 用selector提取行
 
     }
 
-    private static List<Expression> testBoolFilter(List<Region> documentRegions, List<Region> newSelectedRegion) {
+    /**
+     * 用户操作GUI输入positiveExamples
+     *
+     * @return
+     */
+    private static List<Integer> getPositiveLineIndexes() {
+        List<Integer> positiveLineIndex = new ArrayList<Integer>();
+        positiveLineIndex.add(5);
+        positiveLineIndex.add(13);
+        return positiveLineIndex;
+    }
 
+    /**
+     * 根据positiveIndex计算出negativeLineIndex
+     * <p>
+     * 计算方法：max以上没有选中的都是negativeLine
+     *
+     * @param positiveLineIndex
+     * @return
+     */
+    private static List<Integer> getNegativeLineIndex(List<Integer> positiveLineIndex) {
+        List<Integer> negativeLineIndex = new ArrayList<Integer>();
+        int max = 0;
+        for (int index : positiveLineIndex) {
+            max = Math.max(max, index);
+        }
+        for (int i = 0; i < max; i++) {
+            if (!positiveLineIndex.contains(i)) {
+                negativeLineIndex.add(i);
+            }
+        }
+        return negativeLineIndex;
+    }
+
+    /**
+     * 要在当前documentRegions中选择几个新的region, getLineSelector给出筛选目标行的方法
+     * @param documentRegions
+     * @param newSelectedRegion
+     * @param positiveLineIndex
+     * @param negataiveLineIndex
+     * @return
+     */
+    private static List<Regex> getLineSelector(List<Region> documentRegions, List<Region> newSelectedRegion,
+                                               List<Integer> positiveLineIndex, List<Integer> negataiveLineIndex) {
         addDynamicToken(newSelectedRegion);
 
-        List<List<Regex>> startWithReges= new ArrayList<List<Regex>>();
-        List<List<Regex>> endWithReges=new ArrayList<List<Regex>>();
+        List<List<Regex>> startWithReges = new ArrayList<List<Regex>>();
+        List<List<Regex>> endWithReges = new ArrayList<List<Regex>>();
         for (Region region : newSelectedRegion) {
             List<Match> matches = buildStringMatches(region.getParentRegion().getText());
-            startWithReges.add(buildStartWith(1, 3, matches, 0, new Regex("","")));
-            endWithReges.add(buildEndWith(1, 3, matches, region.getParentRegion().getText().length(),new Regex("","")));
+            startWithReges.add(buildStartWith(1, 3, matches, 0, new Regex("", "")));
+            endWithReges.add(buildEndWith(1, 3, matches, region.getParentRegion().getText().length(), new Regex("", "")));
         }
         System.out.println("start with:");
         System.out.println(startWithReges.get(1));
         System.out.println("end with:");
         System.out.println(endWithReges);
 
-        List<Regex> startWithLineSelector=deDuplication(startWithReges,true);
-        List<Regex> endWithLineSelector=deDuplication(endWithReges,false);
+        List<Regex> startWithLineSelector = deDuplication(startWithReges, true);
+        List<Regex> endWithLineSelector = deDuplication(endWithReges, false);
 
         System.out.println(startWithLineSelector);
         System.out.println(endWithLineSelector);
 
-        for (Regex regex:endWithLineSelector){
-            for (Region region:documentRegions){
-                region.doSelect(regex);
-            }
-        }
+        // 利用positive和negativeExamples对selectors进行筛选
+        List<Regex> usefulLineSelector = new ArrayList<Regex>();
+        usefulLineSelector.addAll(filterUsefulSelector(startWithLineSelector, documentRegions, positiveLineIndex, negataiveLineIndex));
+        usefulLineSelector.addAll(filterUsefulSelector(endWithLineSelector, documentRegions, positiveLineIndex, negataiveLineIndex));
 
-
-        return null;
+        return usefulLineSelector;
     }
 
-    private static List<Regex> deDuplication(List<List<Regex>> regexs,boolean isStartWith) {
-        List<Regex> deDuplicatedList=new ArrayList<Regex>();
+    private static List<Regex> filterUsefulSelector(List<Regex> regices, List<Region> documentRegions,
+                                                    List<Integer> positiveLineIndex, List<Integer> negataiveLineIndex) {
+        List<Regex> usefulLineSelector = new ArrayList<Regex>();
 
-        // TODO: 2017/2/27 还没有考虑negativeExamples(隐式)的作用
+        for (Regex regex : regices) {
+            boolean needAddIn = true;
+            for (int index : positiveLineIndex) {
+                Region region = documentRegions.get(index);
+                if (!region.canMatch(regex)) {
+                    needAddIn = false;
+                    break;
+                }
+            }
+            for (int index : negataiveLineIndex) {
+                Region region = documentRegions.get(index);
+                if (region.canMatch(regex)) {
+                    needAddIn = false;
+                    break;
+                }
+            }
+            if (needAddIn) {
+                usefulLineSelector.add(regex);
+            }
+        }
+        return usefulLineSelector;
+    }
 
-        List<Regex> baseRegexList=regexs.get(0);
+    private static List<Regex> deDuplication(List<List<Regex>> regexs, boolean isStartWith) {
+        List<Regex> deDuplicatedList = new ArrayList<Regex>();
+
+        List<Regex> baseRegexList = regexs.get(0);
         for (Regex baseRegex : baseRegexList) {
             boolean needAddIn = false;
             for (int j = 1; j < regexs.size(); j++) {
@@ -220,7 +289,7 @@ public class FEMain {
                 deDuplicatedList.add(baseRegex);
             }
         }
-        return  deDuplicatedList;
+        return deDuplicatedList;
     }
 
     /**
@@ -271,26 +340,26 @@ public class FEMain {
      * @param lastRegex
      */
     private static List<Regex> buildEndWith(int curDeepth, int maxDeepth,
-                                     List<Match> matches, int endNode, Regex lastRegex) {
+                                            List<Match> matches, int endNode, Regex lastRegex) {
         if (curDeepth > maxDeepth) {
             return null;
         }
-        String connector="+";
-        if (curDeepth==1){
-            connector="";
+        String connector = "+";
+        if (curDeepth == 1) {
+            connector = "";
         }
-        List<Regex> regexList=new ArrayList<Regex>();
+        List<Regex> regexList = new ArrayList<Regex>();
         for (int i = matches.size() - 1; i >= 0; i--) {
             Match match = matches.get(i);
             if ((match.getMatchedIndex() + match.getMatchedString().length()) == endNode) {
 
-                Regex curRegex=new Regex(match.getRegex().getRegexName()+connector+lastRegex.getRegexName(),
-                        match.getRegex().getReg()+lastRegex.getReg());
+                Regex curRegex = new Regex(match.getRegex().getRegexName() + connector + lastRegex.getRegexName(),
+                        match.getRegex().getReg() + lastRegex.getReg());
                 regexList.add(curRegex);
-                List<Regex> curList=buildEndWith(curDeepth + 1, maxDeepth,
+                List<Regex> curList = buildEndWith(curDeepth + 1, maxDeepth,
                         matches, match.getMatchedIndex(),
                         curRegex);
-                if (curList!=null){
+                if (curList != null) {
                     regexList.addAll(curList);
                 }
             }
@@ -308,27 +377,27 @@ public class FEMain {
      * @param lastRegex
      */
     private static List<Regex> buildStartWith(int curDeepth, int maxDeepth,
-                                       List<Match> matches, int beginNode, Regex lastRegex) {
+                                              List<Match> matches, int beginNode, Regex lastRegex) {
         if (curDeepth > maxDeepth) {
             return null;
         }
-        String connector="+";
-        if (curDeepth==1){
-            connector="";
+        String connector = "+";
+        if (curDeepth == 1) {
+            connector = "";
         }
-        List<Regex> regexList=new ArrayList<Regex>();
+        List<Regex> regexList = new ArrayList<Regex>();
 
         for (int i = 0; i < matches.size(); i++) {
             Match match = matches.get(i);
             if (match.getMatchedIndex() == beginNode) {
-                Regex curRegex=new Regex(lastRegex.getRegexName()+connector+match.getRegex().getRegexName(),
-                        lastRegex.getReg()+match.getRegex().getReg());
+                Regex curRegex = new Regex(lastRegex.getRegexName() + connector + match.getRegex().getRegexName(),
+                        lastRegex.getReg() + match.getRegex().getReg());
                 regexList.add(curRegex);
 
-                List<Regex> curList=buildStartWith(curDeepth + 1, maxDeepth,
+                List<Regex> curList = buildStartWith(curDeepth + 1, maxDeepth,
                         matches, match.getMatchedIndex() + match.getMatchedString().length(),
                         curRegex);
-                if (curList!=null){
+                if (curList != null) {
                     regexList.addAll(curList);
                 }
             }

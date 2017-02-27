@@ -41,11 +41,17 @@ public class Region {
 //        Collections.sort(childRegions);
     }
 
-    public void doSelect(Regex selector){
+    /**
+     * 用于Filter，测试selector是否可以选出此行Region
+     * @param selector
+     * @return
+     */
+    public boolean canMatch(Regex selector){
         List<Match> matches=selector.doMatch(text);
         if (matches.size()>0){
-            System.out.println("selector:"+selector.toString()+"\ntext="+text);
+            return true;
         }
+        return false;
     }
 
     public Region getParentRegion() {
