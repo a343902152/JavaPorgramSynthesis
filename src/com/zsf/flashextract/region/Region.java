@@ -1,7 +1,10 @@
 package com.zsf.flashextract.region;
 
+import com.zsf.flashextract.regex.LineSelector;
+import com.zsf.interpreter.model.Match;
+import com.zsf.interpreter.model.Regex;
+
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -29,13 +32,20 @@ public class Region {
     }
 
     public void selectNewChildRegion(Region newChildRegion){
-        insetNewChildRegionToRightPos(newChildRegion);
+        insertNewChildRegionToRightPos(newChildRegion);
     }
 
-    private void insetNewChildRegionToRightPos(Region newChildRegion) {
+    private void insertNewChildRegionToRightPos(Region newChildRegion) {
         childRegions.add(newChildRegion);
         // TODO: 2017/2/27 根据endPos从小到大排序的Comparter
 //        Collections.sort(childRegions);
+    }
+
+    public void doSelect(Regex selector){
+        List<Match> matches=selector.doMatch(text);
+        if (matches.size()>0){
+            System.out.println("selector:"+selector.toString()+"\ntext="+text);
+        }
     }
 
     public Region getParentRegion() {

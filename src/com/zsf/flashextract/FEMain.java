@@ -76,7 +76,6 @@ public class FEMain {
     }
 
     public static void main(String[] args) {
-        // TODO: 2017/2/26 FilterBool的测试
 //        String inputDocument="<HTML>\n" +
 //                "<body>\n" +
 //                "<table>\n" +
@@ -144,33 +143,84 @@ public class FEMain {
                 "                        姓名：<span class=\"name\">葛亮</span> <br> 职称：<span class=\"zc\">副教授</span><br> 联系方式：<span class=\"lxfs\">geliang@cqu.edu.cn</span><br> 主要研究方向:<span class=\"major\">计算机视觉，数据挖据，Web应用技术</span><br>\n" +
                 "                    </div>\n" +
                 "                </div>";
-        List<Region> baseRegions = new ArrayList<Region>();
+        List<Region> documentRegions = new ArrayList<Region>();
         String[] splitedLines = inputDocument.split("\n");
         for (String line : splitedLines) {
-            baseRegions.add(new Region(null, 0, -1, line));
+            documentRegions.add(new Region(null, 0, -1, line));
         }
         List<Region> newSelectedRegions = new ArrayList<Region>();
-        newSelectedRegions.add(new Region(baseRegions.get(5), 45, 53, "Ran Liu"));
-        newSelectedRegions.add(new Region(baseRegions.get(13), 45, 48, "陈波"));
+        newSelectedRegions.add(new Region(documentRegions.get(5), 45, 53, "Ran Liu"));
+        newSelectedRegions.add(new Region(documentRegions.get(13), 45, 48, "陈波"));
 //
-        List<Expression> expForExtractingLine = testBoolFilter(inputDocument, newSelectedRegions);
+        List<Expression> expForExtractingLine = testBoolFilter(documentRegions, newSelectedRegions);
 
     }
 
-    private static List<Expression> testBoolFilter(String inputDocument, List<Region> newSelectedRegion) {
+    private static List<Expression> testBoolFilter(List<Region> documentRegions, List<Region> newSelectedRegion) {
 
         addDynamicToken(newSelectedRegion);
 
+        List<List<Regex>> startWithReges= new ArrayList<List<Regex>>();
+        List<List<Regex>> endWithReges=new ArrayList<List<Regex>>();
         for (Region region : newSelectedRegion) {
             List<Match> matches = buildStringMatches(region.getParentRegion().getText());
-            System.out.println("start with:");
-            buildStartWith(1, 3, matches, 0, "");
-            System.out.println("end with:");
-            buildEndWith(1, 3, matches, region.getParentRegion().getText().length(), "");
-            // TODO: 2017/2/26 dynamicToken
+            startWithReges.add(buildStartWith(1, 3, matches, 0, new Regex("","")));
+            endWithReges.add(buildEndWith(1, 3, matches, region.getParentRegion().getText().length(),new Regex("","")));
+        }
+        System.out.println("start with:");
+        System.out.println(startWithReges.get(1));
+        System.out.println("end with:");
+        System.out.println(endWithReges);
+
+        List<Regex> startWithLineSelector=deDuplication(startWithReges,true);
+        List<Regex> endWithLineSelector=deDuplication(endWithReges,false);
+
+        System.out.println(startWithLineSelector);
+        System.out.println(endWithLineSelector);
+
+        for (Regex regex:endWithLineSelector){
+            for (Region region:documentRegions){
+                region.doSelect(regex);
+            }
         }
 
+
         return null;
+    }
+
+    private static List<Regex> deDuplication(List<List<Regex>> regexs,boolean isStartWith) {
+        List<Regex> deDuplicatedList=new ArrayList<Regex>();
+
+        // TODO: 2017/2/27 还没有考虑negativeExamples(隐式)的作用
+
+        List<Regex> baseRegexList=regexs.get(0);
+        for (Regex baseRegex : baseRegexList) {
+            boolean needAddIn = false;
+            for (int j = 1; j < regexs.size(); j++) {
+                List<Regex> regexList = regexs.get(j);
+
+                for (Regex regex : regexList) {
+                    if ((baseRegex.equals(regex))) {
+                        needAddIn = true;
+                        break;
+                    }
+                }
+                if (!needAddIn) {
+                    break;
+                }
+            }
+            if (needAddIn) {
+                if (isStartWith) {
+                    baseRegex.setReg("^" + baseRegex.getReg());
+                    baseRegex.setRegexName("startWith(" + baseRegex.getRegexName() + ")");
+                } else {
+                    baseRegex.setReg(baseRegex.getReg() + "$");
+                    baseRegex.setRegexName("endWith(" + baseRegex.getRegexName() + ")");
+                }
+                deDuplicatedList.add(baseRegex);
+            }
+        }
+        return  deDuplicatedList;
     }
 
     /**
@@ -181,6 +231,7 @@ public class FEMain {
     private static void addDynamicToken(List<Region> targetLines) {
         Region region = targetLines.get(0);
 
+        // 左匹配
         String textBeforeSelected = region.getParentRegion().getText().substring(0, region.getBeginPos() + 1);
         String leftCommonStr = textBeforeSelected;
         System.out.println(textBeforeSelected);
@@ -192,7 +243,7 @@ public class FEMain {
             System.out.println("leftCommonStr:  " + leftCommonStr);
         }
 
-
+        // 右匹配
         String textAfterSelected = region.getParentRegion().getText().substring(region.getEndPos());
         String rightCommonStr = textAfterSelected;
         System.out.println(textAfterSelected);
@@ -217,25 +268,34 @@ public class FEMain {
      * @param maxDeepth
      * @param matches
      * @param endNode
-     * @param curExpression
+     * @param lastRegex
      */
-    private static void buildEndWith(int curDeepth, int maxDeepth,
-                                     List<Match> matches, int endNode, String curExpression) {
+    private static List<Regex> buildEndWith(int curDeepth, int maxDeepth,
+                                     List<Match> matches, int endNode, Regex lastRegex) {
         if (curDeepth > maxDeepth) {
-            return;
+            return null;
         }
+        String connector="+";
+        if (curDeepth==1){
+            connector="";
+        }
+        List<Regex> regexList=new ArrayList<Regex>();
         for (int i = matches.size() - 1; i >= 0; i--) {
             Match match = matches.get(i);
             if ((match.getMatchedIndex() + match.getMatchedString().length()) == endNode) {
-                String curExpressionBack = curExpression;
-                curExpression = match.getRegex().toString() + curExpression;
-                System.out.println((curDeepth + " ") + curExpression);
-                buildEndWith(curDeepth + 1, maxDeepth,
+
+                Regex curRegex=new Regex(match.getRegex().getRegexName()+connector+lastRegex.getRegexName(),
+                        match.getRegex().getReg()+lastRegex.getReg());
+                regexList.add(curRegex);
+                List<Regex> curList=buildEndWith(curDeepth + 1, maxDeepth,
                         matches, match.getMatchedIndex(),
-                        curExpression);
-                curExpression = curExpressionBack;
+                        curRegex);
+                if (curList!=null){
+                    regexList.addAll(curList);
+                }
             }
         }
+        return regexList;
     }
 
     /**
@@ -245,26 +305,34 @@ public class FEMain {
      * @param maxDeepth
      * @param matches
      * @param beginNode
-     * @param curExpression
+     * @param lastRegex
      */
-    private static void buildStartWith(int curDeepth, int maxDeepth,
-                                       List<Match> matches, int beginNode, String curExpression) {
+    private static List<Regex> buildStartWith(int curDeepth, int maxDeepth,
+                                       List<Match> matches, int beginNode, Regex lastRegex) {
         if (curDeepth > maxDeepth) {
-            return;
+            return null;
         }
+        String connector="+";
+        if (curDeepth==1){
+            connector="";
+        }
+        List<Regex> regexList=new ArrayList<Regex>();
+
         for (int i = 0; i < matches.size(); i++) {
             Match match = matches.get(i);
             if (match.getMatchedIndex() == beginNode) {
-                String curExpressionBack = curExpression;
-                curExpression += match.getRegex().toString();
-                System.out.println((curDeepth + " ") + curExpression);
-                buildStartWith(curDeepth + 1, maxDeepth,
+                Regex curRegex=new Regex(lastRegex.getRegexName()+connector+match.getRegex().getRegexName(),
+                        lastRegex.getReg()+match.getRegex().getReg());
+                regexList.add(curRegex);
+
+                List<Regex> curList=buildStartWith(curDeepth + 1, maxDeepth,
                         matches, match.getMatchedIndex() + match.getMatchedString().length(),
-                        curExpression);
-                curExpression = curExpressionBack;
+                        curRegex);
+                if (curList!=null){
+                    regexList.addAll(curList);
+                }
             }
         }
-
-
+        return regexList;
     }
 }
