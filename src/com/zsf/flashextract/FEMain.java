@@ -156,8 +156,23 @@ public class FEMain {
                 positiveLineIndex, negataiveLineIndex);
         System.out.println(boolLineSelector);
 
-        // TODO: 2017/2/27 用selector提取行
+        showRegionNeedSelect(documentRegions, boolLineSelector);
+    }
 
+    /**
+     * 根据boolLineSelector对documentRegion进行筛选，输出(显示)需要显示的行
+     * @param documentRegions
+     * @param boolLineSelector
+     */
+    private static void showRegionNeedSelect(List<Region> documentRegions, List<Regex> boolLineSelector) {
+        for (Regex selector:boolLineSelector){
+            System.out.println("========="+"selector:"+selector.toString()+"=========");
+            for (Region region:documentRegions){
+                if (region.canMatch(selector)){
+                    System.out.println(region.getText());
+                }
+            }
+        }
     }
 
     /**
