@@ -64,8 +64,9 @@ public class Regex {
         }
         List<Match> matches=new ArrayList<Match>();
         Matcher matcher=pattern.matcher(inputString);
+        int count=1;
         while (matcher.find()){
-            matches.add(new Match(inputString,matcher.start(),matcher.group(),this));
+            matches.add(new Match(inputString,matcher.start(),matcher.group(),this,count++));
         }
         return matches;
     }

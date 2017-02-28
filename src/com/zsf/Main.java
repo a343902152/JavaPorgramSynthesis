@@ -3,9 +3,7 @@ package com.zsf;
 import com.zsf.interpreter.expressions.*;
 import com.zsf.interpreter.expressions.linking.ConcatenateExpression;
 import com.zsf.interpreter.expressions.loop.LoopExpression;
-import com.zsf.interpreter.expressions.pos.AbsPosExpression;
-import com.zsf.interpreter.expressions.pos.PosExpression;
-import com.zsf.interpreter.expressions.pos.RegPosExpression;
+import com.zsf.interpreter.expressions.pos.*;
 import com.zsf.interpreter.expressions.string.ConstStrExpression;
 import com.zsf.interpreter.expressions.string.SubString2Expression;
 import com.zsf.interpreter.expressions.string.SubStringExpression;
@@ -42,7 +40,7 @@ public class Main {
             System.out.println(String.format("Input=%s  Output=%s", input, output));
             System.out.println(expressionGroup.size());
             for (Expression exp : expressionGroup.getExpressions()) {
-                System.out.println(exp.toString());
+//                System.out.println(exp.toString());
             }
             if (expressionGroup != null) {
                 expressionGroups.add(expressionGroup);
@@ -228,6 +226,14 @@ public class Main {
         }
         if (k == inputString.length()) {
             result.add(new AbsPosExpression(PosExpression.END_POS));
+        }
+
+        for (Match match:matches){
+            if (match.getMatchedIndex()==k){
+                result.add(new MatchStartPos(match.getRegex(),match.getCount()));
+            }else if ((match.getMatchedIndex()+match.getMatchedString().length())==k){
+                result.add(new MatchEndPos(match.getRegex(),match.getCount()));
+            }
         }
 
         /**
@@ -596,7 +602,7 @@ public class Main {
         System.out.println("==========所属partition=" + partitionIndex + " ==========");
         ExamplePartition partition = partitions.get(partitionIndex);
 
-        ExpressionGroup topNExpression = getTopNExpressions(partition, newInput, 5);
+        ExpressionGroup topNExpression = getTopNExpressions(partition, newInput, 5000000);
 
         return topNExpression;
     }
@@ -649,7 +655,8 @@ public class Main {
         System.out.println("期望输出：" + v.getTargetString());
         for (Expression expression : topNExpression.getExpressions()) {
             if (expression instanceof NonTerminalExpression) {
-                System.out.println(((NonTerminalExpression) expression).interpret(v.getInputString()) + " , " + expression.toString());
+                if (v.getTargetString().equals(((NonTerminalExpression) expression).interpret(v.getInputString())))
+                    System.out.println(((NonTerminalExpression) expression).interpret(v.getInputString()) + " , " + expression.toString());
             }
         }
     }
@@ -708,9 +715,9 @@ public class Main {
 
         // region # success
         // 提取结构化数据
-        testPairs.add(new ValidationPair("Coffee Shop,40.73340972,-74.00285648,Wed Jul 13 12:27:07 +0800 2012", "Coffee Shop,Jul 13"));
-        testPairs.add(new ValidationPair("40.69990191,,Sat Nov 17 20:36:26 +0800,Food & Drink Shop", "Food & Drink Shop,Nov 17"));
-        testPairs.add(new ValidationPair("40.74218831,-73.98792419,Park,Wed Jul 11 11:42:00 +0800 2012", "Park,Jul 11"));
+//        testPairs.add(new ValidationPair("Coffee Shop,40.73340972,-74.00285648,Wed Jul 13 12:27:07 +0800 2012", "Coffee Shop,Jul 13"));
+//        testPairs.add(new ValidationPair("40.69990191,,Sat Nov 17 20:36:26 +0800,Food & Drink Shop", "Food & Drink Shop,Nov 17"));
+//        testPairs.add(new ValidationPair("40.74218831,-73.98792419,Park,Wed Jul 11 11:42:00 +0800 2012", "Park,Jul 11"));
 
         // 初级Loop
 //        testPairs.add(new ValidationPair("Foundation of Software Engineering","FSE"));
@@ -721,6 +728,9 @@ public class Main {
 
         // region # error
         testPairs.add(new ValidationPair("姓名：<span class=\"name\">陈波</span> <br> 职称：<span class=\"zc\"></span><br> 联系方式：<span class=\"lxfs\"></span><br> 主要研究方向:<span class=\"major\"></span><br>", "陈波"));
+        testPairs.add(new ValidationPair("                        姓名：<span class=\"name\">陈自郁</span> <br> 职称：<span class=\"zc\">讲师</span><br> 联系方式：<span class=\"lxfs\">chenziyu@cqu.edu.cn</span><br> 主要研究方向:<span class=\"major\">群智能、图像处理和智能控制</span><br>", "陈自郁"));
+        testPairs.add(new ValidationPair("                        姓名：<span class=\"name\">但静培</span> <br> 职称：<span class=\"zc\">讲师</span><br> 联系方式：<span class=\"lxfs\"></span><br> 主要研究方向:<span class=\"major\">时间序列数据挖掘、计算智能、神经网络等</span><br>", "但静培"));
+
 
         // FIXME: 2017/2/16 错误原因初步判定为相似度(classifier)错误
 //        testPairs.add(new ValidationPair("2014年3月23日","3"));

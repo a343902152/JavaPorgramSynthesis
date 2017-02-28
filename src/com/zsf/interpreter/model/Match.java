@@ -9,12 +9,14 @@ public class Match {
     private int matchedIndex;
     private String matchedString;
     private Regex regex;
+    private int count;
 
-    public Match(String inputString, int matchedIndex, String matchedString, Regex regex) {
+    public Match(String inputString, int matchedIndex, String matchedString, Regex regex, int count) {
         this.inputString = inputString;
         this.matchedIndex = matchedIndex;
         this.matchedString = matchedString;
         this.regex = regex;
+        this.count=count;
     }
 
 
@@ -48,5 +50,13 @@ public class Match {
 
     public void setRegex(Regex regex) {
         this.regex = regex;
+    }
+
+    public int getCount() {
+        return count;
+    }
+
+    public void setCount(int count) {
+        this.count = count;
     }
 }
