@@ -15,6 +15,7 @@ import com.zsf.interpreter.tool.RunTimeMeasurer;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
+import java.util.List;
 import java.util.regex.Matcher;
 
 public class Main {
@@ -36,11 +37,11 @@ public class Main {
             String input = pair.getInputString();
             String output = pair.getOutputString();
 
-            ExpressionGroup expressionGroup = generateStr(input, output);
+            ExpressionGroup expressionGroup = generateStr(input, output,examplePairs);
             System.out.println(String.format("Input=%s  Output=%s", input, output));
             System.out.println(expressionGroup.size());
             for (Expression exp : expressionGroup.getExpressions()) {
-//                System.out.println(exp.toString());
+                System.out.println(exp.toString());
             }
             if (expressionGroup != null) {
                 expressionGroups.add(expressionGroup);
@@ -53,11 +54,11 @@ public class Main {
     /**
      * generate阶段要调用的函数
      * 返回一个能够从input中生产output的expressions集合
-     *
-     * @param inputString
+     *  @param inputString
      * @param outputString
+     * @param examplePairs
      */
-    public static ExpressionGroup generateStr(String inputString, String outputString) {
+    public static ExpressionGroup generateStr(String inputString, String outputString, List<ExamplePair> examplePairs) {
         // 论文中记作W W指能产生outputString[i，j]的所有方法集合,包括constStr[s[i,j]]以及动态获得子串方法generateSubString().
         int len = outputString.length();
         ResultMap resultMap = new ResultMap(len, len);
@@ -82,7 +83,7 @@ public class Main {
         // FIXME: 2017/2/3 此方法过于耗时，当item数和每个item的长度增加时，解会爆炸增长
         // FIXME: 2017/2/3 初步推测这和constStr过多有关
         RunTimeMeasurer.startTiming();
-        resultMap.setData(0, len, generateJumpingExps(resultMap, 0, len));
+        resultMap.setData(0, len, generateJumpingExps(examplePairs,resultMap, 0, len));
         RunTimeMeasurer.endTiming("generateJumpingExps");
 
         RunTimeMeasurer.startTiming();
@@ -107,7 +108,7 @@ public class Main {
      * <p>
      * 算法思想：dfs
      */
-    private static ExpressionGroup generateJumpingExps(ResultMap resultMap, int start, int end) {
+    private static ExpressionGroup generateJumpingExps(List<ExamplePair> examplePairs, ResultMap resultMap, int start, int end) {
         if (start + 1 == end) {
             return resultMap.getData(start, end);
         }
@@ -115,11 +116,31 @@ public class Main {
         for (int j = start + 1; j < end; j++) {
             ExpressionGroup curExpressions = resultMap.getData(start, j);
             if (curExpressions.size() > 0) {
-                ExpressionGroup tmpConcatedExps = ConcatenateExpression.concatenateExp(curExpressions, generateJumpingExps(resultMap, j, end));
-                newExpressions.insert(tmpConcatedExps);
+                ExpressionGroup tmpConcatedExps = ConcatenateExpression.concatenateExp(curExpressions, generateJumpingExps(examplePairs,resultMap, j, end));
+                newExpressions.insert(getValidExpressions(examplePairs,tmpConcatedExps));
             }
         }
         return newExpressions;
+    }
+
+    private static ExpressionGroup getValidExpressions(List<ExamplePair> examplePairs, ExpressionGroup tmpConcatedExps) {
+        ExpressionGroup expressionGroup=new ExpressionGroup();
+        for (Expression exp:tmpConcatedExps.getExpressions()){
+            if (exp instanceof NonTerminalExpression){
+                boolean needAddIn=true;
+                for (ExamplePair examplePair:examplePairs){
+                    String ans=((NonTerminalExpression) exp).interpret(examplePair.getInputString());
+                    if (!examplePair.getOutputString().contains(ans)){
+                        needAddIn=false;
+                        break;
+                    }
+                }
+                if (needAddIn){
+                    expressionGroup.insert(exp);
+                }
+            }
+        }
+        return expressionGroup;
     }
 
     /**
@@ -435,8 +456,6 @@ public class Main {
         // FIXME: 2017/2/5 如果开启这个SpTok在当前算法下会导致解过于庞大
 //        regexList.add(new Regex("SpecialTokens","[ -+()\\[\\],.:]+"));
 
-        // TODO: 2017/2/26 必须加入"the first occurrence of end of Greater-than and " 这种substr.end的能力
-
         return regexList;
     }
 
@@ -689,6 +708,7 @@ public class Main {
         // endregion
 
         examplePairs.add(new ExamplePair("姓名：<span class=\"name\">Ran Liu</span> <br> 职称：<span class=\"zc\">Associate Professor/Senior Engineer</span><br> 联系方式：<span class=\"lxfs\">ran.liu_cqu@qq.com</span><br> 主要研究方向:<span class=\"major\">Medical and stereo image processing; IC design; Biomedical Engineering</span><br>","Ran Liu"));
+        examplePairs.add(new ExamplePair("姓名：<span class=\"name\">陈波</span> <br> 职称：<span class=\"zc\"></span><br> 联系方式：<span class=\"lxfs\"></span><br> 主要研究方向:<span class=\"major\"></span><br>", "陈波"));
 
         // region # error
         // FIXME: 2017/2/16 错误原因初步判定为相似度(classifier)错误
