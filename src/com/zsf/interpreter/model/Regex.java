@@ -75,6 +75,7 @@ public class Regex implements Score{
 
     @Override
     public double score() {
+        // TODO: 2017/3/1 dynamicToken的score应该要高一些
         return 0.1+(reg.length()/10)*0.1;
     }
 }
