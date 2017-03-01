@@ -7,7 +7,7 @@ import com.zsf.interpreter.expressions.linking.LinkingExpression;
 import com.zsf.interpreter.expressions.pos.PosExpression;
 import com.zsf.interpreter.expressions.string.SubString2Expression;
 import com.zsf.interpreter.model.Match;
-import com.zsf.interpreter.model.Regex;
+import com.zsf.interpreter.expressions.regex.Regex;
 
 import java.util.List;
 

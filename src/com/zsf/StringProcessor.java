@@ -5,16 +5,14 @@ import com.zsf.interpreter.expressions.NonTerminalExpression;
 import com.zsf.interpreter.expressions.linking.ConcatenateExpression;
 import com.zsf.interpreter.expressions.loop.LoopExpression;
 import com.zsf.interpreter.expressions.pos.*;
+import com.zsf.interpreter.expressions.regex.*;
 import com.zsf.interpreter.expressions.string.ConstStrExpression;
 import com.zsf.interpreter.expressions.string.SubString2Expression;
 import com.zsf.interpreter.expressions.string.SubStringExpression;
 import com.zsf.interpreter.model.*;
-import com.zsf.interpreter.tool.ExpScoreComparator;
 import com.zsf.interpreter.tool.ExpressionComparator;
 import com.zsf.interpreter.tool.RunTimeMeasurer;
 
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -103,34 +101,6 @@ public class StringProcessor {
     }
 
     /**
-     * 已经在concatResExp()中处理过跳跃性的res(如首字母提取)
-     * generateLoop()中只要找到是拼接起来的，而且左右表达式一致的exp即可。
-     */
-    private ExpressionGroup generateLoop(int passbyNode, int endNode, ResultMap resultMap, int outputLen) {
-        // TODO: 2017/1/23 效率存在问题，output一旦变长，程序就运行不出来了
-
-        ExpressionGroup outputExpressions = resultMap.getData(passbyNode, endNode);
-        ExpressionGroup loopExpressions = new ExpressionGroup();
-        for (Expression exp : outputExpressions.getExpressions()) {
-            if (exp instanceof ConcatenateExpression) {
-                // TODO: 2017/2/16 这里也许可以改为：1. 左做loop 2. 右做loop 3. 合并左右 ，这样可以解决类似“1 2 3 Bank Of China”->"1-2-3 BOC"之类的问题
-                if (isSameExpression(((ConcatenateExpression) exp).getLeftExp(), ((ConcatenateExpression) exp).getRightExp())) {
-//                    System.out.println("same:");
-//                    System.out.println(exp);
-                    LoopExpression loop = new LoopExpression(LoopExpression.LINKING_MODE_CONCATENATE, exp, passbyNode, endNode);
-//                    System.out.println(loop.toString());
-                    loopExpressions.insert(loop);
-                    if (endNode == outputLen) {
-                        LoopExpression loopToEnd = new LoopExpression(LoopExpression.LINKING_MODE_CONCATENATE, exp, passbyNode, PosExpression.END_POS);
-                        loopExpressions.insert(loopToEnd);
-                    }
-                }
-            }
-        }
-        return loopExpressions;
-    }
-
-    /**
      * 返回从intputString中得到target的所有方式
      * 如：
      * inputString=123-456-123,targetString=123
@@ -208,6 +178,7 @@ public class StringProcessor {
             result.add(new AbsPosExpression(PosExpression.END_POS));
         }
 
+        // 找到MatchPos形式的pos表达式
         for (Match match:matches){
             if (match.getMatchedIndex()==k){
                 result.add(new MatchStartPos(match.getRegex(),match.getCount()));
@@ -234,7 +205,7 @@ public class StringProcessor {
                                 Regex r2 = match2.getRegex();
 
                                 // TODO: 2017/1/22 用更好的方法合并r1和r2
-                                Regex r12 = new Regex("r12", r1.getReg() + r2.getReg());
+                                Regex r12 = new CombinedRegex("r12", r1.getReg() + r2.getReg());
                                 List<Match> totalMatches = r12.doMatch(inputString);
                                 int curOccur = -1;
                                 String sk1k2 = inputString.substring(k1, k2);
@@ -257,7 +228,6 @@ public class StringProcessor {
 
 
     private List<Regex> usefulRegex = initUsefulRegex();
-
     /**
      * 增加有效的token可以强化匹配能力
      * <p>
@@ -268,30 +238,30 @@ public class StringProcessor {
      */
     private List<Regex> initUsefulRegex() {
         List<Regex> regexList = new ArrayList<Regex>();
-        regexList.add(new Regex("SimpleNumberTok", "[0-9]+"));
-        regexList.add(new Regex("DigitToken", "[-+]?(([0-9]+)([.]([0-9]+))?)"));
-        regexList.add(new Regex("LowerToken", "[a-z]+"));
-        regexList.add(new Regex("UpperToken", "[A-Z]+"));
-        regexList.add(new Regex("AlphaToken", "[a-zA-Z]+"));
+        regexList.add(new NormalRegex("SimpleNumberTok", "[0-9]+"));
+        regexList.add(new NormalRegex("DigitToken", "[-+]?(([0-9]+)([.]([0-9]+))?)"));
+        regexList.add(new NormalRegex("LowerToken", "[a-z]+"));
+        regexList.add(new NormalRegex("UpperToken", "[A-Z]+"));
+        regexList.add(new NormalRegex("AlphaToken", "[a-zA-Z]+"));
 //        regexList.add(new Regex("WordToken","[a-z\\sA-Z]+")); // 匹配单词的token，会导致结果爆炸增长几十万倍
 
         // TimeToken可匹配[12:15 | 10:26:59 PM| 22:01:15 aM]形式的时间数据
-        regexList.add(new Regex("TimeToken", "(([0-1]?[0-9])|([2][0-3])):([0-5]?[0-9])(:([0-5]?[0-9]))?([ ]*[aApP][mM])?"));
+        regexList.add(new RareRegex("TimeToken", "(([0-1]?[0-9])|([2][0-3])):([0-5]?[0-9])(:([0-5]?[0-9]))?([ ]*[aApP][mM])?"));
         // YMDToken可匹配[10/03/1979 | 1-1-02 | 01.1.2003]形式的年月日数据
-        regexList.add(new Regex("YMDToken", "([0]?[1-9]|[1|2][0-9]|[3][0|1])[./-]([0]?[1-9]|[1][0-2])[./-]([0-9]{4}|[0-9]{2})"));
+        regexList.add(new RareRegex("YMDToken", "([0]?[1-9]|[1|2][0-9]|[3][0|1])[./-]([0]?[1-9]|[1][0-2])[./-]([0-9]{4}|[0-9]{2})"));
         // YMDToken2可匹配[2004-04-30 | 2004-02-29],不匹配[2004-04-31 | 2004-02-30 | 2004-2-15 | 2004-5-7]
-        regexList.add(new Regex("YMDToken2", "[0-9]{4}-(((0[13578]|(10|12))-(0[1-9]|[1-2][0-9]|3[0-1]))|(02-(0[1-9]|[1-2][0-9]))|((0[469]|11)-(0[1-9]|[1-2][0-9]|30)))"));
+        regexList.add(new RareRegex("YMDToken2", "[0-9]{4}-(((0[13578]|(10|12))-(0[1-9]|[1-2][0-9]|3[0-1]))|(02-(0[1-9]|[1-2][0-9]))|((0[469]|11)-(0[1-9]|[1-2][0-9]|30)))"));
         // TextDate可匹配[Apr 03 | February 28 | November 02] (PS:简化版，没处理日期的逻辑错误)
-        regexList.add(new Regex("TextDate", "(Jan(uary)?|Feb(ruary)?|Ma(r(ch)?|y)|Apr(il)?|Jul(y)?|Ju((ly?)|(ne?))|Aug(ust)?|Oct(ober)?|(Sept|Nov|Dec)(ember)?)[ -]?(0[1-9]|[1-2][0-9]|3[01])"));
-        regexList.add(new Regex("WhichDayToken", "(Mon|Tues|Fri|Sun)(day)?|Wed(nesday)?|(Thur|Tue)(sday)?|Sat(urday)?"));
+        regexList.add(new RareRegex("TextDate", "(Jan(uary)?|Feb(ruary)?|Ma(r(ch)?|y)|Apr(il)?|Jul(y)?|Ju((ly?)|(ne?))|Aug(ust)?|Oct(ober)?|(Sept|Nov|Dec)(ember)?)[ -]?(0[1-9]|[1-2][0-9]|3[01])"));
+        regexList.add(new RareRegex("WhichDayToken", "(Mon|Tues|Fri|Sun)(day)?|Wed(nesday)?|(Thur|Tue)(sday)?|Sat(urday)?"));
 //        regices.add(new Regex("AlphaNumToken", "[a-z A-Z 0-9]+"));
 
         // special tokens
-        regexList.add(new Regex("TestSymbolToken", "[-]+"));
-        regexList.add(new Regex("CommaToken", "[,]+"));
-        regexList.add(new Regex("<", "[<]+"));
-        regexList.add(new Regex(">", "[>]+"));
-        regexList.add(new Regex("/", "[/]+"));
+        regexList.add(new EpicRegex("TestSymbolToken", "[-]+"));
+        regexList.add(new EpicRegex("CommaToken", "[,]+"));
+        regexList.add(new EpicRegex("<", "[<]+"));
+        regexList.add(new EpicRegex(">", "[>]+"));
+        regexList.add(new EpicRegex("/", "[/]+"));
 //        regexList.add(new Regex("SpaceToken", "[ ]+")); // 加上之后就出不了结果？？
         // FIXME: 2017/2/5 如果开启这个SpTok在当前算法下会导致解过于庞大
 //        regexList.add(new Regex("SpecialTokens","[ -+()\\[\\],.:]+"));
@@ -362,6 +332,12 @@ public class StringProcessor {
     }
 
 
+    /**
+     * 判断一个constStr是否有必要加入到图中
+     * @param subString
+     * @param inputString
+     * @return
+     */
     private boolean needBeAddedIn(String subString, String inputString) {
         // 如果是原字符串中存在的str，那么就不需要添加(可能会有特例，需要注意一下)
         // TODO: 2017/2/2 (在最终调整之前不修改这个，以防万一)字符串是否存在要修改一下 ，去掉subString的分隔符，然后用LSC比较subString是否全都出现过
@@ -404,38 +380,15 @@ public class StringProcessor {
      * @param partitions
      */
     private ExpressionGroup predictOutput(String newInput, List<ExamplePartition> partitions) {
-        int partitionIndex = lookupPartitionIndex(newInput, partitions);
-
-        System.out.println("==========所属partition=" + partitionIndex + " ==========");
-        ExamplePartition partition = partitions.get(partitionIndex);
-
-        ExpressionGroup topNExpression = getTopNExpressions(partition, newInput, 5000000);
-
-        return topNExpression;
-    }
-
-    /**
-     * 找出rank得分最高的n个Expression，从前往后排序
-     * 【需要一个有效的rank】
-     *
-     * @param partition
-     * @param testString
-     * @param n          取出rank前n的结果
-     * @return
-     */
-    private ExpressionGroup getTopNExpressions(ExamplePartition partition, String testString, int n) {
-        ExpressionGroup topN = new ExpressionGroup();
-        // TODO: 2017/2/6 等待rank算法
-        List<Expression> expressions = partition.getUsefulExpression().getExpressions();
-        Collections.sort(expressions, new ExpressionComparator());
-        int count = 1;
-        for (Expression exp : expressions) {
-            topN.insert(exp);
-            if (count++ >= n) {
-                break;
-            }
-        }
-        return topN;
+//        int partitionIndex = lookupPartitionIndex(newInput, partitions);
+//
+//        System.out.println("==========所属partition=" + partitionIndex + " ==========");
+//        ExamplePartition partition = partitions.get(partitionIndex);
+//
+//        ExpressionGroup topNExpression = getTopNExpressions(partition, newInput, 5);
+//
+//        return topNExpression;
+        return null;
     }
 
     /**
@@ -490,6 +443,7 @@ public class StringProcessor {
      * 算法思想：dfs
      */
     private ExpressionGroup doSelectTopKExps(ResultMap resultMap, int start, int end, int k) {
+        // TODO: 2017/3/1 如果有多个例子，还要考虑多个例子的作用(可能是要partition？)
         if (start + 1 == end) {
             return resultMap.getData(start,end);
         }

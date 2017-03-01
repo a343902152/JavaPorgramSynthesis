@@ -1,6 +1,7 @@
-package com.zsf.interpreter.model;
+package com.zsf.interpreter.expressions.regex;
 
 import com.zsf.interpreter.expressions.Score;
+import com.zsf.interpreter.model.Match;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,7 +12,7 @@ import java.util.regex.Pattern;
  * 代表正则token
  * Created by hasee on 2017/1/22.
  */
-public class Regex implements Score{
+public abstract class Regex implements Score{
     private String regexName;
     private String reg;
     private Pattern pattern;
@@ -71,11 +72,5 @@ public class Regex implements Score{
             matches.add(new Match(inputString,matcher.start(),matcher.group(),this,count++));
         }
         return matches;
-    }
-
-    @Override
-    public double score() {
-        // TODO: 2017/3/1 dynamicToken的score应该要高一些
-        return 0.1+(reg.length()/10)*0.1;
     }
 }

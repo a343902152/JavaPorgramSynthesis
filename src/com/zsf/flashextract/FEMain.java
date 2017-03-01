@@ -1,8 +1,8 @@
 package com.zsf.flashextract;
 
 import com.zsf.flashextract.region.Region;
+import com.zsf.interpreter.expressions.regex.*;
 import com.zsf.interpreter.model.Match;
-import com.zsf.interpreter.model.Regex;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,30 +27,30 @@ public class FEMain {
      */
     private static List<Regex> initUsefulRegex() {
         List<Regex> regexList = new ArrayList<Regex>();
-        regexList.add(new Regex("SimpleNumberTok", "\\d+"));
-        regexList.add(new Regex("DigitToken", "[-+]?(([0-9]+)([.]([0-9]+))?)"));
-        regexList.add(new Regex("LowerToken", "[a-z]+"));
-        regexList.add(new Regex("UpperToken", "[A-Z]+"));
-        regexList.add(new Regex("AlphaToken", "[a-zA-Z]+"));
+        regexList.add(new NormalRegex("SimpleNumberTok", "[0-9]+"));
+        regexList.add(new NormalRegex("DigitToken", "[-+]?(([0-9]+)([.]([0-9]+))?)"));
+        regexList.add(new NormalRegex("LowerToken", "[a-z]+"));
+        regexList.add(new NormalRegex("UpperToken", "[A-Z]+"));
+        regexList.add(new NormalRegex("AlphaToken", "[a-zA-Z]+"));
 //        regexList.add(new Regex("WordToken","[a-z\\sA-Z]+")); // 匹配单词的token，会导致结果爆炸增长几十万倍
 
         // TimeToken可匹配[12:15 | 10:26:59 PM| 22:01:15 aM]形式的时间数据
-        regexList.add(new Regex("TimeToken", "(([0-1]?[0-9])|([2][0-3])):([0-5]?[0-9])(:([0-5]?[0-9]))?([ ]*[aApP][mM])?"));
+        regexList.add(new RareRegex("TimeToken", "(([0-1]?[0-9])|([2][0-3])):([0-5]?[0-9])(:([0-5]?[0-9]))?([ ]*[aApP][mM])?"));
         // YMDToken可匹配[10/03/1979 | 1-1-02 | 01.1.2003]形式的年月日数据
-        regexList.add(new Regex("YMDToken", "([0]?[1-9]|[1|2][0-9]|[3][0|1])[./-]([0]?[1-9]|[1][0-2])[./-]([0-9]{4}|[0-9]{2})"));
+        regexList.add(new RareRegex("YMDToken", "([0]?[1-9]|[1|2][0-9]|[3][0|1])[./-]([0]?[1-9]|[1][0-2])[./-]([0-9]{4}|[0-9]{2})"));
         // YMDToken2可匹配[2004-04-30 | 2004-02-29],不匹配[2004-04-31 | 2004-02-30 | 2004-2-15 | 2004-5-7]
-        regexList.add(new Regex("YMDToken2", "[0-9]{4}-(((0[13578]|(10|12))-(0[1-9]|[1-2][0-9]|3[0-1]))|(02-(0[1-9]|[1-2][0-9]))|((0[469]|11)-(0[1-9]|[1-2][0-9]|30)))"));
+        regexList.add(new RareRegex("YMDToken2", "[0-9]{4}-(((0[13578]|(10|12))-(0[1-9]|[1-2][0-9]|3[0-1]))|(02-(0[1-9]|[1-2][0-9]))|((0[469]|11)-(0[1-9]|[1-2][0-9]|30)))"));
         // TextDate可匹配[Apr 03 | February 28 | November 02] (PS:简化版，没处理日期的逻辑错误)
-        regexList.add(new Regex("TextDate", "(Jan(uary)?|Feb(ruary)?|Ma(r(ch)?|y)|Apr(il)?|Jul(y)?|Ju((ly?)|(ne?))|Aug(ust)?|Oct(ober)?|(Sept|Nov|Dec)(ember)?)[ -]?(0[1-9]|[1-2][0-9]|3[01])"));
-        regexList.add(new Regex("WhichDayToken", "(Mon|Tues|Fri|Sun)(day)?|Wed(nesday)?|(Thur|Tue)(sday)?|Sat(urday)?"));
+        regexList.add(new RareRegex("TextDate", "(Jan(uary)?|Feb(ruary)?|Ma(r(ch)?|y)|Apr(il)?|Jul(y)?|Ju((ly?)|(ne?))|Aug(ust)?|Oct(ober)?|(Sept|Nov|Dec)(ember)?)[ -]?(0[1-9]|[1-2][0-9]|3[01])"));
+        regexList.add(new RareRegex("WhichDayToken", "(Mon|Tues|Fri|Sun)(day)?|Wed(nesday)?|(Thur|Tue)(sday)?|Sat(urday)?"));
 //        regices.add(new Regex("AlphaNumToken", "[a-z A-Z 0-9]+"));
 
         // special tokens
-        regexList.add(new Regex("TestSymbolToken", "[-]+"));
-        regexList.add(new Regex("CommaToken", "[,]+"));
-        regexList.add(new Regex("<", "[<]+"));
-        regexList.add(new Regex(">", "[>]+"));
-        regexList.add(new Regex("/", "[/]+"));
+        regexList.add(new EpicRegex("TestSymbolToken", "[-]+"));
+        regexList.add(new EpicRegex("CommaToken", "[,]+"));
+        regexList.add(new EpicRegex("<", "[<]+"));
+        regexList.add(new EpicRegex(">", "[>]+"));
+        regexList.add(new EpicRegex("/", "[/]+"));
 //        regexList.add(new Regex("SpaceToken", "[ ]+")); // 加上之后就出不了结果？？
         // FIXME: 2017/2/5 如果开启这个SpTok在当前算法下会导致解过于庞大
 //        regexList.add(new Regex("SpecialTokens","[ -+()\\[\\],.:]+"));
@@ -225,8 +225,8 @@ public class FEMain {
         List<List<Regex>> endWithReges = new ArrayList<List<Regex>>();
         for (Region region : newSelectedRegion) {
             List<Match> matches = buildStringMatches(region.getParentRegion().getText());
-            startWithReges.add(buildStartWith(1, 3, matches, 0, new Regex("", "")));
-            endWithReges.add(buildEndWith(1, 3, matches, region.getParentRegion().getText().length(), new Regex("", "")));
+            startWithReges.add(buildStartWith(1, 3, matches, 0, new DynamicRegex("", "")));
+            endWithReges.add(buildEndWith(1, 3, matches, region.getParentRegion().getText().length(), new DynamicRegex("", "")));
         }
         System.out.println("start with:");
         System.out.println(startWithReges.get(1));
@@ -338,8 +338,8 @@ public class FEMain {
             System.out.println("rightCommonStr:  " + rightCommonStr);
         }
 
-        Regex leftRegex = new Regex("DynamicTok(" + leftCommonStr + ")", leftCommonStr);
-        Regex rightRegex = new Regex("DynamicTok(" + rightCommonStr + ")", rightCommonStr);
+        Regex leftRegex = new DynamicRegex("DynamicTok(" + leftCommonStr + ")", leftCommonStr);
+        Regex rightRegex = new DynamicRegex("DynamicTok(" + rightCommonStr + ")", rightCommonStr);
 
         usefulRegex.add(leftRegex);
         usefulRegex.add(rightRegex);
@@ -368,7 +368,7 @@ public class FEMain {
             Match match = matches.get(i);
             if ((match.getMatchedIndex() + match.getMatchedString().length()) == endNode) {
 
-                Regex curRegex = new Regex(match.getRegex().getRegexName() + connector + lastRegex.getRegexName(),
+                Regex curRegex = new DynamicRegex(match.getRegex().getRegexName() + connector + lastRegex.getRegexName(),
                         match.getRegex().getReg() + lastRegex.getReg());
                 regexList.add(curRegex);
                 List<Regex> curList = buildEndWith(curDeepth + 1, maxDeepth,
@@ -405,7 +405,7 @@ public class FEMain {
         for (int i = 0; i < matches.size(); i++) {
             Match match = matches.get(i);
             if (match.getMatchedIndex() == beginNode) {
-                Regex curRegex = new Regex(lastRegex.getRegexName() + connector + match.getRegex().getRegexName(),
+                Regex curRegex = new DynamicRegex(lastRegex.getRegexName() + connector + match.getRegex().getRegexName(),
                         lastRegex.getReg() + match.getRegex().getReg());
                 regexList.add(curRegex);
 

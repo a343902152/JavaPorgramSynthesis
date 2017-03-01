@@ -4,11 +4,11 @@ import com.zsf.interpreter.expressions.*;
 import com.zsf.interpreter.expressions.linking.ConcatenateExpression;
 import com.zsf.interpreter.expressions.loop.LoopExpression;
 import com.zsf.interpreter.expressions.pos.*;
+import com.zsf.interpreter.expressions.regex.*;
 import com.zsf.interpreter.expressions.string.ConstStrExpression;
 import com.zsf.interpreter.expressions.string.SubString2Expression;
 import com.zsf.interpreter.expressions.string.SubStringExpression;
 import com.zsf.interpreter.model.*;
-import com.zsf.interpreter.model.Regex;
 import com.zsf.interpreter.tool.ExpressionComparator;
 import com.zsf.interpreter.tool.RunTimeMeasurer;
 
@@ -275,7 +275,7 @@ public class Main {
                                 Regex r2 = match2.getRegex();
 
                                 // TODO: 2017/1/22 用更好的方法合并r1和r2
-                                Regex r12 = new Regex("r12", r1.getReg() + r2.getReg());
+                                Regex r12 = new CombinedRegex("r12", r1.getReg() + r2.getReg());
                                 List<Match> totalMatches = r12.doMatch(inputString);
                                 int curOccur = -1;
                                 String sk1k2 = inputString.substring(k1, k2);
@@ -428,30 +428,30 @@ public class Main {
      */
     private static List<Regex> initUsefulRegex() {
         List<Regex> regexList = new ArrayList<Regex>();
-        regexList.add(new Regex("SimpleNumberTok", "[0-9]+"));
-        regexList.add(new Regex("DigitToken", "[-+]?(([0-9]+)([.]([0-9]+))?)"));
-        regexList.add(new Regex("LowerToken", "[a-z]+"));
-        regexList.add(new Regex("UpperToken", "[A-Z]+"));
-        regexList.add(new Regex("AlphaToken", "[a-zA-Z]+"));
+        regexList.add(new NormalRegex("SimpleNumberTok", "[0-9]+"));
+        regexList.add(new NormalRegex("DigitToken", "[-+]?(([0-9]+)([.]([0-9]+))?)"));
+        regexList.add(new NormalRegex("LowerToken", "[a-z]+"));
+        regexList.add(new NormalRegex("UpperToken", "[A-Z]+"));
+        regexList.add(new NormalRegex("AlphaToken", "[a-zA-Z]+"));
 //        regexList.add(new Regex("WordToken","[a-z\\sA-Z]+")); // 匹配单词的token，会导致结果爆炸增长几十万倍
 
         // TimeToken可匹配[12:15 | 10:26:59 PM| 22:01:15 aM]形式的时间数据
-        regexList.add(new Regex("TimeToken", "(([0-1]?[0-9])|([2][0-3])):([0-5]?[0-9])(:([0-5]?[0-9]))?([ ]*[aApP][mM])?"));
+        regexList.add(new RareRegex("TimeToken", "(([0-1]?[0-9])|([2][0-3])):([0-5]?[0-9])(:([0-5]?[0-9]))?([ ]*[aApP][mM])?"));
         // YMDToken可匹配[10/03/1979 | 1-1-02 | 01.1.2003]形式的年月日数据
-        regexList.add(new Regex("YMDToken", "([0]?[1-9]|[1|2][0-9]|[3][0|1])[./-]([0]?[1-9]|[1][0-2])[./-]([0-9]{4}|[0-9]{2})"));
+        regexList.add(new RareRegex("YMDToken", "([0]?[1-9]|[1|2][0-9]|[3][0|1])[./-]([0]?[1-9]|[1][0-2])[./-]([0-9]{4}|[0-9]{2})"));
         // YMDToken2可匹配[2004-04-30 | 2004-02-29],不匹配[2004-04-31 | 2004-02-30 | 2004-2-15 | 2004-5-7]
-        regexList.add(new Regex("YMDToken2", "[0-9]{4}-(((0[13578]|(10|12))-(0[1-9]|[1-2][0-9]|3[0-1]))|(02-(0[1-9]|[1-2][0-9]))|((0[469]|11)-(0[1-9]|[1-2][0-9]|30)))"));
+        regexList.add(new RareRegex("YMDToken2", "[0-9]{4}-(((0[13578]|(10|12))-(0[1-9]|[1-2][0-9]|3[0-1]))|(02-(0[1-9]|[1-2][0-9]))|((0[469]|11)-(0[1-9]|[1-2][0-9]|30)))"));
         // TextDate可匹配[Apr 03 | February 28 | November 02] (PS:简化版，没处理日期的逻辑错误)
-        regexList.add(new Regex("TextDate", "(Jan(uary)?|Feb(ruary)?|Ma(r(ch)?|y)|Apr(il)?|Jul(y)?|Ju((ly?)|(ne?))|Aug(ust)?|Oct(ober)?|(Sept|Nov|Dec)(ember)?)[ -]?(0[1-9]|[1-2][0-9]|3[01])"));
-        regexList.add(new Regex("WhichDayToken", "(Mon|Tues|Fri|Sun)(day)?|Wed(nesday)?|(Thur|Tue)(sday)?|Sat(urday)?"));
+        regexList.add(new RareRegex("TextDate", "(Jan(uary)?|Feb(ruary)?|Ma(r(ch)?|y)|Apr(il)?|Jul(y)?|Ju((ly?)|(ne?))|Aug(ust)?|Oct(ober)?|(Sept|Nov|Dec)(ember)?)[ -]?(0[1-9]|[1-2][0-9]|3[01])"));
+        regexList.add(new RareRegex("WhichDayToken", "(Mon|Tues|Fri|Sun)(day)?|Wed(nesday)?|(Thur|Tue)(sday)?|Sat(urday)?"));
 //        regices.add(new Regex("AlphaNumToken", "[a-z A-Z 0-9]+"));
 
         // special tokens
-        regexList.add(new Regex("TestSymbolToken", "[-]+"));
-        regexList.add(new Regex("CommaToken", "[,]+"));
-        regexList.add(new Regex("<", "[<]+"));
-        regexList.add(new Regex(">", "[>]+"));
-        regexList.add(new Regex("/", "[/]+"));
+        regexList.add(new EpicRegex("TestSymbolToken", "[-]+"));
+        regexList.add(new EpicRegex("CommaToken", "[,]+"));
+        regexList.add(new EpicRegex("<", "[<]+"));
+        regexList.add(new EpicRegex(">", "[>]+"));
+        regexList.add(new EpicRegex("/", "[/]+"));
 //        regexList.add(new Regex("SpaceToken", "[ ]+")); // 加上之后就出不了结果？？
         // FIXME: 2017/2/5 如果开启这个SpTok在当前算法下会导致解过于庞大
 //        regexList.add(new Regex("SpecialTokens","[ -+()\\[\\],.:]+"));
@@ -699,7 +699,7 @@ public class Main {
 //        examplePairs.add(new ExamplePair("40.7451638,-73.98251878,Tue Apr 03 18:02:41 +0800 2012,Medical Center", "Medical Center,Apr 03"));
 
         // 单个较长output
-        examplePairs.add(new ExamplePair("Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012", "Electronics Store,Apr 03,Tue,40.74260751"));
+        examplePairs.add(new ExamplePair("Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012", "Electronics Store,Apr 03,Tue"));
 
         // 初级Loop能力
 //        examplePairs.add(new ExamplePair("Hello World Zsf the Program Synthesis Electronics Airport","HWZPSEA"));
@@ -707,8 +707,8 @@ public class Main {
 
         // endregion
 
-//        examplePairs.add(new ExamplePair("姓名：<span class=\"name\">Ran Liu</span> <br> 职称：<span class=\"zc\">Associate Professor/Senior Engineer</span><br> 联系方式：<span class=\"lxfs\">ran.liu_cqu@qq.com</span><br> 主要研究方向:<span class=\"major\">Medical and stereo image processing; IC design; Biomedical Engineering</span><br>","Associate Professor/Senior Engineer"));
 //        examplePairs.add(new ExamplePair("                        姓名：<span class=\"name\">陈自郁</span> <br> 职称：<span class=\"zc\">讲师</span><br> 联系方式：<span class=\"lxfs\">chenziyu@cqu.edu.cn</span><br> 主要研究方向:<span class=\"major\">群智能、图像处理和智能控制</span><br>", "讲师"));
+//        examplePairs.add(new ExamplePair("姓名：<span class=\"name\">Ran Liu</span> <br> 职称：<span class=\"zc\">Associate Professor/Senior Engineer</span><br> 联系方式：<span class=\"lxfs\">ran.liu_cqu@qq.com</span><br> 主要研究方向:<span class=\"major\">Medical and stereo image processing; IC design; Biomedical Engineering</span><br>","Associate Professor/Senior Engineer"));
 
         // region # error
         // FIXME: 2017/2/16 错误原因初步判定为相似度(classifier)错误
@@ -736,8 +736,10 @@ public class Main {
         // region # success
         // 提取结构化数据
         testPairs.add(new ValidationPair("Coffee Shop,40.73340972,-74.00285648,Wed Jul 13 12:27:07 +0800 2012", "Coffee Shop,Jul 13"));
-        testPairs.add(new ValidationPair("40.69990191,,Sat Nov 17 20:36:26 +0800,Food & Drink Shop", "Food & Drink Shop,Nov 17"));
-        testPairs.add(new ValidationPair("40.74218831,-73.98792419,Park,Wed Jul 11 11:42:00 +0800 2012", "Park,Jul 11"));
+        testPairs.add(new ValidationPair("Bridge,43,-73,Tue Apr 03 18:00:25 +0800 2012", "Coffee Shop,Jul 13"));
+
+//        testPairs.add(new ValidationPair("40.69990191,,Sat Nov 17 20:36:26 +0800,Food & Drink Shop", "Food & Drink Shop,Nov 17"));
+//        testPairs.add(new ValidationPair("40.74218831,-73.98792419,Park,Wed Jul 11 11:42:00 +0800 2012", "Park,Jul 11"));
 
         // 初级Loop
 //        testPairs.add(new ValidationPair("Foundation of Software Engineering","FSE"));
@@ -750,7 +752,7 @@ public class Main {
 //        testPairs.add(new ValidationPair("姓名：<span class=\"name\">陈波</span> <br> 职称：<span class=\"zc\"></span><br> 联系方式：<span class=\"lxfs\"></span><br> 主要研究方向:<span class=\"major\"></span><br>", ""));
 //        testPairs.add(new ValidationPair("                        姓名：<span class=\"name\">陈自郁</span> <br> 职称：<span class=\"zc\">讲师</span><br> 联系方式：<span class=\"lxfs\">chenziyu@cqu.edu.cn</span><br> 主要研究方向:<span class=\"major\">群智能、图像处理和智能控制</span><br>", "讲师"));
 //        testPairs.add(new ValidationPair("                        姓名：<span class=\"name\">但静培</span> <br> 职称：<span class=\"zc\">讲师</span><br> 联系方式：<span class=\"lxfs\"></span><br> 主要研究方向:<span class=\"major\">时间序列数据挖掘、计算智能、神经网络等</span><br>", "讲师"));
-//
+
 
         // FIXME: 2017/2/16 错误原因初步判定为相似度(classifier)错误
 //        testPairs.add(new ValidationPair("2014年3月23日","3"));

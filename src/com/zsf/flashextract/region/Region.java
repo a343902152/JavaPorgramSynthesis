@@ -1,8 +1,7 @@
 package com.zsf.flashextract.region;
 
-import com.zsf.flashextract.regex.LineSelector;
 import com.zsf.interpreter.model.Match;
-import com.zsf.interpreter.model.Regex;
+import com.zsf.interpreter.expressions.regex.Regex;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,5 +1,7 @@
 package com.zsf.interpreter.model;
 
+import com.zsf.interpreter.expressions.regex.Regex;
+
 /**
  * 在generateStr时要把各regex和Input匹配，得到一系列的match
  * Created by hasee on 2017/1/22.
