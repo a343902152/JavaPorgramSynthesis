@@ -9,6 +9,7 @@ import com.zsf.interpreter.expressions.string.ConstStrExpression;
 import com.zsf.interpreter.expressions.string.SubString2Expression;
 import com.zsf.interpreter.expressions.string.SubStringExpression;
 import com.zsf.interpreter.model.*;
+import com.zsf.interpreter.tool.ExpScoreComparator;
 import com.zsf.interpreter.tool.ExpressionComparator;
 import com.zsf.interpreter.tool.RunTimeMeasurer;
 
@@ -34,23 +35,16 @@ public class StringProcessor {
      * <p>
      * generateExpressionByEaxmples求得expression之后返回这个表达式，之后的所有I利用这个E来求得O即可
      */
-    public List<ExpressionGroup> generateExpressionsByExamples(List<ExamplePair> examplePairs) {
-        List<ExpressionGroup> expressionGroups = new ArrayList<ExpressionGroup>();
+    public List<ResultMap> generateExpressionsByExamples(List<ExamplePair> examplePairs) {
+        List<ResultMap> resultMaps = new ArrayList<ResultMap>();
         for (ExamplePair pair : examplePairs) {
             String input = pair.getInputString();
             String output = pair.getOutputString();
 
-            ExpressionGroup expressionGroup = generateStr(input, output,examplePairs);
-            System.out.println(String.format("Input=%s  Output=%s", input, output));
-            System.out.println(expressionGroup.size());
-            for (Expression exp : expressionGroup.getExpressions()) {
-                System.out.println(exp.toString());
-            }
-            if (expressionGroup != null) {
-                expressionGroups.add(expressionGroup);
-            }
+            ResultMap resultMap= generateStr(input, output);
+            resultMaps.add(resultMap);
         }
-        return expressionGroups;
+        return resultMaps;
     }
 
 
@@ -59,9 +53,8 @@ public class StringProcessor {
      * 返回一个能够从input中生产output的expressions集合
      *  @param inputString
      * @param outputString
-     * @param examplePairs
      */
-    private ExpressionGroup generateStr(String inputString, String outputString, List<ExamplePair> examplePairs) {
+    private ResultMap generateStr(String inputString, String outputString) {
         // 论文中记作W W指能产生outputString[i，j]的所有方法集合,包括constStr[s[i,j]]以及动态获得子串方法generateSubString().
         int len = outputString.length();
         ResultMap resultMap = new ResultMap(len, len);
@@ -83,67 +76,30 @@ public class StringProcessor {
         }
         RunTimeMeasurer.endTiming("generateSubString");
 
-        // FIXME: 2017/2/3 此方法过于耗时，当item数和每个item的长度增加时，解会爆炸增长
-        // FIXME: 2017/2/3 初步推测这和constStr过多有关
-        RunTimeMeasurer.startTiming();
-        resultMap.setData(0, len, generateJumpingExps(examplePairs,resultMap, 0, len));
-        RunTimeMeasurer.endTiming("generateJumpingExps");
+        // 上面的resultMap结合DAG就有了跳跃能力，而且无需存储中间结果(只需要存储跳跃边), 再resultMap的基础上再加上一些Loop语句就可实现全局搜索
+        // DAG在选择答案时可以结合loss func+bean search极大减小搜索空间。
+        // TODO: 2017/3/1 直接更新 resultMap，加入Loop
+//        resultMap=newGenerateLoop(inputString,outputString,resultMap);
 
-        RunTimeMeasurer.startTiming();
-        // FIXME: 2017/1/25 BUG:如果类似IBMHW，输出为IBM,HW，其中IBM是一个Loop，HW是一个LOOP但是现在程序不能产生这种Loop
-        // FIXME 原因应该是处在generateLoop的位置，应该和论文一样把他放到generateStr的每个循环中
-        // FIXME: 2017/2/3 当前的方法也比较耗时(约为concatRes的20%)
-        for (int i = 0; i < len; i++) {
-            for (int j = i + 1; j <= len; j++) {
-                resultMap.getData(i, j).insert(generateLoop(i, j, resultMap, len));
-            }
-        }
-        RunTimeMeasurer.endTiming("generateLoop");
 
-        ExpressionGroup usefulExpressions = resultMap.getData(0, len);
-        return usefulExpressions;
+        // TODO: 2017/3/1 返回的是一个DAG(或者就是resultMap)
+        return resultMap;
     }
 
+    private ResultMap newGenerateLoop(String inputString, String outputString, ResultMap resultMap) {
+        for (int k1 = 0; k1 < outputString.length(); k1++){
+            for (int k2 = k1 + 1; k2 < outputString.length(); k2++){
+                for (int k3 = k2 + 1; k3 <= outputString.length(); k3++){
+                    ResultMap resultMap1=generateStr(inputString,outputString.substring(k1,k2));
+                    ResultMap resultMap2=generateStr(inputString,outputString.substring(k2,k3));
 
-    /**
-     * 新方法：应对IBM这种跳跃式的output，可以先用Concate把o[0],o[1],o[2]连接起来
-     * 之后generateLoop中只要把表达式全都一样的concate合并成一个Loop即可。
-     * <p>
-     * 算法思想：dfs
-     */
-    private ExpressionGroup generateJumpingExps(List<ExamplePair> examplePairs, ResultMap resultMap, int start, int end) {
-        if (start + 1 == end) {
-            return resultMap.getData(start, end);
-        }
-        ExpressionGroup newExpressions = resultMap.getData(start, end).deepClone();
-        for (int j = start + 1; j < end; j++) {
-            ExpressionGroup curExpressions = resultMap.getData(start, j);
-            if (curExpressions.size() > 0) {
-                ExpressionGroup tmpConcatedExps = ConcatenateExpression.concatenateExp(curExpressions, generateJumpingExps(examplePairs,resultMap, j, end));
-                newExpressions.insert(getValidExpressions(examplePairs,tmpConcatedExps));
-            }
-        }
-        return newExpressions;
-    }
+                    ResultMap newResultMap=ResultMap.merge(resultMap1,resultMap2);
 
-    private ExpressionGroup getValidExpressions(List<ExamplePair> examplePairs, ExpressionGroup tmpConcatedExps) {
-        ExpressionGroup expressionGroup=new ExpressionGroup();
-        for (Expression exp:tmpConcatedExps.getExpressions()){
-            if (exp instanceof NonTerminalExpression){
-                boolean needAddIn=true;
-                for (ExamplePair examplePair:examplePairs){
-                    String ans=((NonTerminalExpression) exp).interpret(examplePair.getInputString());
-                    if (!examplePair.getOutputString().contains(ans)){
-                        needAddIn=false;
-                        break;
-                    }
-                }
-                if (needAddIn){
-                    expressionGroup.insert(exp);
+                    // TODO: 2017/3/1 产生Loop 暂时不做
                 }
             }
         }
-        return expressionGroup;
+        return null;
     }
 
     /**
@@ -300,125 +256,6 @@ public class StringProcessor {
     }
 
 
-    /**
-     * 当有多个IOPair时，每个IOPair都会对应一组解，但是实际上很多例子属于同一类别
-     * generatePartition就是为所有IOPairs做一个划分，将相同类别的例子归到同一类(然后配合Classifier就可以做switch了)
-     * <p>
-     * 基本思想：
-     * 1. while所有pairs中存在某两个pair相互兼容(难点1.相互兼容的定义)
-     * 2. 找到所有配对中CS(Compatibility Score)最高的一对(难点2.CS分的定义 难点3.快速求最高分的方法,可用模拟退火？)
-     * 3. T=T-(原有两个pairs)+(pairs合并后的结果)(小难点.合并？)
-     * <p>
-     * 改进：
-     * 1. 上面的基本思想是基于贪心的，可以改成启发式搜索
-     * 2. 类似试卷分配，可以改成基于swap的模拟退火
-     * <p>
-     * 备注:
-     * 如果当前的lookupPartition所用的str相似度方法靠谱的话，就可以把generatePartition改造成聚类算法
-     *
-     * @param expressionList
-     * @param examplePairs
-     */
-    public List<ExamplePartition> generatePartitions(List<ExpressionGroup> expressionList, List<ExamplePair> examplePairs) {
-        // init
-        RunTimeMeasurer.startTiming();
-        List<ExamplePartition> partitions = new ArrayList<ExamplePartition>();
-        for (int i = 0; i < examplePairs.size(); i++) {
-            partitions.add(new ExamplePartition(examplePairs.get(i), expressionList.get(i)));
-        }
-
-        boolean needMerge = true;
-        while (needMerge) {
-            needMerge = false;
-            int max = 0;
-            // findPartitions
-            ExamplePartition partition1 = null;
-            ExamplePartition partition2 = null;
-            ExpressionGroup p12TheSameExpressions = null;
-
-            int index1 = 0;
-            int index2 = 0;
-            for (int i = 0; i < partitions.size(); i++) {
-                for (int j = i + 1; j < partitions.size(); j++) {
-                    ExpressionGroup theSameExpressions = findSameExps(partitions.get(i), partitions.get(j));
-                    if (theSameExpressions.size() > max) {
-                        max = theSameExpressions.size();
-                        partition1 = partitions.get(i);
-                        partition2 = partitions.get(j);
-                        p12TheSameExpressions = theSameExpressions;
-                        index1 = i;
-                        index2 = j;
-                        needMerge = true;
-                    }
-                }
-            }
-
-            // mergePartitions
-            if (needMerge) {
-                // TODO: 2017/2/5 假设存在某两个partition的sameExp.size()只有1，不知道此时还要不要进行合并(但是目前还没有遇见这种情况)。
-                System.out.println(String.format("Merge %d and %d,max=%d", index1, index2, max));
-                partitions.remove(partition1);
-                partitions.remove(partition2);
-
-                List<ExamplePair> pairs = new ArrayList<ExamplePair>();
-                pairs.addAll(partition1.getExamplePairs());
-                pairs.addAll(partition2.getExamplePairs());
-
-                partitions.add(new ExamplePartition(pairs, p12TheSameExpressions));
-            }
-        }
-        RunTimeMeasurer.endTiming("generatePartition");
-        return partitions;
-    }
-
-    /**
-     * 在generatePartition中使用
-     * 用于找出两个partition可共用的expressionList
-     * <p>
-     * 当返回的theSameExpressions.size()>0 说明两个partition可以合并
-     *
-     * @param partition1
-     * @param partition2
-     * @return
-     */
-    private ExpressionGroup findSameExps(ExamplePartition partition1, ExamplePartition partition2) {
-        // FIXME: 2017/2/6 这个函数运行时间较长，根本原因应该还是partition中的expression过于庞大
-        ExpressionGroup expressions1 = partition1.getUsefulExpression();
-        ExpressionGroup expressions2 = partition2.getUsefulExpression();
-
-        List<ExamplePair> pairs1 = partition1.getExamplePairs();
-        List<ExamplePair> pairs2 = partition2.getExamplePairs();
-
-        ExpressionGroup theSameExpressions = new ExpressionGroup();
-        for (Expression e1 : expressions1.getExpressions()) {
-            for (Expression e2 : expressions2.getExpressions()) {
-                if (e1.equals(e2)) {
-                    boolean isTwoExpSame = true;
-                    if (e1 instanceof NonTerminalExpression && e2 instanceof NonTerminalExpression) {
-                        for (ExamplePair pair : pairs1) {
-                            if (!((NonTerminalExpression) e2).interpret(pair.getInputString()).equals(pair.getOutputString())) {
-                                isTwoExpSame = false;
-                                break;
-                            }
-                        }
-                        if (isTwoExpSame) {
-                            for (ExamplePair pair : pairs2) {
-                                if (!((NonTerminalExpression) e1).interpret(pair.getInputString()).equals(pair.getOutputString())) {
-                                    isTwoExpSame = false;
-                                    break;
-                                }
-                            }
-                        }
-                        if (isTwoExpSame) {
-                            theSameExpressions.insert(e1);
-                        }
-                    }
-                }
-            }
-        }
-        return theSameExpressions;
-    }
-
     private List<Regex> usefulRegex = initUsefulRegex();
 
     /**
@@ -536,32 +373,6 @@ public class StringProcessor {
         return !existedString || subString.matches(delimiterReg);
     }
 
-
-    private void verifyResult(ExpressionGroup resExps, String testString, String target, boolean needToString, int deepth) {
-        try {
-            FileWriter fileWriter = new FileWriter("C:\\Users\\hasee\\Desktop\\tempdata\\string-processor\\ans.txt");
-            for (Expression exp : resExps.getExpressions()) {
-//            if (exp instanceof LoopExpression)
-                if (needToString)
-                    System.out.println(String.valueOf(exp.deepth()) + " " + exp.toString());
-                if (exp instanceof NonTerminalExpression) {
-                    String result = ((NonTerminalExpression) exp).interpret(testString);
-                    if (result == null) {
-                        System.out.println("null");
-                    } else if (exp.deepth() <= deepth) {
-                        if (result.equals(target))
-                            System.out.println(String.valueOf(exp.deepth()) + " " + exp.toString());
-                    }
-                }
-                fileWriter.write(exp.toString());
-                fileWriter.write("\n");
-                fileWriter.flush();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     /**
      * 找到当前String应该所属的分类(取代了论文中的classifier)
      *
@@ -631,12 +442,10 @@ public class StringProcessor {
      * 在得到partitions划分之后，依次处理每一个input并显示
      *
      * @param validationPairs
-     * @param partitions
      */
-    public void handleNewInput(List<ValidationPair> validationPairs, List<ExamplePartition> partitions) {
+    public void handleNewInput(List<ValidationPair> validationPairs,ExpressionGroup expressionGroup) {
         for (ValidationPair v : validationPairs) {
-            ExpressionGroup topNExpression = predictOutput(v.getInputString(), partitions);
-            displayOutput(v, topNExpression);
+            displayOutput(v, expressionGroup);
         }
     }
 
@@ -651,9 +460,49 @@ public class StringProcessor {
         System.out.println("期望输出：" + v.getTargetString());
         for (Expression expression : topNExpression.getExpressions()) {
             if (expression instanceof NonTerminalExpression) {
-                if (v.getTargetString().equals(((NonTerminalExpression) expression).interpret(v.getInputString())))
+//                if (v.getTargetString().equals(((NonTerminalExpression) expression).interpret(v.getInputString())))
                     System.out.println(((NonTerminalExpression) expression).interpret(v.getInputString()) + " , " + expression.toString());
             }
         }
+    }
+
+    public ExpressionGroup selectTopKExps(List<ResultMap> resultMaps,int k) {
+        if (resultMaps==null&&resultMaps.size()<=0){
+            return null;
+        }
+        List<ExpressionGroup> ansList=new ArrayList<ExpressionGroup>();
+        for (ResultMap resultMap:resultMaps){
+            ExpressionGroup g=doSelectTopKExps(resultMap,0,resultMap.getCol(),k);
+            ansList.add(g);
+            for (Expression e:g.getExpressions()){
+                System.out.println(e.deepth()+"  "+e.score()+"  "+e.toString());
+            }
+        }
+        ExpressionGroup validExpressions=new ExpressionGroup();
+        validExpressions=ansList.get(0);
+        return validExpressions;
+    }
+
+    /**
+     * 应对IBM这种跳跃式的output，可以先用Concate把o[0],o[1],o[2]连接起来
+     * 每次用beam search保留前k个答案
+     * <p>
+     * 算法思想：dfs
+     */
+    private ExpressionGroup doSelectTopKExps(ResultMap resultMap, int start, int end, int k) {
+        if (start + 1 == end) {
+            return resultMap.getData(start,end);
+        }
+        ExpressionGroup newExpressions = resultMap.getData(start, end).deepClone();
+        for (int j = start + 1; j < end; j++) {
+            ExpressionGroup curExpressions = resultMap.getData(start, j);
+            if (curExpressions.size() > 0) {
+                ExpressionGroup topExpressionGroup=curExpressions.selecTopK(k);
+                ExpressionGroup tmpConcatedExps = ConcatenateExpression.concatenateExp(topExpressionGroup, doSelectTopKExps(resultMap, j, end,k));
+                newExpressions.insert(tmpConcatedExps);
+                newExpressions=newExpressions.selecTopK(k);
+            }
+        }
+        return newExpressions.selecTopK(k);
     }
 }

@@ -1,5 +1,7 @@
 package com.zsf.interpreter.model;
 
+import com.zsf.interpreter.expressions.Score;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -9,7 +11,7 @@ import java.util.regex.Pattern;
  * 代表正则token
  * Created by hasee on 2017/1/22.
  */
-public class Regex {
+public class Regex implements Score{
     private String regexName;
     private String reg;
     private Pattern pattern;
@@ -69,5 +71,10 @@ public class Regex {
             matches.add(new Match(inputString,matcher.start(),matcher.group(),this,count++));
         }
         return matches;
+    }
+
+    @Override
+    public double score() {
+        return 0.1+(reg.length()/10)*0.1;
     }
 }

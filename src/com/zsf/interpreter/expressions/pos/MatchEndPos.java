@@ -66,6 +66,10 @@ public class MatchEndPos extends PosExpression {
         return false;
     }
 
+    @Override
+    public double score() {
+        return 0.3+r.score();
+    }
 
     public Regex getR() {
         return r;

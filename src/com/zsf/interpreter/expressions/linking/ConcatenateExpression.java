@@ -80,6 +80,11 @@ public class ConcatenateExpression extends LinkingExpression {
         return false;
     }
 
+    @Override
+    public double score() {
+        return (leftExp.score()+rightExp.score())/deepth();
+    }
+
     public Expression getLeftExp() {
         return leftExp;
     }

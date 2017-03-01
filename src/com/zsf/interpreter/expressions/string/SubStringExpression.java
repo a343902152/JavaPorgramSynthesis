@@ -100,4 +100,8 @@ public class SubStringExpression extends StringExpression {
     }
 
 
+    @Override
+    public double score() {
+        return 0.5+(posExpression1.score()+posExpression2.score())/2.0;
+    }
 }

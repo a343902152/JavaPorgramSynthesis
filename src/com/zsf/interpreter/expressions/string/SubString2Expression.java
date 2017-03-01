@@ -62,6 +62,11 @@ public class SubString2Expression extends StringExpression {
         return ans;
     }
 
+    @Override
+    public double score() {
+        return 0.5+regex.score();
+    }
+
     public Regex getRegex() {
         return regex;
     }

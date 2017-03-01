@@ -48,5 +48,10 @@ public class ConstStrExpression extends StringExpression {
         return 1;
     }
 
+    @Override
+    public double score() {
+        return 0.2;
+    }
+
 
 }

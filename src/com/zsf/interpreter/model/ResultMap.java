@@ -16,11 +16,40 @@ public class ResultMap {
         this.resultMap=new ExpressionGroup[row+1][col+1];
     }
 
+
+
     public void setData(int i, int j, ExpressionGroup expressionGroup) {
         resultMap[i][j]=expressionGroup;
     }
 
     public ExpressionGroup getData(int i, int j) {
         return resultMap[i][j];
+    }
+
+    /**
+     * 两个ResultMap的合并(即两个DAG合并)
+     * @param resultMap1
+     * @param resultMap2
+     * @return
+     */
+    public static ResultMap merge(ResultMap resultMap1, ResultMap resultMap2) {
+
+        return null;
+    }
+
+    public int getRow() {
+        return row;
+    }
+
+    public void setRow(int row) {
+        this.row = row;
+    }
+
+    public int getCol() {
+        return col;
+    }
+
+    public void setCol(int col) {
+        this.col = col;
     }
 }

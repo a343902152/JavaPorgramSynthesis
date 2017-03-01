@@ -85,6 +85,11 @@ public class RegPosExpression extends PosExpression {
     }
 
     @Override
+    public double score() {
+        return 0.2+(r1.score()+r2.score())/2.0;
+    }
+
+    @Override
     public Expression deepClone() {
         return new RegPosExpression(r1,r2,c);
     }

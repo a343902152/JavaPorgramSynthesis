@@ -1,8 +1,10 @@
 package com.zsf.interpreter.model;
 
 import com.zsf.interpreter.expressions.Expression;
+import com.zsf.interpreter.tool.ExpScoreComparator;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -71,4 +73,20 @@ public class ExpressionGroup {
     }
 
 
+    public void sort(ExpScoreComparator expScoreComparator) {
+        Collections.sort(expressions,expScoreComparator);
+    }
+
+    public ExpressionGroup selecTopK(int k) {
+        ExpressionGroup topExpressionGroup=new ExpressionGroup();
+        Collections.sort(expressions,new ExpScoreComparator());
+        int count=1;
+        for (Expression exp:expressions){
+            if (count++>k){
+                break;
+            }
+            topExpressionGroup.insert(exp);
+        }
+        return topExpressionGroup;
+    }
 }

@@ -125,6 +125,10 @@ public class LoopExpression extends NonTerminalExpression {
         return 1;
     }
 
+    @Override
+    public double score() {
+        return 1;
+    }
 
     public String getLinkingMode() {
         return linkingMode;

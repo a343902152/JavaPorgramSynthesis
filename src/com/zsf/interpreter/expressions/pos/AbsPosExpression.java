@@ -49,4 +49,9 @@ public class AbsPosExpression extends PosExpression {
     public void setPos(int pos) {
         this.pos = pos;
     }
+
+    @Override
+    public double score() {
+        return 0.1;
+    }
 }
