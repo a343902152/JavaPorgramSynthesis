@@ -1,6 +1,7 @@
 package com.zsf;
 
-import com.zsf.interpreter.expressions.*;
+import com.zsf.interpreter.expressions.Expression;
+import com.zsf.interpreter.expressions.NonTerminalExpression;
 import com.zsf.interpreter.expressions.linking.ConcatenateExpression;
 import com.zsf.interpreter.expressions.loop.LoopExpression;
 import com.zsf.interpreter.expressions.pos.*;
@@ -8,18 +9,20 @@ import com.zsf.interpreter.expressions.string.ConstStrExpression;
 import com.zsf.interpreter.expressions.string.SubString2Expression;
 import com.zsf.interpreter.expressions.string.SubStringExpression;
 import com.zsf.interpreter.model.*;
-import com.zsf.interpreter.model.Regex;
 import com.zsf.interpreter.tool.ExpressionComparator;
 import com.zsf.interpreter.tool.RunTimeMeasurer;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 
-public class Main {
-
+/**
+ * Created by hasee on 2017/3/1.
+ */
+public class StringProcessor {
     /**
      * 根据I->O的examples，利用generateStr()+generatePatrition()...得到能够正确处理I->0转换的表达式
      * 整个过程类似中缀表达式求值：中缀表达式->后缀表达式->求值
@@ -31,7 +34,7 @@ public class Main {
      * <p>
      * generateExpressionByEaxmples求得expression之后返回这个表达式，之后的所有I利用这个E来求得O即可
      */
-    private static List<ExpressionGroup> generateExpressionsByExamples(List<ExamplePair> examplePairs) {
+    public List<ExpressionGroup> generateExpressionsByExamples(List<ExamplePair> examplePairs) {
         List<ExpressionGroup> expressionGroups = new ArrayList<ExpressionGroup>();
         for (ExamplePair pair : examplePairs) {
             String input = pair.getInputString();
@@ -58,7 +61,7 @@ public class Main {
      * @param outputString
      * @param examplePairs
      */
-    public static ExpressionGroup generateStr(String inputString, String outputString, List<ExamplePair> examplePairs) {
+    private ExpressionGroup generateStr(String inputString, String outputString, List<ExamplePair> examplePairs) {
         // 论文中记作W W指能产生outputString[i，j]的所有方法集合,包括constStr[s[i,j]]以及动态获得子串方法generateSubString().
         int len = outputString.length();
         ResultMap resultMap = new ResultMap(len, len);
@@ -108,7 +111,7 @@ public class Main {
      * <p>
      * 算法思想：dfs
      */
-    private static ExpressionGroup generateJumpingExps(List<ExamplePair> examplePairs, ResultMap resultMap, int start, int end) {
+    private ExpressionGroup generateJumpingExps(List<ExamplePair> examplePairs, ResultMap resultMap, int start, int end) {
         if (start + 1 == end) {
             return resultMap.getData(start, end);
         }
@@ -123,7 +126,7 @@ public class Main {
         return newExpressions;
     }
 
-    private static ExpressionGroup getValidExpressions(List<ExamplePair> examplePairs, ExpressionGroup tmpConcatedExps) {
+    private ExpressionGroup getValidExpressions(List<ExamplePair> examplePairs, ExpressionGroup tmpConcatedExps) {
         ExpressionGroup expressionGroup=new ExpressionGroup();
         for (Expression exp:tmpConcatedExps.getExpressions()){
             if (exp instanceof NonTerminalExpression){
@@ -147,7 +150,7 @@ public class Main {
      * 已经在concatResExp()中处理过跳跃性的res(如首字母提取)
      * generateLoop()中只要找到是拼接起来的，而且左右表达式一致的exp即可。
      */
-    private static ExpressionGroup generateLoop(int passbyNode, int endNode, ResultMap resultMap, int outputLen) {
+    private ExpressionGroup generateLoop(int passbyNode, int endNode, ResultMap resultMap, int outputLen) {
         // TODO: 2017/1/23 效率存在问题，output一旦变长，程序就运行不出来了
 
         ExpressionGroup outputExpressions = resultMap.getData(passbyNode, endNode);
@@ -183,7 +186,7 @@ public class Main {
      * @param targetString 要从intputString中截取的字符串
      * @param matches
      */
-    public static ExpressionGroup generateSubString(String inputString, String targetString, List<Match> matches) {
+    private ExpressionGroup generateSubString(String inputString, String targetString, List<Match> matches) {
         ExpressionGroup result = new ExpressionGroup();
 
         ExpressionGroup substr2Expressions = generateSubStr2(inputString, targetString);
@@ -209,7 +212,7 @@ public class Main {
         return result;
     }
 
-    private static ExpressionGroup generateSubStr2(String inputString, String targetString) {
+    private ExpressionGroup generateSubStr2(String inputString, String targetString) {
         ExpressionGroup res = new ExpressionGroup();
         for (int i = 0; i < usefulRegex.size(); i++) {
             Regex regex = usefulRegex.get(i);
@@ -239,7 +242,7 @@ public class Main {
      * 如：input=“123-abc-456-zxc" target="abc" 那么一个有效的起点pos(即a的位置)=POS(hyphenTok(即‘-’),letterTok,1||-2)
      * 这个POS表示第一个或倒数第二个左侧为‘-’，右侧为字母的符号的位置
      */
-    public static List<PosExpression> generatePos(String inputString, int k, List<Match> matches) {
+    private List<PosExpression> generatePos(String inputString, int k, List<Match> matches) {
         List<PosExpression> result = new ArrayList<PosExpression>();
         // 首先把k这个位置(正向数底k个，逆向数第-(inputString.length()-k)个)加到res中
         if (k == 0) {
@@ -316,7 +319,7 @@ public class Main {
      * @param expressionList
      * @param examplePairs
      */
-    private static List<ExamplePartition> generatePartitions(List<ExpressionGroup> expressionList, List<ExamplePair> examplePairs) {
+    public List<ExamplePartition> generatePartitions(List<ExpressionGroup> expressionList, List<ExamplePair> examplePairs) {
         // init
         RunTimeMeasurer.startTiming();
         List<ExamplePartition> partitions = new ArrayList<ExamplePartition>();
@@ -378,7 +381,7 @@ public class Main {
      * @param partition2
      * @return
      */
-    private static ExpressionGroup findSameExps(ExamplePartition partition1, ExamplePartition partition2) {
+    private ExpressionGroup findSameExps(ExamplePartition partition1, ExamplePartition partition2) {
         // FIXME: 2017/2/6 这个函数运行时间较长，根本原因应该还是partition中的expression过于庞大
         ExpressionGroup expressions1 = partition1.getUsefulExpression();
         ExpressionGroup expressions2 = partition2.getUsefulExpression();
@@ -416,7 +419,7 @@ public class Main {
         return theSameExpressions;
     }
 
-    public static List<Regex> usefulRegex = initUsefulRegex();
+    private List<Regex> usefulRegex = initUsefulRegex();
 
     /**
      * 增加有效的token可以强化匹配能力
@@ -426,7 +429,7 @@ public class Main {
      *
      * @return
      */
-    private static List<Regex> initUsefulRegex() {
+    private List<Regex> initUsefulRegex() {
         List<Regex> regexList = new ArrayList<Regex>();
         regexList.add(new Regex("SimpleNumberTok", "[0-9]+"));
         regexList.add(new Regex("DigitToken", "[-+]?(([0-9]+)([.]([0-9]+))?)"));
@@ -463,7 +466,7 @@ public class Main {
      * 在每次有新的input时就调用此方法，可以返回 各个pos上所有能够和input匹配的集合
      * 当generatePosition()需要时，直接根据match的pos(index)去查找使用，避免重复计算
      */
-    private static List<Match> buildStringMatches(String inputString) {
+    private List<Match> buildStringMatches(String inputString) {
         // TODO: 2017/2/5 加入match次数的能力
         // TODO: 2017/2/5 加入不match的能力
         List<Match> matches = new ArrayList<Match>();
@@ -473,25 +476,6 @@ public class Main {
             matches.addAll(curMatcher);
         }
         return matches;
-    }
-
-    /**
-     * 注：r=TokenSeq(T1,T2..Tn)表示Str要符合[T1]+[T2]+...[Tn]+这种形式
-     * 如：r=TokenSea(num，letter)，那么str必须是123abc或1Abb这种形式才能和r匹配
-     * TokenSeq中可能存在的token，如多次123abc456zxc会表示成{numToken，letterToken，numtoken，letterToken}形势，
-     * 上面例子得到的经过本方法去重复之后得到{numtoken，letterToken}
-     * <p>
-     * △ 但是：123abc456->{numToken，letterToken，numtoken}不可以变成{numToken，letterToken}
-     * <p>
-     * 不太理解，不知道是不是可以略去
-     * <p>
-     * 对于一个某次字符串s匹配，token1和token2会取得一样的效果，此时token1和token2就没有区别(indistinguishable)
-     *
-     * @param regExpression
-     * @param inputString
-     */
-    public static void generateRegex(RegExpression regExpression, String inputString) {
-
     }
 
     /**
@@ -506,7 +490,7 @@ public class Main {
      * @param rightExp
      * @return
      */
-    private static boolean isSameExpression(Expression leftExp, Expression rightExp) {
+    private boolean isSameExpression(Expression leftExp, Expression rightExp) {
         // FIXME: 2017/2/5 现在(包括论文里)不能处理以下 这种LOOP:
         // FIXME concat(subStr2(SimpleNumberTok,1),concat(constStr(-),concat(subStr2(SimpleNumberTok,2),concat(constStr(-),subStr2(SimpleNumberTok,3)))))
         Expression left = leftExp.deepClone();
@@ -541,7 +525,7 @@ public class Main {
     }
 
 
-    private static boolean needBeAddedIn(String subString, String inputString) {
+    private boolean needBeAddedIn(String subString, String inputString) {
         // 如果是原字符串中存在的str，那么就不需要添加(可能会有特例，需要注意一下)
         // TODO: 2017/2/2 (在最终调整之前不修改这个，以防万一)字符串是否存在要修改一下 ，去掉subString的分隔符，然后用LSC比较subString是否全都出现过
         boolean existedString = inputString.indexOf(subString) >= 0;
@@ -553,7 +537,7 @@ public class Main {
     }
 
 
-    private static void verifyResult(ExpressionGroup resExps, String testString, String target, boolean needToString, int deepth) {
+    private void verifyResult(ExpressionGroup resExps, String testString, String target, boolean needToString, int deepth) {
         try {
             FileWriter fileWriter = new FileWriter("C:\\Users\\hasee\\Desktop\\tempdata\\string-processor\\ans.txt");
             for (Expression exp : resExps.getExpressions()) {
@@ -578,13 +562,6 @@ public class Main {
         }
     }
 
-    private static void showPartitions(List<ExamplePartition> partitions) {
-        for (int i = 0; i < partitions.size(); i++) {
-            System.out.println(String.format("Partition %d :", i));
-            partitions.get(i).showDetails(true, false);
-        }
-    }
-
     /**
      * 找到当前String应该所属的分类(取代了论文中的classifier)
      *
@@ -592,7 +569,7 @@ public class Main {
      * @param partitions
      * @return
      */
-    private static int lookupPartitionIndex(String string, List<ExamplePartition> partitions) {
+    private int lookupPartitionIndex(String string, List<ExamplePartition> partitions) {
         int index = -1;
         double maxScore = -1;
         for (int i = 0; i < partitions.size(); i++) {
@@ -615,7 +592,7 @@ public class Main {
      * @param newInput
      * @param partitions
      */
-    private static ExpressionGroup predictOutput(String newInput, List<ExamplePartition> partitions) {
+    private ExpressionGroup predictOutput(String newInput, List<ExamplePartition> partitions) {
         int partitionIndex = lookupPartitionIndex(newInput, partitions);
 
         System.out.println("==========所属partition=" + partitionIndex + " ==========");
@@ -635,7 +612,7 @@ public class Main {
      * @param n          取出rank前n的结果
      * @return
      */
-    private static ExpressionGroup getTopNExpressions(ExamplePartition partition, String testString, int n) {
+    private ExpressionGroup getTopNExpressions(ExamplePartition partition, String testString, int n) {
         ExpressionGroup topN = new ExpressionGroup();
         // TODO: 2017/2/6 等待rank算法
         List<Expression> expressions = partition.getUsefulExpression().getExpressions();
@@ -656,7 +633,7 @@ public class Main {
      * @param validationPairs
      * @param partitions
      */
-    private static void handleNewInput(List<ValidationPair> validationPairs, List<ExamplePartition> partitions) {
+    public void handleNewInput(List<ValidationPair> validationPairs, List<ExamplePartition> partitions) {
         for (ValidationPair v : validationPairs) {
             ExpressionGroup topNExpression = predictOutput(v.getInputString(), partitions);
             displayOutput(v, topNExpression);
@@ -670,7 +647,7 @@ public class Main {
      * @param v
      * @param topNExpression
      */
-    private static void displayOutput(ValidationPair v, ExpressionGroup topNExpression) {
+    private void displayOutput(ValidationPair v, ExpressionGroup topNExpression) {
         System.out.println("期望输出：" + v.getTargetString());
         for (Expression expression : topNExpression.getExpressions()) {
             if (expression instanceof NonTerminalExpression) {
@@ -678,126 +655,5 @@ public class Main {
                     System.out.println(((NonTerminalExpression) expression).interpret(v.getInputString()) + " , " + expression.toString());
             }
         }
-    }
-
-    private static List<ExamplePair> getExamplePairs() {
-
-        // 对于提取IBM形式的句子，最后W的规模大致为3*(len(o))^2
-        // 其他的subStr问题W的规模会小很多
-
-        // FIXME 当前concatExp算法为指数型函数，一旦output中item数(比如用逗号隔开)增加以及每个item的长度变长，计算时间会爆炸增长。
-        // FIXME: 2017/2/3 初步估计每个item延长一位会让concatResExp耗时翻倍，每增加一个item，就会导致concatResExp耗时乘以n倍
-        List<ExamplePair> examplePairs = new ArrayList<ExamplePair>();
-        // region # success
-        // 提取结构化数据能力
-//        examplePairs.add(new ExamplePair("Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012", "Electronics Store,Apr 03"));
-//        examplePairs.add(new ExamplePair("Airport,40.77446436,-73.86970997,Sun Jul 15 14:51:15 +0800 2012", "Airport,Jul 15"));
-//        examplePairs.add(new ExamplePair("Bridge,Tue Apr 03 18:00:25 +0800 2012", "Bridge,Apr 03"));
-//        examplePairs.add(new ExamplePair("Arts & Crafts Store,40.71981038,-74.00258103,Tue Apr 03 18:00:09 +0800 2012", "Arts & Crafts Store,Apr 03"));
-//
-//        examplePairs.add(new ExamplePair("Wed Jul 11 11:17:44 +0800 2012,40.23213,German Restaurant", "German Restaurant,Jul 11"));
-//        examplePairs.add(new ExamplePair("40.7451638,-73.98251878,Tue Apr 03 18:02:41 +0800 2012,Medical Center", "Medical Center,Apr 03"));
-
-        // 单个较长output
-//        examplePairs.add(new ExamplePair("Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012", "Electronics Store,Apr 03,Tue"));
-
-        // 初级Loop能力
-//        examplePairs.add(new ExamplePair("Hello World Zsf the Program Synthesis Electronics Airport","HWZPSEA"));
-//        examplePairs.add(new ExamplePair("Hello World Zsf the Program Synthesis Electronics Airport Bridge","HWZPSEAB"));
-
-        // endregion
-
-        examplePairs.add(new ExamplePair("姓名：<span class=\"name\">Ran Liu</span> <br> 职称：<span class=\"zc\">Associate Professor/Senior Engineer</span><br> 联系方式：<span class=\"lxfs\">ran.liu_cqu@qq.com</span><br> 主要研究方向:<span class=\"major\">Medical and stereo image processing; IC design; Biomedical Engineering</span><br>","Associate Professor/Senior Engineer"));
-        examplePairs.add(new ExamplePair("                        姓名：<span class=\"name\">陈自郁</span> <br> 职称：<span class=\"zc\">讲师</span><br> 联系方式：<span class=\"lxfs\">chenziyu@cqu.edu.cn</span><br> 主要研究方向:<span class=\"major\">群智能、图像处理和智能控制</span><br>", "讲师"));
-
-        // region # error
-        // FIXME: 2017/2/16 错误原因初步判定为相似度(classifier)错误
-//        examplePairs.add(new ExamplePair("01/21/2001","01"));
-//        examplePairs.add(new ExamplePair("2003-03-23","03"));
-
-        // FIXME: 2017/2/16 未知错误，运行时很久没有结果，可能在哪里死循环了，需要debug
-//        examplePairs.add(new ExamplePair("12-23-34","12-23-34"));
-//        examplePairs.add(new ExamplePair("12.3.4","12-3-4"));
-//        examplePairs.add(new ExamplePair("74-12","abc-74-12"));
-//        examplePairs.add(new ExamplePair("(123)-84-122","123-84-122"));
-
-        // FIXME: 2017/2/21 去掉注释
-//        examplePairs.add(new ExamplePair("System.out.println(\"hello\");//hello", "System.out.println(\"hello\");"));
-//        examplePairs.add(new ExamplePair("Hello World// Zsf the Program Synthesis","Hello World"));
-        // endregion
-
-
-        return examplePairs;
-    }
-
-    private static List<ValidationPair> getTestPairs() {
-        List<ValidationPair> testPairs = new ArrayList<ValidationPair>();
-
-        // region # success
-        // 提取结构化数据
-//        testPairs.add(new ValidationPair("Coffee Shop,40.73340972,-74.00285648,Wed Jul 13 12:27:07 +0800 2012", "Coffee Shop,Jul 13"));
-//        testPairs.add(new ValidationPair("40.69990191,,Sat Nov 17 20:36:26 +0800,Food & Drink Shop", "Food & Drink Shop,Nov 17"));
-//        testPairs.add(new ValidationPair("40.74218831,-73.98792419,Park,Wed Jul 11 11:42:00 +0800 2012", "Park,Jul 11"));
-
-        // 初级Loop
-//        testPairs.add(new ValidationPair("Foundation of Software Engineering","FSE"));
-//        testPairs.add(new ValidationPair("European Software Engineering Conference","ESEC"));
-//        testPairs.add(new ValidationPair("International Conference on Software Engineering","ICSE"));
-        // endregion
-
-
-        // region # error
-        testPairs.add(new ValidationPair("姓名：<span class=\"name\">陈波</span> <br> 职称：<span class=\"zc\"></span><br> 联系方式：<span class=\"lxfs\"></span><br> 主要研究方向:<span class=\"major\"></span><br>", ""));
-        testPairs.add(new ValidationPair("                        姓名：<span class=\"name\">陈自郁</span> <br> 职称：<span class=\"zc\">讲师</span><br> 联系方式：<span class=\"lxfs\">chenziyu@cqu.edu.cn</span><br> 主要研究方向:<span class=\"major\">群智能、图像处理和智能控制</span><br>", "讲师"));
-        testPairs.add(new ValidationPair("                        姓名：<span class=\"name\">但静培</span> <br> 职称：<span class=\"zc\">讲师</span><br> 联系方式：<span class=\"lxfs\"></span><br> 主要研究方向:<span class=\"major\">时间序列数据挖掘、计算智能、神经网络等</span><br>", "讲师"));
-
-
-        // FIXME: 2017/2/16 错误原因初步判定为相似度(classifier)错误
-//        testPairs.add(new ValidationPair("2014年3月23日","3"));
-//        testPairs.add(new ValidationPair("9/23/2012","09"));
-
-        // FIXME: 2017/2/16 未知错误，运行时很久没有结果，可能在哪里死循环了，需要debug
-//        testPairs.add(new ValidationPair("1234-2345-23", "1234-2345-23"));
-//        testPairs.add(new ValidationPair("1.3213.02", "1-3213-02"));
-
-        // FIXME: 2017/2/21 去掉注释
-//        testPairs.add(new ValidationPair("testPairs.add(new ValidationPair(\"Foundation of Software Engineering\",\"FSE\")); //测试","Coffee Shop,Jul 13"));
-//        testPairs.add(new ValidationPair("40.69990191,//,Sat Nov 17 20:36:26 +0800,Food & Drink Shop","Food & Drink Shop,Nov 17"));
-//        testPairs.add(new ValidationPair("40.74218831,-73.9879//2419,Park,Wed Jul 11 11:42:00 +0800 2012","Park,Jul 11"));
-
-        // endregion
-        return testPairs;
-    }
-
-    public static void main(String[] args) {
-        List<ExamplePair> examplePairs = getExamplePairs();
-        List<ValidationPair> testPairs = getTestPairs();
-
-        StringProcessor stringProcessor=new StringProcessor();
-
-//        List<ExpressionGroup> expressionList = generateExpressionsByExamples(examplePairs);
-        List<ExpressionGroup> expressionList=stringProcessor.generateExpressionsByExamples(examplePairs);
-
-
-//        List<ExamplePartition> partitions = generatePartitions(expressionList, examplePairs);
-        List<ExamplePartition> partitions=stringProcessor.generatePartitions(expressionList,examplePairs);
-        showPartitions(partitions);
-
-        stringProcessor.handleNewInput(testPairs, partitions);
-
-
-
-        //        boolean needVerifyResult = false;
-//        boolean needToString = false;
-//        int deepth = 4;
-//        if (needVerifyResult) {
-//            System.out.println("--------------------------------------------");
-//            for (ValidationPair v:validationPairs){
-//                verifyResult(resExps, v.getInputString(), v.getTargetString(), needToString, deepth);
-//            }
-//            System.out.println("============================================\n");
-//        }
-
-
     }
 }
