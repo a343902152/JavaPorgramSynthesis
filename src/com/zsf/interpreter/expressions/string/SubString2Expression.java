@@ -12,6 +12,7 @@ import java.util.List;
 public class SubString2Expression extends StringExpression {
     private Regex regex;
     private int c;
+    private int totalC;
 
     public SubString2Expression(Regex regex, int c) {
         this.regex = regex;
@@ -60,6 +61,14 @@ public class SubString2Expression extends StringExpression {
             ans=null;
         }
         return ans;
+    }
+
+    public int getTotalC() {
+        return totalC;
+    }
+
+    public void setTotalC(int totalC) {
+        this.totalC = totalC;
     }
 
     @Override

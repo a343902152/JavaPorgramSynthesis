@@ -2,8 +2,6 @@ package com.zsf.interpreter.expressions.loop;
 
 import com.zsf.interpreter.expressions.Expression;
 import com.zsf.interpreter.expressions.NonTerminalExpression;
-import com.zsf.interpreter.expressions.linking.ConcatenateExpression;
-import com.zsf.interpreter.expressions.linking.LinkingExpression;
 import com.zsf.interpreter.expressions.pos.PosExpression;
 import com.zsf.interpreter.expressions.string.SubString2Expression;
 import com.zsf.interpreter.model.Match;
@@ -42,39 +40,21 @@ public class LoopExpression extends NonTerminalExpression {
     private int startCount = 0;
     private int stepSize = 1;
     private int endCount = 0;
+    private int maxMatchesCount =0;
     private int totalExpsCount = 0;
 
     public LoopExpression() {
         this.linkingMode=LINKING_MODE_CONCATENATE;
     }
 
-    public LoopExpression(String linkingMode, Expression baseExpression, int startCount, int stepSize, int endCount, int totalExpsCount) {
+    public LoopExpression(String linkingMode, Expression baseExpression, int startCount, int stepSize, int endCount, int maxMatchesCount, int totalExpsCount) {
         this.linkingMode = linkingMode;
         this.baseExpression = baseExpression;
         this.startCount = startCount;
         this.stepSize = stepSize;
         this.endCount = endCount;
+        this.maxMatchesCount = maxMatchesCount;
         this.totalExpsCount = totalExpsCount;
-    }
-
-    public LoopExpression(String linkingMode, Expression baseExpression , int startCount, int endCount) {
-        this.linkingMode = linkingMode;
-        this.startCount = startCount;
-        this.endCount = endCount;
-        this.baseExpression=baseExpression;
-        totalExpsCount = 0;
-
-        // TODO: 2017/1/23 根据totalExpressions得到baseExp
-        // TODO: 2017/1/23 下面的假设TotalExp全都是Concat，而且.leftExp()全都是substr2
-
-//        if (totalExpressions instanceof ConcatenateExpression) {
-//
-//            Expression leftExp = ((ConcatenateExpression) totalExpressions).getLeftExp().deepClone();
-//            while (leftExp instanceof ConcatenateExpression) {
-//                leftExp = ((ConcatenateExpression) leftExp).getLeftExp().deepClone();
-//            }
-//            baseExpression = leftExp;
-//        }
     }
 
     @Override
@@ -103,7 +83,7 @@ public class LoopExpression extends NonTerminalExpression {
 
     @Override
     public Expression deepClone() {
-        return new LoopExpression(linkingMode,baseExpression,startCount,stepSize,endCount,totalExpsCount);
+        return new LoopExpression(linkingMode,baseExpression,startCount,stepSize,endCount, maxMatchesCount,totalExpsCount);
     }
 
     @Override
@@ -133,6 +113,17 @@ public class LoopExpression extends NonTerminalExpression {
     }
 
     @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof LoopExpression){
+            return baseExpression.equals(((LoopExpression) obj).getBaseExpression()) &&
+                    startCount==((LoopExpression) obj).getStartCount()&&
+                    endCount==((LoopExpression) obj).getEndCount()&&
+                    totalExpsCount==((LoopExpression) obj).getTotalExpsCount();
+        }
+        return false;
+    }
+
+    @Override
     public int deepth() {
         return 1;
     }
@@ -144,29 +135,44 @@ public class LoopExpression extends NonTerminalExpression {
 
 
     public void addNode(Expression expression) {
-
         if (expression instanceof SubString2Expression) {
             int count = ((SubString2Expression) expression).getC();
-            endCount = count;
             totalExpsCount++;
             if (totalExpsCount==1){
                 startCount=count;
-                stepSize=0;
-            }else {
-                stepSize = (endCount - startCount) / (totalExpsCount-1);
+                this.maxMatchesCount =((SubString2Expression) expression).getTotalC();
             }
+            endCount=count;
         }else if (expression instanceof LoopExpression){
             int count=((LoopExpression) expression).getEndCount();
             endCount=count;
             totalExpsCount+=((LoopExpression) expression).getTotalExpsCount();
             if (totalExpsCount==1){
                 startCount=count;
-                stepSize=0;
-            }else {
-                stepSize = (endCount - startCount) / (totalExpsCount-1);
             }
         }
+        endCount=transformInteger(endCount, maxMatchesCount);
+        startCount=transformInteger(startCount, maxMatchesCount);
+        updateStepSize();
 
+    }
+
+    private void updateStepSize() {
+        if (totalExpsCount==1){
+            stepSize=0;
+        }else {
+            int end=endCount<0?endCount+(1+maxMatchesCount):endCount;
+            int start=startCount<0?startCount+(1+maxMatchesCount):startCount;
+            stepSize = (end - start) / (totalExpsCount-1);
+        }
+    }
+
+    private int transformInteger(int count,int total){
+        if (count<=(total+1)/2){
+            return count;
+        }else {
+            return count-(total+1);
+        }
     }
 
     /**

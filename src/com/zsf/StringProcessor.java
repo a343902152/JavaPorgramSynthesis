@@ -12,8 +12,7 @@ import com.zsf.interpreter.expressions.string.SubStringExpression;
 import com.zsf.interpreter.model.*;
 import com.zsf.interpreter.tool.RunTimeMeasurer;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 
 /**
@@ -76,7 +75,7 @@ public class StringProcessor {
         // 上面的resultMap结合DAG就有了跳跃能力，而且无需存储中间结果(只需要存储跳跃边), 再resultMap的基础上再加上一些Loop语句就可实现全局搜索
         // DAG在选择答案时可以结合loss func+bean search极大减小搜索空间。
         // TODO: 2017/3/1 直接更新 resultMap，加入Loop
-        newGenerateLoop(outputString,resultMap);
+        newGenerateLoop(outputString, resultMap);
 
 
         // TODO: 2017/3/1 返回的是一个DAG(或者就是resultMap)
@@ -88,7 +87,7 @@ public class StringProcessor {
          * 从某个节点出发，搜寻所有后续路径上一样的exp来构成loop
          *
          * Loop的基本条件：
-         * 1. 层数>=3
+         * 1. 层数>=2
          *
          * 一样的判定：
          * 1. substr2的reg一样
@@ -98,37 +97,65 @@ public class StringProcessor {
         for (int start = 0; start < outputString.length(); start++) {
             for (int end = start + 1; end <= outputString.length(); end++) {
                 // // TODO: 2017/3/2 doGenerateLoop(start,end,resultMap)
-                doGenerateLoop(new LoopExpression(),start, end, resultMap);
+                ExpressionGroup loopExpressions=doGenerateLoop(new LoopExpression(), start, end, resultMap);
+                loopExpressions=deDuplicateLoopExps(loopExpressions);
+                resultMap.getData(start,end).insert(loopExpressions);
             }
         }
     }
 
-    private void doGenerateLoop(LoopExpression baseExpression, int start, int end, ResultMap resultMap) {
+    private ExpressionGroup deDuplicateLoopExps(ExpressionGroup loopExpressions) {
+        // FIXME: 2017/3/2 复杂度是n^2的 只能应对小规模数据集
+        ExpressionGroup eg=new ExpressionGroup();
+        for (Expression exp:loopExpressions.getExpressions()){
+            boolean needAdd=true;
+            for (Expression e:eg.getExpressions()){
+                if (e.equals(exp)){
+                    needAdd=false;
+                    break;
+                }
+            }
+            if (needAdd){
+                eg.insert(exp);
+            }
+        }
+        return eg;
+    }
+
+    private ExpressionGroup doGenerateLoop(LoopExpression baseExpression, int start, int end, ResultMap resultMap) {
         // TODO: 2017/3/2 此方法内嵌到EG中去
 
         // FIXME:直接这么做肯定会产生很多重复，比如计算[1:5]时统计过[3:4]的数据(并且更新到resultMap中), 然后计算[2:7]时又统计了一次[3:4]的数据(并且又更新了resultMap)
         // FIXME: 2017/3/2 应该还是已DAG的形式保留, 而且能够【去重复】
+        ExpressionGroup validLoopExpressionGroup=new ExpressionGroup();
+        if (start+1==end){
+            ExpressionGroup curExpressions=resultMap.getData(start,end).deepClone();
 
-        if (start + 1 == end) {
-            return;
+            for (Expression expression:curExpressions.getExpressions()){
+                if (baseExpression.isLegalExpression(expression)) {
+                    validLoopExpressionGroup.insert(expression);
+                }
+            }
+            return validLoopExpressionGroup;
         }
 
-        for (int j = start + 1; j <end; j++) {
-            ExpressionGroup curExpressions = resultMap.getData(start, j);
-            if (curExpressions.size() > 0) {
-                for (Expression expression : curExpressions.getExpressions()) {
-                    if (baseExpression.isLegalExpression(expression)){
-                        LoopExpression newLoopExpression = (LoopExpression) baseExpression.deepClone();
-                        newLoopExpression.addNode(expression);
+        for (int j=start+1;j<end;j++){
+            ExpressionGroup curExpressions=resultMap.getData(start,j).deepClone();
+            for (Expression expression:curExpressions.getExpressions()){
+                if (baseExpression.isLegalExpression(expression)){
+                    LoopExpression loopExpression=new LoopExpression();
+                    loopExpression.addNode(expression);
 
-                        if (newLoopExpression.getTotalExpsCount()>=2){
-                            resultMap.getData(start, end).insert(newLoopExpression);
-                        }
-                        doGenerateLoop(newLoopExpression, j, end, resultMap);
+                    ExpressionGroup tmpExpressions=doGenerateLoop(loopExpression,j,end,resultMap);
+                    for (Expression exp:tmpExpressions.getExpressions()){
+                        LoopExpression newLoopExpression=(LoopExpression)loopExpression.deepClone();
+                        newLoopExpression.addNode(exp);
+                        validLoopExpressionGroup.insert(newLoopExpression);
                     }
                 }
             }
         }
+        return validLoopExpressionGroup;
     }
 
     /**
@@ -175,12 +202,19 @@ public class StringProcessor {
             Regex regex = usefulRegex.get(i);
             Matcher matcher = regex.getPattern().matcher(inputString);
             int count = 0;
+            ExpressionGroup curRegExpressions = new ExpressionGroup();
             while (matcher.find()) {
                 count++;
                 if (matcher.group().equals(targetString)) {
-                    res.insert(new SubString2Expression(regex, count));
+                    curRegExpressions.insert(new SubString2Expression(regex, count));
                 }
             }
+            for (Expression expression:curRegExpressions.getExpressions()){
+                if (expression instanceof SubString2Expression){
+                    ((SubString2Expression) expression).setTotalC(count);
+                }
+            }
+            res.insert(curRegExpressions);
         }
         return res;
     }
@@ -317,7 +351,6 @@ public class StringProcessor {
         return matches;
     }
 
-
     /**
      * 判断一个constStr是否有必要加入到图中
      *
@@ -440,13 +473,6 @@ public class StringProcessor {
             if (curExpressions.size() > 0) {
                 ExpressionGroup topExpressionGroup = curExpressions.selecTopK(k);
                 ExpressionGroup tmpConcatedExps = ConcatenateExpression.concatenateExp(topExpressionGroup, doSelectTopKExps(resultMap, j, end, k));
-//                for (Expression e:tmpConcatedExps.getExpressions()){
-//                    if (e instanceof ConcatenateExpression){
-//                        if (((ConcatenateExpression) e).getLeftExp() instanceof LoopExpression){
-//                            System.out.println(e.score()+"  "+e.toString());
-//                        }
-//                    }
-//                }
                 newExpressions.insert(tmpConcatedExps);
                 newExpressions = newExpressions.selecTopK(k);
             }
