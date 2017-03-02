@@ -12,6 +12,7 @@ public class Match {
     private String matchedString;
     private Regex regex;
     private int count;
+    private int maxCount;
 
     public Match(String inputString, int matchedIndex, String matchedString, Regex regex, int count) {
         this.inputString = inputString;
@@ -21,6 +22,13 @@ public class Match {
         this.count=count;
     }
 
+    public int getMaxCount() {
+        return maxCount;
+    }
+
+    public void setMaxCount(int maxCount) {
+        this.maxCount = maxCount;
+    }
 
     public String getInputString() {
         return inputString;

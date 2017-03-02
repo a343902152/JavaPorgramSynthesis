@@ -14,10 +14,13 @@ public class MatchEndPos extends PosExpression {
 
     private Regex r;
     private int count;
+    private int maxCount;
 
-    public MatchEndPos(Regex r, int count) {
+
+    public MatchEndPos(Regex r, int count,int maxCount) {
         this.r = r;
         this.count = count;
+        this.maxCount=maxCount;
     }
 
     @Override
@@ -50,7 +53,7 @@ public class MatchEndPos extends PosExpression {
 
     @Override
     public Expression deepClone() {
-        return new MatchEndPos(r, count);
+        return new MatchEndPos(r, count,maxCount);
     }
 
     @Override

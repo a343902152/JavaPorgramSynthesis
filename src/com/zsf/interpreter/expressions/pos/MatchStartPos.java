@@ -14,10 +14,14 @@ public class MatchStartPos extends PosExpression {
 
     private Regex r;
     private int count;
+    private int maxCount;
 
-    public MatchStartPos(Regex r, int count) {
+    public MatchStartPos(Regex r, int count,int maxCount) {
         this.r = r;
         this.count = count;
+        this.maxCount=maxCount;
+
+        // TODO: 2017/3/2 利用maxCount将count转换成maxCount(如果有必要的话)
     }
 
     @Override
@@ -50,7 +54,7 @@ public class MatchStartPos extends PosExpression {
 
     @Override
     public Expression deepClone() {
-        return new MatchStartPos(r, count);
+        return new MatchStartPos(r, count,maxCount);
     }
 
     @Override

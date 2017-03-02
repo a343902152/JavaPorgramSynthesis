@@ -71,6 +71,10 @@ public abstract class Regex implements Score{
         while (matcher.find()){
             matches.add(new Match(inputString,matcher.start(),matcher.group(),this,count++));
         }
+        count--;
+        for (Match match:matches){
+            match.setMaxCount(count);
+        }
         return matches;
     }
 }

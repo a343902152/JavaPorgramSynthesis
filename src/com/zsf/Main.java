@@ -241,58 +241,58 @@ public class Main {
      */
     public static List<PosExpression> generatePos(String inputString, int k, List<Match> matches) {
         List<PosExpression> result = new ArrayList<PosExpression>();
-        // 首先把k这个位置(正向数底k个，逆向数第-(inputString.length()-k)个)加到res中
-        if (k == 0) {
-            result.add(new AbsPosExpression(k));
-        }
-        if (k == inputString.length()) {
-            result.add(new AbsPosExpression(PosExpression.END_POS));
-        }
-
-        for (Match match:matches){
-            if (match.getMatchedIndex()==k){
-                result.add(new MatchStartPos(match.getRegex(),match.getCount()));
-            }else if ((match.getMatchedIndex()+match.getMatchedString().length())==k){
-                result.add(new MatchEndPos(match.getRegex(),match.getCount()));
-            }
-        }
-
-        /**
-         * 新方法：
-         * TODO 重构代码
-         */
-        for (int k1 = k - 1; k1 >= 0; k1--) {
-            for (int m1 = 0; m1 < matches.size(); m1++) {
-                Match match1 = matches.get(m1);
-                // TODO 确定r1，把if改成TokenSeq形式，要能根据match的起点和终点进行跳跃
-                if (match1.getMatchedIndex() == k1 && (match1.getMatchedIndex() + match1.getMatchedString().length()) == k) {
-                    Regex r1 = match1.getRegex();
-                    for (int k2 = k + 1; k2 <= inputString.length(); k2++) {
-                        for (int m2 = 0; m2 < matches.size(); m2++) {
-                            Match match2 = matches.get(m2);
-                            // TODO 确定r2，把if改成TokenSeq形式，要能根据match的起点和终点进行跳跃
-                            if (match2.getMatchedIndex() == k && (k + match2.getMatchedString().length()) == k2) {
-                                Regex r2 = match2.getRegex();
-
-                                // TODO: 2017/1/22 用更好的方法合并r1和r2
-                                Regex r12 = new CombinedRegex("r12", r1.getReg() + r2.getReg());
-                                List<Match> totalMatches = r12.doMatch(inputString);
-                                int curOccur = -1;
-                                String sk1k2 = inputString.substring(k1, k2);
-                                for (int i = 0; i < totalMatches.size(); i++) {
-                                    if (sk1k2.equals(totalMatches.get(i).getMatchedString())) {
-                                        curOccur = i + 1;
-                                        break;
-                                    }
-                                }
-                                result.add(new RegPosExpression(r1, r2, curOccur));
-                                result.add(new RegPosExpression(r1, r2, -(totalMatches.size() - curOccur + 1)));
-                            }
-                        }
-                    }
-                }
-            }
-        }
+//        // 首先把k这个位置(正向数底k个，逆向数第-(inputString.length()-k)个)加到res中
+//        if (k == 0) {
+//            result.add(new AbsPosExpression(k));
+//        }
+//        if (k == inputString.length()) {
+//            result.add(new AbsPosExpression(PosExpression.END_POS));
+//        }
+//
+//        for (Match match:matches){
+//            if (match.getMatchedIndex()==k){
+//                result.add(new MatchStartPos(match.getRegex(),match.getCount()));
+//            }else if ((match.getMatchedIndex()+match.getMatchedString().length())==k){
+//                result.add(new MatchEndPos(match.getRegex(),match.getCount()));
+//            }
+//        }
+//
+//        /**
+//         * 新方法：
+//         * TODO 重构代码
+//         */
+//        for (int k1 = k - 1; k1 >= 0; k1--) {
+//            for (int m1 = 0; m1 < matches.size(); m1++) {
+//                Match match1 = matches.get(m1);
+//                // TODO 确定r1，把if改成TokenSeq形式，要能根据match的起点和终点进行跳跃
+//                if (match1.getMatchedIndex() == k1 && (match1.getMatchedIndex() + match1.getMatchedString().length()) == k) {
+//                    Regex r1 = match1.getRegex();
+//                    for (int k2 = k + 1; k2 <= inputString.length(); k2++) {
+//                        for (int m2 = 0; m2 < matches.size(); m2++) {
+//                            Match match2 = matches.get(m2);
+//                            // TODO 确定r2，把if改成TokenSeq形式，要能根据match的起点和终点进行跳跃
+//                            if (match2.getMatchedIndex() == k && (k + match2.getMatchedString().length()) == k2) {
+//                                Regex r2 = match2.getRegex();
+//
+//                                // TODO: 2017/1/22 用更好的方法合并r1和r2
+//                                Regex r12 = new CombinedRegex("r12", r1.getReg() + r2.getReg());
+//                                List<Match> totalMatches = r12.doMatch(inputString);
+//                                int curOccur = -1;
+//                                String sk1k2 = inputString.substring(k1, k2);
+//                                for (int i = 0; i < totalMatches.size(); i++) {
+//                                    if (sk1k2.equals(totalMatches.get(i).getMatchedString())) {
+//                                        curOccur = i + 1;
+//                                        break;
+//                                    }
+//                                }
+//                                result.add(new RegPosExpression(r1, r2, curOccur));
+//                                result.add(new RegPosExpression(r1, r2, -(totalMatches.size() - curOccur + 1)));
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
         return result;
     }
 
@@ -702,13 +702,13 @@ public class Main {
 //        examplePairs.add(new ExamplePair("Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012", "Electronics Store,Apr 03,Tue"));
 
         // 初级Loop能力
-        examplePairs.add(new ExamplePair("Hello World Zsf the Program Synthesis Electronics Airport","HWZPSEA"));
+//        examplePairs.add(new ExamplePair("Hello World Zsf the Program Synthesis Electronics Airport","HWZPSEA"));
 //        examplePairs.add(new ExamplePair("Hello World Zsf the Program Synthesis Electronics Airport Bridge","HWZPSEAB"));
 
         // endregion
 
 //        examplePairs.add(new ExamplePair("                        姓名：<span class=\"name\">陈自郁</span> <br> 职称：<span class=\"zc\">讲师</span><br> 联系方式：<span class=\"lxfs\">chenziyu@cqu.edu.cn</span><br> 主要研究方向:<span class=\"major\">群智能、图像处理和智能控制</span><br>", "讲师"));
-//        examplePairs.add(new ExamplePair("姓名：<span class=\"name\">Ran Liu</span> <br> 职称：<span class=\"zc\">Associate Professor/Senior Engineer</span><br> 联系方式：<span class=\"lxfs\">ran.liu_cqu@qq.com</span><br> 主要研究方向:<span class=\"major\">Medical and stereo image processing; IC design; Biomedical Engineering</span><br>","Associate Professor/Senior Engineer"));
+        examplePairs.add(new ExamplePair("姓名：<span class=\"name\">Ran Liu</span> <br> 职称：<span class=\"zc\">Associate Professor/Senior Engineer</span><br> 联系方式：<span class=\"lxfs\">ran.liu_cqu@qq.com</span><br> 主要研究方向:<span class=\"major\">Medical and stereo image processing; IC design; Biomedical Engineering</span><br>","Ran Liu,Associate Professor/Senior Engineer"));
 
         // region # error
         // FIXME: 2017/2/16 错误原因初步判定为相似度(classifier)错误

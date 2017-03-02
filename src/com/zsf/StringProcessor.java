@@ -97,25 +97,25 @@ public class StringProcessor {
         for (int start = 0; start < outputString.length(); start++) {
             for (int end = start + 1; end <= outputString.length(); end++) {
                 // // TODO: 2017/3/2 doGenerateLoop(start,end,resultMap)
-                ExpressionGroup loopExpressions=doGenerateLoop(new LoopExpression(), start, end, resultMap);
-                loopExpressions=deDuplicateLoopExps(loopExpressions);
-                resultMap.getData(start,end).insert(loopExpressions);
+                ExpressionGroup loopExpressions = doGenerateLoop(new LoopExpression(), start, end, resultMap);
+                loopExpressions = deDuplicateLoopExps(loopExpressions);
+                resultMap.getData(start, end).insert(loopExpressions);
             }
         }
     }
 
     private ExpressionGroup deDuplicateLoopExps(ExpressionGroup loopExpressions) {
         // FIXME: 2017/3/2 复杂度是n^2的 只能应对小规模数据集
-        ExpressionGroup eg=new ExpressionGroup();
-        for (Expression exp:loopExpressions.getExpressions()){
-            boolean needAdd=true;
-            for (Expression e:eg.getExpressions()){
-                if (e.equals(exp)){
-                    needAdd=false;
+        ExpressionGroup eg = new ExpressionGroup();
+        for (Expression exp : loopExpressions.getExpressions()) {
+            boolean needAdd = true;
+            for (Expression e : eg.getExpressions()) {
+                if (e.equals(exp)) {
+                    needAdd = false;
                     break;
                 }
             }
-            if (needAdd){
+            if (needAdd) {
                 eg.insert(exp);
             }
         }
@@ -127,11 +127,11 @@ public class StringProcessor {
 
         // FIXME:直接这么做肯定会产生很多重复，比如计算[1:5]时统计过[3:4]的数据(并且更新到resultMap中), 然后计算[2:7]时又统计了一次[3:4]的数据(并且又更新了resultMap)
         // FIXME: 2017/3/2 应该还是已DAG的形式保留, 而且能够【去重复】
-        ExpressionGroup validLoopExpressionGroup=new ExpressionGroup();
-        if (start+1==end){
-            ExpressionGroup curExpressions=resultMap.getData(start,end).deepClone();
+        ExpressionGroup validLoopExpressionGroup = new ExpressionGroup();
+        if (start + 1 == end) {
+            ExpressionGroup curExpressions = resultMap.getData(start, end).deepClone();
 
-            for (Expression expression:curExpressions.getExpressions()){
+            for (Expression expression : curExpressions.getExpressions()) {
                 if (baseExpression.isLegalExpression(expression)) {
                     validLoopExpressionGroup.insert(expression);
                 }
@@ -139,16 +139,16 @@ public class StringProcessor {
             return validLoopExpressionGroup;
         }
 
-        for (int j=start+1;j<end;j++){
-            ExpressionGroup curExpressions=resultMap.getData(start,j).deepClone();
-            for (Expression expression:curExpressions.getExpressions()){
-                if (baseExpression.isLegalExpression(expression)){
-                    LoopExpression loopExpression=new LoopExpression();
+        for (int j = start + 1; j < end; j++) {
+            ExpressionGroup curExpressions = resultMap.getData(start, j).deepClone();
+            for (Expression expression : curExpressions.getExpressions()) {
+                if (baseExpression.isLegalExpression(expression)) {
+                    LoopExpression loopExpression = new LoopExpression();
                     loopExpression.addNode(expression);
 
-                    ExpressionGroup tmpExpressions=doGenerateLoop(loopExpression,j,end,resultMap);
-                    for (Expression exp:tmpExpressions.getExpressions()){
-                        LoopExpression newLoopExpression=(LoopExpression)loopExpression.deepClone();
+                    ExpressionGroup tmpExpressions = doGenerateLoop(loopExpression, j, end, resultMap);
+                    for (Expression exp : tmpExpressions.getExpressions()) {
+                        LoopExpression newLoopExpression = (LoopExpression) loopExpression.deepClone();
                         newLoopExpression.addNode(exp);
                         validLoopExpressionGroup.insert(newLoopExpression);
                     }
@@ -209,8 +209,8 @@ public class StringProcessor {
                     curRegExpressions.insert(new SubString2Expression(regex, count));
                 }
             }
-            for (Expression expression:curRegExpressions.getExpressions()){
-                if (expression instanceof SubString2Expression){
+            for (Expression expression : curRegExpressions.getExpressions()) {
+                if (expression instanceof SubString2Expression) {
                     ((SubString2Expression) expression).setTotalC(count);
                 }
             }
@@ -246,9 +246,9 @@ public class StringProcessor {
         // 找到MatchPos形式的pos表达式
         for (Match match : matches) {
             if (match.getMatchedIndex() == k) {
-                result.add(new MatchStartPos(match.getRegex(), match.getCount()));
+                result.add(new MatchStartPos(match.getRegex(), match.getCount(), match.getMaxCount()));
             } else if ((match.getMatchedIndex() + match.getMatchedString().length()) == k) {
-                result.add(new MatchEndPos(match.getRegex(), match.getCount()));
+                result.add(new MatchEndPos(match.getRegex(), match.getCount(), match.getMaxCount()));
             }
         }
 
@@ -470,13 +470,48 @@ public class StringProcessor {
         ExpressionGroup newExpressions = resultMap.getData(start, end).deepClone();
         for (int j = start + 1; j < end; j++) {
             ExpressionGroup curExpressions = resultMap.getData(start, j);
+            if (start == 0 && j == 7) {
+                System.out.println();
+            }
+            if (start == 7 && j == 8) {
+                System.out.println();
+            }
+            if (start == 8 && j == 43) {
+                System.out.println();
+            }
+
+            // FIXME: 2017/3/2 一、0-7正常，7-8正常，8-43正常。二、7-43正常，0-43不正常？？ 三、0-43有时正常有时不正常
             if (curExpressions.size() > 0) {
                 ExpressionGroup topExpressionGroup = curExpressions.selecTopK(k);
-                ExpressionGroup tmpConcatedExps = ConcatenateExpression.concatenateExp(topExpressionGroup, doSelectTopKExps(resultMap, j, end, k));
+                ExpressionGroup sub = doSelectTopKExps(resultMap, j, end, k);
+                ExpressionGroup tmpConcatedExps = ConcatenateExpression.concatenateExp(topExpressionGroup, sub);
+
+//                if (start == 0 && end == 43) {
+//                    System.out.println("===============tmpConcatedExps==========================");
+//                    for (Expression expression : tmpConcatedExps.getExpressions()) {
+//                        System.out.println(expression.score() + "  " + expression.toString());
+//                    }
+//                    System.out.println("===============newExpressions==========================");
+//                    for (Expression expression : newExpressions.getExpressions()) {
+//                        System.out.println(expression.score() + "  " + expression.toString());
+//                    }
+//                }
                 newExpressions.insert(tmpConcatedExps);
                 newExpressions = newExpressions.selecTopK(k);
+
+//                if (start == 0 && end == 43) {
+//                    System.out.println("===============newExpressions==========================");
+//                    for (Expression expression : newExpressions.getExpressions()) {
+//                        System.out.println(expression.score() + "  " + expression.toString());
+//                    }
+//                }
             }
         }
+//        if (start==0 && end==8){
+//            for (Expression expression:newExpressions.getExpressions()){
+//                System.out.println(expression.score()+"  "+expression.toString());
+//            }
+//        }
         return newExpressions.selecTopK(k);
     }
 }
