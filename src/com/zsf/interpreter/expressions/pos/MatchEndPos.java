@@ -71,7 +71,8 @@ public class MatchEndPos extends PosExpression {
 
     @Override
     public double score() {
-        return 0.3+r.score();
+        double score=0.3+r.score();
+        return score;
     }
 
     public Regex getR() {

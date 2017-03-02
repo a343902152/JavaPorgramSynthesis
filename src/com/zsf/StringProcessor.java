@@ -470,13 +470,7 @@ public class StringProcessor {
         ExpressionGroup newExpressions = resultMap.getData(start, end).deepClone();
         for (int j = start + 1; j < end; j++) {
             ExpressionGroup curExpressions = resultMap.getData(start, j);
-            if (start == 0 && j == 7) {
-                System.out.println();
-            }
-            if (start == 7 && j == 8) {
-                System.out.println();
-            }
-            if (start == 8 && j == 43) {
+            if (start == 0 && j == 7 && end==43) {
                 System.out.println();
             }
 
@@ -486,25 +480,25 @@ public class StringProcessor {
                 ExpressionGroup sub = doSelectTopKExps(resultMap, j, end, k);
                 ExpressionGroup tmpConcatedExps = ConcatenateExpression.concatenateExp(topExpressionGroup, sub);
 
-//                if (start == 0 && end == 43) {
-//                    System.out.println("===============tmpConcatedExps==========================");
-//                    for (Expression expression : tmpConcatedExps.getExpressions()) {
-//                        System.out.println(expression.score() + "  " + expression.toString());
-//                    }
-//                    System.out.println("===============newExpressions==========================");
-//                    for (Expression expression : newExpressions.getExpressions()) {
-//                        System.out.println(expression.score() + "  " + expression.toString());
-//                    }
-//                }
-                newExpressions.insert(tmpConcatedExps);
+                if (start == 0 && j == 7 && end==43) {
+                    System.out.println("===============tmpConcatedExps==========================");
+                    for (Expression expression : tmpConcatedExps.getExpressions()) {
+                        System.out.println(expression.score() + "  " + expression.toString());
+                    }
+                    System.out.println("===============newExpressions==========================");
+                    for (Expression expression : newExpressions.getExpressions()) {
+                        System.out.println(expression.score() + "  " + expression.toString());
+                    }
+                }
+                newExpressions.insert(tmpConcatedExps.selecTopK(k));
                 newExpressions = newExpressions.selecTopK(k);
+                if (start == 0 && j == 7 && end==43) {
+                    System.out.println("===============newExpressions==========================");
+                    for (Expression expression : newExpressions.getExpressions()) {
+                        System.out.println(expression.score() + "  " + expression.toString());
+                    }
+                }
 
-//                if (start == 0 && end == 43) {
-//                    System.out.println("===============newExpressions==========================");
-//                    for (Expression expression : newExpressions.getExpressions()) {
-//                        System.out.println(expression.score() + "  " + expression.toString());
-//                    }
-//                }
             }
         }
 //        if (start==0 && end==8){

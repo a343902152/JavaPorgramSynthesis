@@ -85,7 +85,8 @@ public class ConcatenateExpression extends LinkingExpression {
     @Override
     public double score() {
         // FIXME: 2017/3/2 concat(exp1,,concat(e2,e3))会导致score失真
-        return (leftExp.score()+rightExp.score())/deepth();
+        double score=(leftExp.score()+rightExp.score())/deepth();
+        return score;
     }
 
     public Expression getLeftExp() {
