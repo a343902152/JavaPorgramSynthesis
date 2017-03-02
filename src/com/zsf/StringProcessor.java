@@ -10,11 +10,9 @@ import com.zsf.interpreter.expressions.string.ConstStrExpression;
 import com.zsf.interpreter.expressions.string.SubString2Expression;
 import com.zsf.interpreter.expressions.string.SubStringExpression;
 import com.zsf.interpreter.model.*;
-import com.zsf.interpreter.tool.ExpressionComparator;
 import com.zsf.interpreter.tool.RunTimeMeasurer;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 
@@ -39,7 +37,7 @@ public class StringProcessor {
             String input = pair.getInputString();
             String output = pair.getOutputString();
 
-            ResultMap resultMap= generateStr(input, output);
+            ResultMap resultMap = generateStr(input, output);
             resultMaps.add(resultMap);
         }
         return resultMaps;
@@ -49,7 +47,8 @@ public class StringProcessor {
     /**
      * generate阶段要调用的函数
      * 返回一个能够从input中生产output的expressions集合
-     *  @param inputString
+     *
+     * @param inputString
      * @param outputString
      */
     private ResultMap generateStr(String inputString, String outputString) {
@@ -77,27 +76,59 @@ public class StringProcessor {
         // 上面的resultMap结合DAG就有了跳跃能力，而且无需存储中间结果(只需要存储跳跃边), 再resultMap的基础上再加上一些Loop语句就可实现全局搜索
         // DAG在选择答案时可以结合loss func+bean search极大减小搜索空间。
         // TODO: 2017/3/1 直接更新 resultMap，加入Loop
-//        resultMap=newGenerateLoop(inputString,outputString,resultMap);
+        newGenerateLoop(outputString,resultMap);
 
 
         // TODO: 2017/3/1 返回的是一个DAG(或者就是resultMap)
         return resultMap;
     }
 
-    private ResultMap newGenerateLoop(String inputString, String outputString, ResultMap resultMap) {
-        for (int k1 = 0; k1 < outputString.length(); k1++){
-            for (int k2 = k1 + 1; k2 < outputString.length(); k2++){
-                for (int k3 = k2 + 1; k3 <= outputString.length(); k3++){
-                    ResultMap resultMap1=generateStr(inputString,outputString.substring(k1,k2));
-                    ResultMap resultMap2=generateStr(inputString,outputString.substring(k2,k3));
+    private void newGenerateLoop(String outputString, ResultMap resultMap) {
+        /**
+         * 从某个节点出发，搜寻所有后续路径上一样的exp来构成loop
+         *
+         * Loop的基本条件：
+         * 1. 层数>=3
+         *
+         * 一样的判定：
+         * 1. substr2的reg一样
+         * 2. loop的baseExp一样
+         * 3. concat的左右的baseExp全都一样(递归包含情况1和2)
+         */
+        for (int start = 0; start < outputString.length(); start++) {
+            for (int end = start + 1; end <= outputString.length(); end++) {
+                // // TODO: 2017/3/2 doGenerateLoop(start,end,resultMap)
+                doGenerateLoop(new LoopExpression(),start, end, resultMap);
+            }
+        }
+    }
 
-                    ResultMap newResultMap=ResultMap.merge(resultMap1,resultMap2);
+    private void doGenerateLoop(LoopExpression baseExpression, int start, int end, ResultMap resultMap) {
+        // TODO: 2017/3/2 此方法内嵌到EG中去
 
-                    // TODO: 2017/3/1 产生Loop 暂时不做
+        // FIXME:直接这么做肯定会产生很多重复，比如计算[1:5]时统计过[3:4]的数据(并且更新到resultMap中), 然后计算[2:7]时又统计了一次[3:4]的数据(并且又更新了resultMap)
+        // FIXME: 2017/3/2 应该还是已DAG的形式保留, 而且能够【去重复】
+
+        if (start + 1 == end) {
+            return;
+        }
+
+        for (int j = start + 1; j <end; j++) {
+            ExpressionGroup curExpressions = resultMap.getData(start, j);
+            if (curExpressions.size() > 0) {
+                for (Expression expression : curExpressions.getExpressions()) {
+                    if (baseExpression.isLegalExpression(expression)){
+                        LoopExpression newLoopExpression = (LoopExpression) baseExpression.deepClone();
+                        newLoopExpression.addNode(expression);
+
+                        if (newLoopExpression.getTotalExpsCount()>=2){
+                            resultMap.getData(start, end).insert(newLoopExpression);
+                        }
+                        doGenerateLoop(newLoopExpression, j, end, resultMap);
+                    }
                 }
             }
         }
-        return null;
     }
 
     /**
@@ -179,11 +210,11 @@ public class StringProcessor {
         }
 
         // 找到MatchPos形式的pos表达式
-        for (Match match:matches){
-            if (match.getMatchedIndex()==k){
-                result.add(new MatchStartPos(match.getRegex(),match.getCount()));
-            }else if ((match.getMatchedIndex()+match.getMatchedString().length())==k){
-                result.add(new MatchEndPos(match.getRegex(),match.getCount()));
+        for (Match match : matches) {
+            if (match.getMatchedIndex() == k) {
+                result.add(new MatchStartPos(match.getRegex(), match.getCount()));
+            } else if ((match.getMatchedIndex() + match.getMatchedString().length()) == k) {
+                result.add(new MatchEndPos(match.getRegex(), match.getCount()));
             }
         }
 
@@ -228,6 +259,7 @@ public class StringProcessor {
 
 
     private List<Regex> usefulRegex = initUsefulRegex();
+
     /**
      * 增加有效的token可以强化匹配能力
      * <p>
@@ -285,55 +317,10 @@ public class StringProcessor {
         return matches;
     }
 
-    /**
-     * same的定义：
-     * constStr要求str相同
-     * 普通Expression要求token相同
-     * linkingExpression要求左右两边的普通Expression相同(如果linkingExpression左右均为LinkingExpression，)
-     * <p>
-     * FIXME: 现在只做了substr2的equals
-     *
-     * @param leftExp
-     * @param rightExp
-     * @return
-     */
-    private boolean isSameExpression(Expression leftExp, Expression rightExp) {
-        // FIXME: 2017/2/5 现在(包括论文里)不能处理以下 这种LOOP:
-        // FIXME concat(subStr2(SimpleNumberTok,1),concat(constStr(-),concat(subStr2(SimpleNumberTok,2),concat(constStr(-),subStr2(SimpleNumberTok,3)))))
-        Expression left = leftExp.deepClone();
-        Expression right = rightExp.deepClone();
-        if (leftExp instanceof ConcatenateExpression) {
-            if (isSameExpression(((ConcatenateExpression) leftExp).getLeftExp(),
-                    ((ConcatenateExpression) leftExp).getRightExp())) {
-                while (((ConcatenateExpression) leftExp).getLeftExp() instanceof ConcatenateExpression) {
-                    leftExp = ((ConcatenateExpression) leftExp).getLeftExp();
-                }
-                left = ((ConcatenateExpression) leftExp).getLeftExp().deepClone();
-            } else {
-                return false;
-            }
-        }
-        if (rightExp instanceof ConcatenateExpression) {
-            if (isSameExpression(((ConcatenateExpression) rightExp).getLeftExp(),
-                    ((ConcatenateExpression) rightExp).getRightExp())) {
-                while (((ConcatenateExpression) rightExp).getLeftExp() instanceof ConcatenateExpression) {
-                    rightExp = ((ConcatenateExpression) rightExp).getLeftExp();
-                }
-                right = ((ConcatenateExpression) rightExp).getLeftExp().deepClone();
-            } else {
-                return false;
-            }
-        }
-        if (left instanceof SubString2Expression) {
-            return ((SubString2Expression) left).loopEquals(right);
-        } else {
-            return false;
-        }
-    }
-
 
     /**
      * 判断一个constStr是否有必要加入到图中
+     *
      * @param subString
      * @param inputString
      * @return
@@ -396,7 +383,7 @@ public class StringProcessor {
      *
      * @param validationPairs
      */
-    public void handleNewInput(List<ValidationPair> validationPairs,ExpressionGroup expressionGroup) {
+    public void handleNewInput(List<ValidationPair> validationPairs, ExpressionGroup expressionGroup) {
         for (ValidationPair v : validationPairs) {
             displayOutput(v, expressionGroup);
         }
@@ -414,25 +401,25 @@ public class StringProcessor {
         for (Expression expression : topNExpression.getExpressions()) {
             if (expression instanceof NonTerminalExpression) {
 //                if (v.getTargetString().equals(((NonTerminalExpression) expression).interpret(v.getInputString())))
-                    System.out.println(((NonTerminalExpression) expression).interpret(v.getInputString()) + " , " + expression.toString());
+                System.out.println(((NonTerminalExpression) expression).interpret(v.getInputString()) + " , " + expression.toString());
             }
         }
     }
 
-    public ExpressionGroup selectTopKExps(List<ResultMap> resultMaps,int k) {
-        if (resultMaps==null&&resultMaps.size()<=0){
+    public ExpressionGroup selectTopKExps(List<ResultMap> resultMaps, int k) {
+        if (resultMaps == null && resultMaps.size() <= 0) {
             return null;
         }
-        List<ExpressionGroup> ansList=new ArrayList<ExpressionGroup>();
-        for (ResultMap resultMap:resultMaps){
-            ExpressionGroup g=doSelectTopKExps(resultMap,0,resultMap.getCol(),k);
+        List<ExpressionGroup> ansList = new ArrayList<ExpressionGroup>();
+        for (ResultMap resultMap : resultMaps) {
+            ExpressionGroup g = doSelectTopKExps(resultMap, 0, resultMap.getCol(), k);
             ansList.add(g);
-            for (Expression e:g.getExpressions()){
-                System.out.println(e.deepth()+"  "+e.score()+"  "+e.toString());
+            for (Expression e : g.getExpressions()) {
+                System.out.println(e.deepth() + "  " + e.score() + "  " + e.toString());
             }
         }
-        ExpressionGroup validExpressions=new ExpressionGroup();
-        validExpressions=ansList.get(0);
+        ExpressionGroup validExpressions = new ExpressionGroup();
+        validExpressions = ansList.get(0);
         return validExpressions;
     }
 
@@ -445,16 +432,23 @@ public class StringProcessor {
     private ExpressionGroup doSelectTopKExps(ResultMap resultMap, int start, int end, int k) {
         // TODO: 2017/3/1 如果有多个例子，还要考虑多个例子的作用(可能是要partition？)
         if (start + 1 == end) {
-            return resultMap.getData(start,end);
+            return resultMap.getData(start, end);
         }
         ExpressionGroup newExpressions = resultMap.getData(start, end).deepClone();
         for (int j = start + 1; j < end; j++) {
             ExpressionGroup curExpressions = resultMap.getData(start, j);
             if (curExpressions.size() > 0) {
-                ExpressionGroup topExpressionGroup=curExpressions.selecTopK(k);
-                ExpressionGroup tmpConcatedExps = ConcatenateExpression.concatenateExp(topExpressionGroup, doSelectTopKExps(resultMap, j, end,k));
+                ExpressionGroup topExpressionGroup = curExpressions.selecTopK(k);
+                ExpressionGroup tmpConcatedExps = ConcatenateExpression.concatenateExp(topExpressionGroup, doSelectTopKExps(resultMap, j, end, k));
+//                for (Expression e:tmpConcatedExps.getExpressions()){
+//                    if (e instanceof ConcatenateExpression){
+//                        if (((ConcatenateExpression) e).getLeftExp() instanceof LoopExpression){
+//                            System.out.println(e.score()+"  "+e.toString());
+//                        }
+//                    }
+//                }
                 newExpressions.insert(tmpConcatedExps);
-                newExpressions=newExpressions.selecTopK(k);
+                newExpressions = newExpressions.selecTopK(k);
             }
         }
         return newExpressions.selecTopK(k);

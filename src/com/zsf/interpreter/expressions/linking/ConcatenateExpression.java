@@ -1,5 +1,6 @@
 package com.zsf.interpreter.expressions.linking;
 
+import com.sun.xml.internal.bind.v2.TODO;
 import com.zsf.interpreter.expressions.Expression;
 import com.zsf.interpreter.expressions.NonTerminalExpression;
 import com.zsf.interpreter.expressions.string.ConstStrExpression;
@@ -38,6 +39,7 @@ public class ConcatenateExpression extends LinkingExpression {
                 }else {
                     linkedExpressions.insert(new ConcatenateExpression(exp1,exp2));
                 }
+                // TODO: 2017/3/2 loop和其他值合併
             }
         }
         return linkedExpressions;
@@ -82,6 +84,7 @@ public class ConcatenateExpression extends LinkingExpression {
 
     @Override
     public double score() {
+        // FIXME: 2017/3/2 concat(exp1,,concat(e2,e3))会导致score失真
         return (leftExp.score()+rightExp.score())/deepth();
     }
 
