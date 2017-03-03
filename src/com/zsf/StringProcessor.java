@@ -3,6 +3,7 @@ package com.zsf;
 import com.zsf.interpreter.expressions.Expression;
 import com.zsf.interpreter.expressions.NonTerminalExpression;
 import com.zsf.interpreter.expressions.linking.ConcatenateExpression;
+import com.zsf.interpreter.expressions.linking.DeprecatedConcatenateExpression;
 import com.zsf.interpreter.expressions.loop.LoopExpression;
 import com.zsf.interpreter.expressions.pos.*;
 import com.zsf.interpreter.expressions.regex.*;
@@ -470,42 +471,15 @@ public class StringProcessor {
         ExpressionGroup newExpressions = resultMap.getData(start, end).deepClone();
         for (int j = start + 1; j < end; j++) {
             ExpressionGroup curExpressions = resultMap.getData(start, j);
-            if (start == 0 && j == 7 && end==43) {
-                System.out.println();
-            }
-
-            // FIXME: 2017/3/2 一、0-7正常，7-8正常，8-43正常。二、7-43正常，0-43不正常？？ 三、0-43有时正常有时不正常
             if (curExpressions.size() > 0) {
                 ExpressionGroup topExpressionGroup = curExpressions.selecTopK(k);
                 ExpressionGroup sub = doSelectTopKExps(resultMap, j, end, k);
                 ExpressionGroup tmpConcatedExps = ConcatenateExpression.concatenateExp(topExpressionGroup, sub);
 
-                if (start == 0 && j == 7 && end==43) {
-                    System.out.println("===============tmpConcatedExps==========================");
-                    for (Expression expression : tmpConcatedExps.getExpressions()) {
-                        System.out.println(expression.score() + "  " + expression.toString());
-                    }
-                    System.out.println("===============newExpressions==========================");
-                    for (Expression expression : newExpressions.getExpressions()) {
-                        System.out.println(expression.score() + "  " + expression.toString());
-                    }
-                }
                 newExpressions.insert(tmpConcatedExps.selecTopK(k));
                 newExpressions = newExpressions.selecTopK(k);
-                if (start == 0 && j == 7 && end==43) {
-                    System.out.println("===============newExpressions==========================");
-                    for (Expression expression : newExpressions.getExpressions()) {
-                        System.out.println(expression.score() + "  " + expression.toString());
-                    }
-                }
-
             }
         }
-//        if (start==0 && end==8){
-//            for (Expression expression:newExpressions.getExpressions()){
-//                System.out.println(expression.score()+"  "+expression.toString());
-//            }
-//        }
         return newExpressions.selecTopK(k);
     }
 }

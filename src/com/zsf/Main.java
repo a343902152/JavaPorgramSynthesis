@@ -1,8 +1,7 @@
 package com.zsf;
 
 import com.zsf.interpreter.expressions.*;
-import com.zsf.interpreter.expressions.linking.ConcatenateExpression;
-import com.zsf.interpreter.expressions.loop.LoopExpression;
+import com.zsf.interpreter.expressions.linking.DeprecatedConcatenateExpression;
 import com.zsf.interpreter.expressions.pos.*;
 import com.zsf.interpreter.expressions.regex.*;
 import com.zsf.interpreter.expressions.string.ConstStrExpression;
@@ -116,7 +115,7 @@ public class Main {
         for (int j = start + 1; j < end; j++) {
             ExpressionGroup curExpressions = resultMap.getData(start, j);
             if (curExpressions.size() > 0) {
-                ExpressionGroup tmpConcatedExps = ConcatenateExpression.concatenateExp(curExpressions, generateJumpingExps(examplePairs,resultMap, j, end));
+                ExpressionGroup tmpConcatedExps = DeprecatedConcatenateExpression.concatenateExp(curExpressions, generateJumpingExps(examplePairs,resultMap, j, end));
                 newExpressions.insert(getValidExpressions(examplePairs,tmpConcatedExps));
             }
         }
@@ -153,9 +152,9 @@ public class Main {
         ExpressionGroup outputExpressions = resultMap.getData(passbyNode, endNode);
         ExpressionGroup loopExpressions = new ExpressionGroup();
 //        for (Expression exp : outputExpressions.getExpressions()) {
-//            if (exp instanceof ConcatenateExpression) {
+//            if (exp instanceof DeprecatedConcatenateExpression) {
 //                // TODO: 2017/2/16 这里也许可以改为：1. 左做loop 2. 右做loop 3. 合并左右 ，这样可以解决类似“1 2 3 Bank Of China”->"1-2-3 BOC"之类的问题
-//                if (isSameExpression(((ConcatenateExpression) exp).getLeftExp(), ((ConcatenateExpression) exp).getRightExp())) {
+//                if (isSameExpression(((DeprecatedConcatenateExpression) exp).getLeftExp(), ((DeprecatedConcatenateExpression) exp).getRightExp())) {
 ////                    System.out.println("same:");
 ////                    System.out.println(exp);
 //                    LoopExpression loop = new LoopExpression(LoopExpression.LINKING_MODE_CONCATENATE, exp, passbyNode, endNode);
@@ -511,24 +510,24 @@ public class Main {
         // FIXME concat(subStr2(SimpleNumberTok,1),concat(constStr(-),concat(subStr2(SimpleNumberTok,2),concat(constStr(-),subStr2(SimpleNumberTok,3)))))
         Expression left = leftExp.deepClone();
         Expression right = rightExp.deepClone();
-        if (leftExp instanceof ConcatenateExpression) {
-            if (isSameExpression(((ConcatenateExpression) leftExp).getLeftExp(),
-                    ((ConcatenateExpression) leftExp).getRightExp())) {
-                while (((ConcatenateExpression) leftExp).getLeftExp() instanceof ConcatenateExpression) {
-                    leftExp = ((ConcatenateExpression) leftExp).getLeftExp();
+        if (leftExp instanceof DeprecatedConcatenateExpression) {
+            if (isSameExpression(((DeprecatedConcatenateExpression) leftExp).getLeftExp(),
+                    ((DeprecatedConcatenateExpression) leftExp).getRightExp())) {
+                while (((DeprecatedConcatenateExpression) leftExp).getLeftExp() instanceof DeprecatedConcatenateExpression) {
+                    leftExp = ((DeprecatedConcatenateExpression) leftExp).getLeftExp();
                 }
-                left = ((ConcatenateExpression) leftExp).getLeftExp().deepClone();
+                left = ((DeprecatedConcatenateExpression) leftExp).getLeftExp().deepClone();
             } else {
                 return false;
             }
         }
-        if (rightExp instanceof ConcatenateExpression) {
-            if (isSameExpression(((ConcatenateExpression) rightExp).getLeftExp(),
-                    ((ConcatenateExpression) rightExp).getRightExp())) {
-                while (((ConcatenateExpression) rightExp).getLeftExp() instanceof ConcatenateExpression) {
-                    rightExp = ((ConcatenateExpression) rightExp).getLeftExp();
+        if (rightExp instanceof DeprecatedConcatenateExpression) {
+            if (isSameExpression(((DeprecatedConcatenateExpression) rightExp).getLeftExp(),
+                    ((DeprecatedConcatenateExpression) rightExp).getRightExp())) {
+                while (((DeprecatedConcatenateExpression) rightExp).getLeftExp() instanceof DeprecatedConcatenateExpression) {
+                    rightExp = ((DeprecatedConcatenateExpression) rightExp).getLeftExp();
                 }
-                right = ((ConcatenateExpression) rightExp).getLeftExp().deepClone();
+                right = ((DeprecatedConcatenateExpression) rightExp).getLeftExp().deepClone();
             } else {
                 return false;
             }
@@ -707,8 +706,8 @@ public class Main {
 
         // endregion
 
-//        examplePairs.add(new ExamplePair("                        姓名：<span class=\"name\">陈自郁</span> <br> 职称：<span class=\"zc\">讲师</span><br> 联系方式：<span class=\"lxfs\">chenziyu@cqu.edu.cn</span><br> 主要研究方向:<span class=\"major\">群智能、图像处理和智能控制</span><br>", "讲师"));
-        examplePairs.add(new ExamplePair("姓名：<span class=\"name\">Ran Liu</span> <br> 职称：<span class=\"zc\">Associate Professor/Senior Engineer</span><br> 联系方式：<span class=\"lxfs\">ran.liu_cqu@qq.com</span><br> 主要研究方向:<span class=\"major\">Medical and stereo image processing; IC design; Biomedical Engineering</span><br>","Ran Liu,Associate Professor/Senior Engineer"));
+        examplePairs.add(new ExamplePair("                        姓名：<span class=\"name\">陈自郁</span> <br> 职称：<span class=\"zc\">讲师</span><br> 联系方式：<span class=\"lxfs\">chenziyu@cqu.edu.cn</span><br> 主要研究方向:<span class=\"major\">群智能、图像处理和智能控制</span><br>", "陈自郁,讲师,群智能、图像处理和智能控制"));
+//        examplePairs.add(new ExamplePair("姓名：<span class=\"name\">Ran Liu</span> <br> 职称：<span class=\"zc\">Associate Professor/Senior Engineer</span><br> 联系方式：<span class=\"lxfs\">ran.liu_cqu@qq.com</span><br> 主要研究方向:<span class=\"major\">Medical and stereo image processing; IC design; Biomedical Engineering</span><br>","Ran Liu,Associate Professor/Senior Engineer,Medical and stereo image processing; IC design; Biomedical Engineering"));
 
         // region # error
         // FIXME: 2017/2/16 错误原因初步判定为相似度(classifier)错误
@@ -749,6 +748,7 @@ public class Main {
 
 
         // region # error
+        testPairs.add(new ValidationPair("姓名：<span class=\"name\">Ran Liu</span> <br> 职称：<span class=\"zc\">Associate Professor/Senior Engineer</span><br> 联系方式：<span class=\"lxfs\">ran.liu_cqu@qq.com</span><br> 主要研究方向:<span class=\"major\">Medical and stereo image processing; IC design; Biomedical Engineering</span><br>","Ran Liu,Associate Professor/Senior Engineer,Medical and stereo image processing; IC design; Biomedical Engineering"));
         testPairs.add(new ValidationPair("姓名：<span class=\"name\">陈波</span> <br> 职称：<span class=\"zc\"></span><br> 联系方式：<span class=\"lxfs\"></span><br> 主要研究方向:<span class=\"major\"></span><br>", ""));
         testPairs.add(new ValidationPair("                        姓名：<span class=\"name\">陈自郁</span> <br> 职称：<span class=\"zc\">讲师</span><br> 联系方式：<span class=\"lxfs\">chenziyu@cqu.edu.cn</span><br> 主要研究方向:<span class=\"major\">群智能、图像处理和智能控制</span><br>", "讲师"));
         testPairs.add(new ValidationPair("                        姓名：<span class=\"name\">但静培</span> <br> 职称：<span class=\"zc\">讲师</span><br> 联系方式：<span class=\"lxfs\"></span><br> 主要研究方向:<span class=\"major\">时间序列数据挖掘、计算智能、神经网络等</span><br>", "讲师"));

@@ -1,27 +1,44 @@
 package com.zsf.interpreter.expressions.linking;
 
-import com.sun.xml.internal.bind.v2.TODO;
 import com.zsf.interpreter.expressions.Expression;
 import com.zsf.interpreter.expressions.NonTerminalExpression;
 import com.zsf.interpreter.expressions.string.ConstStrExpression;
 import com.zsf.interpreter.model.ExpressionGroup;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Created by hasee on 2017/1/23.
  */
 public class ConcatenateExpression extends LinkingExpression {
 
-    private Expression leftExp;
-    private Expression rightExp;
+    private List<Expression> expressionList=new ArrayList<Expression>();
 
-    public ConcatenateExpression(Expression leftExp, Expression rightExp) {
-        this.leftExp = leftExp;
-        this.rightExp = rightExp;
+
+    public ConcatenateExpression(List<Expression> expressionList) {
+        this.expressionList = expressionList;
+    }
+
+    public ConcatenateExpression(Expression exp1, Expression exp2) {
+        expressionList=new ArrayList<Expression>();
+        if (exp1 instanceof ConcatenateExpression && exp2 instanceof ConcatenateExpression){
+            // 全都是concat
+            expressionList.addAll(((ConcatenateExpression) exp1).getExpressionList());
+            expressionList.addAll(((ConcatenateExpression) exp2).getExpressionList());
+        }else if (exp1 instanceof ConcatenateExpression){
+            // exp1是concat
+            expressionList.addAll(((ConcatenateExpression) exp1).getExpressionList());
+            expressionList.add(exp2);
+        }else if (exp2 instanceof ConcatenateExpression){
+            // exp2是concat
+            expressionList.add(exp1);
+            expressionList.addAll(((ConcatenateExpression) exp2).getExpressionList());
+        }else {
+            // 全都不是concat
+            expressionList.add(exp1);
+            expressionList.add(exp2);
+        }
     }
 
     /**
@@ -47,61 +64,75 @@ public class ConcatenateExpression extends LinkingExpression {
 
     @Override
     public String toString() {
-        return String.format("concat(%s,%s)",leftExp.toString(),rightExp.toString());
+        StringBuilder builder=new StringBuilder();
+        builder.append("concat(");
+        for (int i=0;i<expressionList.size();i++){
+            if (i==expressionList.size()-1){
+                builder.append(expressionList.get(i).toString());
+            }else {
+                builder.append(expressionList.get(i).toString()+",");
+            }
+        }
+        builder.append(")");
+        return builder.toString();
     }
 
     @Override
     public Expression deepClone() {
-        return new ConcatenateExpression(leftExp.deepClone(),rightExp.deepClone());
+        return new ConcatenateExpression(expressionList);
     }
 
     @Override
     public int deepth() {
-        return leftExp.deepth()+rightExp.deepth();
+        return expressionList.size();
     }
 
     @Override
     public String interpret(String inputString) {
-        String ans="null";
-        if (leftExp instanceof NonTerminalExpression && rightExp instanceof NonTerminalExpression){
-            try {
-                ans=((NonTerminalExpression) leftExp).interpret(inputString)+((NonTerminalExpression) rightExp).interpret(inputString);
-            }catch (Exception e){
-                return null;
+        StringBuilder builder=new StringBuilder();
+        for (Expression expression:expressionList){
+            if (expression instanceof NonTerminalExpression){
+                builder.append(((NonTerminalExpression) expression).interpret(inputString));
             }
         }
-        return ans;
+        return builder.toString();
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof ConcatenateExpression){
-            return (leftExp.equals(((ConcatenateExpression) obj).getLeftExp())&&rightExp.equals(((ConcatenateExpression) obj).getRightExp()))
-                    ||(leftExp.equals(((ConcatenateExpression) obj).getRightExp())&&rightExp.equals(((ConcatenateExpression) obj).leftExp));
+            if (((ConcatenateExpression) obj).deepth()!=this.deepth()){
+                return false;
+            }
+            List<Expression> expressionList1=this.expressionList;
+            List<Expression> expressionList2=((ConcatenateExpression) obj).getExpressionList();
+            int deepth=deepth();
+            for (int i=0;i<deepth;i++){
+                if (!(expressionList1.get(i).equals(expressionList2.get(i)))){
+                    return false;
+                }
+            }
+            return true;
         }
+
         return false;
     }
 
     @Override
     public double score() {
-        // FIXME: 2017/3/2 concat(exp1,,concat(e2,e3))会导致score失真
-        double score=(leftExp.score()+rightExp.score())/deepth();
+        double sum=0.0;
+        for (Expression expression:expressionList){
+            sum+=expression.score();
+        }
+        double score=(sum/deepth())/Math.pow(1.1,deepth());
         return score;
     }
 
-    public Expression getLeftExp() {
-        return leftExp;
+    public List<Expression> getExpressionList() {
+        return expressionList;
     }
 
-    public void setLeftExp(Expression leftExp) {
-        this.leftExp = leftExp;
-    }
-
-    public Expression getRightExp() {
-        return rightExp;
-    }
-
-    public void setRightExp(Expression rightExp) {
-        this.rightExp = rightExp;
+    public void setExpressionList(List<Expression> expressionList) {
+        this.expressionList = expressionList;
     }
 }
