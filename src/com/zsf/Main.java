@@ -692,13 +692,13 @@ public class Main {
 //        examplePairs.add(new ExamplePair("Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012", "Electronics Store,Apr 03"));
 //        examplePairs.add(new ExamplePair("Airport,40.77446436,-73.86970997,Sun Jul 15 14:51:15 +0800 2012", "Airport,Jul 15"));
 //        examplePairs.add(new ExamplePair("Bridge,Tue Apr 03 18:00:25 +0800 2012", "Bridge,Apr 03"));
-//        examplePairs.add(new ExamplePair("Arts & Crafts Store,40.71981038,-74.00258103,Tue Apr 03 18:00:09 +0800 2012", "Arts & Crafts Store,Apr 03"));
+//        examplePairs.add(new ExamplePair("Arts & Crafts Store,40.71981038,-74.00258103,Tue Apr 03 18:00:09 +0800 2012", "Arts & Crafts Store,Apr 03,Tue"));
 //
 //        examplePairs.add(new ExamplePair("Wed Jul 11 11:17:44 +0800 2012,40.23213,German Restaurant", "German Restaurant,Jul 11"));
 //        examplePairs.add(new ExamplePair("40.7451638,-73.98251878,Tue Apr 03 18:02:41 +0800 2012,Medical Center", "Medical Center,Apr 03"));
 
         // 单个较长output
-//        examplePairs.add(new ExamplePair("Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012", "Electronics Store,Apr 03,Tue"));
+        examplePairs.add(new ExamplePair("Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012", "Electronics Store,Apr 03,Tue"));
 
         // 初级Loop能力
 //        examplePairs.add(new ExamplePair("Hello World Zsf the Program Synthesis Electronics Airport","HWZPSEA"));
@@ -706,7 +706,7 @@ public class Main {
 
         // endregion
 
-        examplePairs.add(new ExamplePair("                        姓名：<span class=\"name\">陈自郁</span> <br> 职称：<span class=\"zc\">讲师</span><br> 联系方式：<span class=\"lxfs\">chenziyu@cqu.edu.cn</span><br> 主要研究方向:<span class=\"major\">群智能、图像处理和智能控制</span><br>", "陈自郁,讲师,群智能、图像处理和智能控制"));
+//        examplePairs.add(new ExamplePair("                        姓名：<span class=\"name\">陈自郁</span> <br> 职称：<span class=\"zc\">讲师</span><br> 联系方式：<span class=\"lxfs\">chenziyu@cqu.edu.cn</span><br> 主要研究方向:<span class=\"major\">群智能、图像处理和智能控制</span><br>", "陈自郁,讲师,群智能、图像处理和智能控制"));
 //        examplePairs.add(new ExamplePair("姓名：<span class=\"name\">Ran Liu</span> <br> 职称：<span class=\"zc\">Associate Professor/Senior Engineer</span><br> 联系方式：<span class=\"lxfs\">ran.liu_cqu@qq.com</span><br> 主要研究方向:<span class=\"major\">Medical and stereo image processing; IC design; Biomedical Engineering</span><br>","Ran Liu,Associate Professor/Senior Engineer,Medical and stereo image processing; IC design; Biomedical Engineering"));
 
         // region # error
@@ -755,8 +755,8 @@ public class Main {
 
 
         // FIXME: 2017/2/16 错误原因初步判定为相似度(classifier)错误
-//        testPairs.add(new ValidationPair("2014年3月23日","3"));
-//        testPairs.add(new ValidationPair("9/23/2012","09"));
+        testPairs.add(new ValidationPair("2014年3月23日","3"));
+        testPairs.add(new ValidationPair("9/23/2012","09"));
 
         // FIXME: 2017/2/16 未知错误，运行时很久没有结果，可能在哪里死循环了，需要debug
 //        testPairs.add(new ValidationPair("1234-2345-23", "1234-2345-23"));

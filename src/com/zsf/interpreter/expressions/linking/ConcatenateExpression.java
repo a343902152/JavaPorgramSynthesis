@@ -4,6 +4,7 @@ import com.zsf.interpreter.expressions.Expression;
 import com.zsf.interpreter.expressions.NonTerminalExpression;
 import com.zsf.interpreter.expressions.string.ConstStrExpression;
 import com.zsf.interpreter.model.ExpressionGroup;
+import org.omg.PortableInterceptor.INACTIVE;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +40,33 @@ public class ConcatenateExpression extends LinkingExpression {
             expressionList.add(exp1);
             expressionList.add(exp2);
         }
+        deduplicateConstr();
+    }
+
+    private void deduplicateConstr() {
+        List<Expression> tmpList=new ArrayList<Expression>();
+        for (int i=0;i<expressionList.size();i++){
+            Expression e1=expressionList.get(i);
+            if (e1 instanceof ConstStrExpression){
+                String constr=((ConstStrExpression) e1).getConstStr();
+                int count=0;
+                for (int j=i+1;j<expressionList.size();j++){
+                    Expression e2=expressionList.get(j);
+                    if (e2 instanceof ConstStrExpression){
+                        constr+=((ConstStrExpression) e2).getConstStr();
+                        count++;
+                    }else {
+                        break;
+                    }
+                }
+                i+=count;
+                tmpList.add(new ConstStrExpression(constr));
+            }else {
+                tmpList.add(e1);
+            }
+        }
+        expressionList=tmpList;
+
     }
 
     /**
@@ -51,12 +79,7 @@ public class ConcatenateExpression extends LinkingExpression {
         ExpressionGroup linkedExpressions=new ExpressionGroup();
         for(Expression exp1:expressions1.getExpressions()){
             for (Expression exp2:expressions2.getExpressions()){
-                if (exp1 instanceof ConstStrExpression && exp2 instanceof ConstStrExpression){
-                    linkedExpressions.insert(new ConstStrExpression(((ConstStrExpression) exp1).getConstStr()+((ConstStrExpression) exp2).getConstStr()));
-                }else {
-                    linkedExpressions.insert(new ConcatenateExpression(exp1,exp2));
-                }
-                // TODO: 2017/3/2 loop和其他值合併
+                linkedExpressions.insert(new ConcatenateExpression(exp1,exp2));
             }
         }
         return linkedExpressions;
@@ -120,12 +143,25 @@ public class ConcatenateExpression extends LinkingExpression {
 
     @Override
     public double score() {
+        // TODO: 2017/3/3 对于constr(如, - 等连接符)不要计算deepth
         double sum=0.0;
+        int deepth=deepth();
         for (Expression expression:expressionList){
+            if (isConnector(expression)){
+                deepth--;
+                continue;
+            }
             sum+=expression.score();
         }
-        double score=(sum/deepth())/Math.pow(1.1,deepth());
+        double score=(sum/deepth)/Math.pow(1.1,deepth);
         return score;
+    }
+
+    private boolean isConnector(Expression expression) {
+        if (expression instanceof ConstStrExpression){
+            return ((ConstStrExpression) expression).getConstStr().length()<=1;
+        }
+        return false;
     }
 
     public List<Expression> getExpressionList() {
