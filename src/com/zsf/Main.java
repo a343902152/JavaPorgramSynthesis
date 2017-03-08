@@ -698,7 +698,7 @@ public class Main {
 //        examplePairs.add(new ExamplePair("40.7451638,-73.98251878,Tue Apr 03 18:02:41 +0800 2012,Medical Center", "Medical Center,Apr 03"));
 
         // 单个较长output
-        examplePairs.add(new ExamplePair("Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012", "Electronics Store,Apr 03,Tue"));
+//        examplePairs.add(new ExamplePair("Electronics Store,40.74260751,-73.99270535,Tue Apr 03 18:08:57 +0800 2012", "Electronics Store,Apr 03,Tue"));
 
         // 初级Loop能力
 //        examplePairs.add(new ExamplePair("Hello World Zsf the Program Synthesis Electronics Airport","HWZPSEA"));
@@ -706,7 +706,7 @@ public class Main {
 
         // endregion
 
-//        examplePairs.add(new ExamplePair("                        姓名：<span class=\"name\">陈自郁</span> <br> 职称：<span class=\"zc\">讲师</span><br> 联系方式：<span class=\"lxfs\">chenziyu@cqu.edu.cn</span><br> 主要研究方向:<span class=\"major\">群智能、图像处理和智能控制</span><br>", "陈自郁,讲师,群智能、图像处理和智能控制"));
+        examplePairs.add(new ExamplePair("                        姓名：<span class=\"name\">陈自郁</span> <br> 职称：<span class=\"zc\">讲师</span><br> 联系方式：<span class=\"lxfs\">chenziyu@cqu.edu.cn</span><br> 主要研究方向:<span class=\"major\">群智能、图像处理和智能控制</span><br>", "陈自郁,讲师,群智能、图像处理和智能控制"));
 //        examplePairs.add(new ExamplePair("姓名：<span class=\"name\">Ran Liu</span> <br> 职称：<span class=\"zc\">Associate Professor/Senior Engineer</span><br> 联系方式：<span class=\"lxfs\">ran.liu_cqu@qq.com</span><br> 主要研究方向:<span class=\"major\">Medical and stereo image processing; IC design; Biomedical Engineering</span><br>","Ran Liu,Associate Professor/Senior Engineer,Medical and stereo image processing; IC design; Biomedical Engineering"));
 
         // region # error

@@ -51,7 +51,7 @@ public class FEMain {
         regexList.add(new EpicRegex("<", "[<]+"));
         regexList.add(new EpicRegex(">", "[>]+"));
         regexList.add(new EpicRegex("/", "[/]+"));
-//        regexList.add(new Regex("SpaceToken", "[ ]+")); // 加上之后就出不了结果？？
+        regexList.add(new EpicRegex("SpaceToken", "[ ]+")); // 加上之后就出不了结果？？
         // FIXME: 2017/2/5 如果开启这个SpTok在当前算法下会导致解过于庞大
 //        regexList.add(new Regex("SpecialTokens","[ -+()\\[\\],.:]+"));
 
@@ -83,14 +83,14 @@ public class FEMain {
 //                "</table>\n" +
 //                "</body>\n" +
 //                "</HTML>";
-//        List<Region> baseRegions=new ArrayList<Region>();
+//        List<Region> documentRegions=new ArrayList<Region>();
 //        String[] splitedLines=inputDocument.split("\n");
 //        for (String line:splitedLines){
-//            baseRegions.add(new Region(null,0,-1,line));
+//            documentRegions.add(new Region(null,0,-1,line));
 //        }
 //        List<Region> newSelectedRegions=new ArrayList<Region>();
-//        newSelectedRegions.add(new Region(baseRegions.get(4),7,21,"Russell Smith"));
-//        newSelectedRegions.add(new Region(baseRegions.get(5),7,19,"John Cameron"));
+//        newSelectedRegions.add(new Region(documentRegions.get(4),7,21,"Russell Smith"));
+//        newSelectedRegions.add(new Region(documentRegions.get(5),7,19,"John Cameron"));
 
         String inputDocument = "<div class=\"teacherdiv\">\n" +
                 "                    <div style=\"position: relative;float:left;width:100px;height:140px;margin: 5px 5px\">\n" +
