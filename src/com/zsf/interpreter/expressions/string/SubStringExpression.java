@@ -32,15 +32,19 @@ public class SubStringExpression extends StringExpression {
 //            System.out.println("ILLEGAL_POS");
             return null;
         }else {
-            String ans="";
-            try {
-                ans=inputString.substring(pos1,pos2);
-            }catch (Exception e){
-                // FIXME: 2017/2/3 例：Input="bc abcd" output="abc" 现在的算法有时会导致index=4(a) 连接到index=0(bc)上去
+            if (pos1==pos2){
+                return "";
+            }else {
+                String ans="";
+                try {
+                    ans=inputString.substring(pos1,pos2);
+                }catch (Exception e){
+                    // FIXME: 2017/2/3 例：Input="bc abcd" output="abc" 现在的算法有时会导致index=4(a) 连接到index=0(bc)上去
 //                System.out.println("SubString发生未知错误");
-                return null;
+                    return null;
+                }
+                return ans;
             }
-            return ans;
         }
     }
 
@@ -48,7 +52,7 @@ public class SubStringExpression extends StringExpression {
         if (pos1<0||pos1>inputString.length() && pos2<0||pos2>inputString.length()){
             return true;
         }
-        if (pos1>=pos2){
+        if (pos1>pos2){
             return true;
         }
         return false;
