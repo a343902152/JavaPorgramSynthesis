@@ -1,6 +1,7 @@
 package com.zsf.flashextract.model;
 
 import com.zsf.flashextract.region.Region;
+import com.zsf.flashextract.region.SelectedRegion;
 import com.zsf.interpreter.expressions.regex.DynamicRegex;
 import com.zsf.interpreter.expressions.regex.Regex;
 import com.zsf.interpreter.model.Match;
@@ -22,8 +23,10 @@ public class Document {
     private List<Regex> usefulRegex;
     private Map<Integer, List<Region>> colorfulRegions = new HashMap<Integer, List<Region>>();
 
-    public Document(String inputDocument,List<Regex> usefulRegex) {
-        this.usefulRegex=usefulRegex;
+    private List<SelectedRegion> selectedRegions = new ArrayList<SelectedRegion>();
+
+    public Document(String inputDocument, List<Regex> usefulRegex) {
+        this.usefulRegex = usefulRegex;
         setInputDocument(inputDocument);
     }
 
@@ -48,14 +51,22 @@ public class Document {
             colorfulRegions.put(color, regions);
         }
         // 注意这个新选择的region还不是ParentRegion的ChildRegion, 只有LineSelector选出来的region才是childRegion
-        regions.add(new Region(documentRegions.get(lineIndex), beginPos, endPos, selectedText));
+//        regions.add(new Region(documentRegions.get(lineIndex), beginPos, endPos, selectedText));
+        // 这里加入的是带颜色的被选中的region，而不是普通region
+        regions.add(new SelectedRegion(documentRegions.get(lineIndex), beginPos, endPos, selectedText, color));
         // 直接将这一行设置为positiveLine
-        doSetPositiveLineIndex(color, lineIndex);
+        addPositiveLineIndex(color, lineIndex);
     }
 
     private Map<Integer, List<Integer>> colorfulPositiveLineIndex = new HashMap<Integer, List<Integer>>();
 
-    private void doSetPositiveLineIndex(int color, int lineIndex) {
+    /**
+     * 在doSelectRegion后调用，将当前选中行加入到positiveIndex中(默认一开始只有一种颜色)
+     *
+     * @param color
+     * @param lineIndex
+     */
+    private void addPositiveLineIndex(int color, int lineIndex) {
         List<Integer> positiveLineIndex = colorfulPositiveLineIndex.get(color);
         if (positiveLineIndex == null) {
             positiveLineIndex = new ArrayList<Integer>();
@@ -99,6 +110,7 @@ public class Document {
         }
         return matches;
     }
+
     /**
      * 现在假设所有的待提取数据都处于同一行，所以只有处理第一种颜色的时候会调用这个函数
      * <p>
@@ -140,7 +152,7 @@ public class Document {
     }
 
     private List<Regex> filterUsefulSelector(List<Regex> regices, List<Region> documentRegions,
-                                                    List<Integer> positiveLineIndex, List<Integer> negataiveLineIndex) {
+                                             List<Integer> positiveLineIndex, List<Integer> negataiveLineIndex) {
         List<Regex> usefulLineSelector = new ArrayList<Regex>();
 
         for (Regex regex : regices) {
@@ -165,6 +177,7 @@ public class Document {
         }
         return usefulLineSelector;
     }
+
     /**
      * 从当前新选择的区域出发，分别向左&向右匹配相同str作为dynamicToken添加到usefulRegex中
      *
@@ -205,7 +218,7 @@ public class Document {
     }
 
 
-    private  List<Regex> deDuplication(List<List<Regex>> regexs, boolean isStartWith) {
+    private List<Regex> deDuplication(List<List<Regex>> regexs, boolean isStartWith) {
         List<Regex> deDuplicatedList = new ArrayList<Regex>();
 
         List<Regex> baseRegexList = regexs.get(0);
@@ -248,7 +261,7 @@ public class Document {
      * @param lastRegex
      */
     private List<Regex> buildEndWith(int curDeepth, int maxDeepth,
-                                            List<Match> matches, int endNode, Regex lastRegex) {
+                                     List<Match> matches, int endNode, Regex lastRegex) {
         if (curDeepth > maxDeepth) {
             return null;
         }
@@ -285,7 +298,7 @@ public class Document {
      * @param lastRegex
      */
     private List<Regex> buildStartWith(int curDeepth, int maxDeepth,
-                                              List<Match> matches, int beginNode, Regex lastRegex) {
+                                       List<Match> matches, int beginNode, Regex lastRegex) {
         if (curDeepth > maxDeepth) {
             return null;
         }
@@ -321,15 +334,21 @@ public class Document {
         return documentRegions;
     }
 
-    public void setDocumentRegions(List<Region> documentRegions) {
-        this.documentRegions = documentRegions;
-    }
-
-    public Map<Integer, List<Region>> getColorfulRegions() {
-        return colorfulRegions;
-    }
-
-    public void setColorfulRegions(Map<Integer, List<Region>> colorfulRegions) {
-        this.colorfulRegions = colorfulRegions;
+    /**
+     * 用某个selector(Regex)选出当前document中符合条件的region，并将他们标注为selectedRegions&返回给外部
+     * 
+     * @param selector
+     * @param color
+     * @return
+     */
+    public List<SelectedRegion> selectRegionsBySelector(Regex selector, int color) {
+        this.selectedRegions = new ArrayList<SelectedRegion>();
+        for (Region region : documentRegions) {
+            if (region.canMatch(selector)) {
+                selectedRegions.add(new SelectedRegion(region.getParentRegion(),
+                        region.getBeginPos(), region.getEndPos(), region.getText(), color));
+            }
+        }
+        return selectedRegions;
     }
 }

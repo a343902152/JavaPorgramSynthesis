@@ -1,6 +1,7 @@
 package com.zsf.flashextract.model;
 
 import com.zsf.flashextract.region.Region;
+import com.zsf.flashextract.region.SelectedRegion;
 import com.zsf.interpreter.expressions.regex.*;
 import com.zsf.interpreter.model.Match;
 
@@ -68,12 +69,15 @@ public class FlashExtract {
      * @param selector
      */
     public void selectRegionBySelector(Regex selector,int color) {
-
-        for (Region region:document.getDocumentRegions()){
-            if (region.canMatch(selector)){
-                System.out.println(region.getText());
-            }
+        List<SelectedRegion> selectedRegions=document.selectRegionsBySelector(selector,color);
+        for (SelectedRegion region:selectedRegions){
+            System.out.println(region.getText());
         }
+//        for (Region region:document.getDocumentRegions()){
+//            if (region.canMatch(selector)){
+//                System.out.println(region.getText());
+//            }
+//        }
     }
 
     public void setInputDocument(String inputDocument) {
