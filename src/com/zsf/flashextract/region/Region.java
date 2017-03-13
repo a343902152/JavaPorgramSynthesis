@@ -21,23 +21,16 @@ public class Region {
     private int endPos;
     private String text;
 
-    private List<Region> childRegions=new ArrayList<Region>();
+    /**
+     * 在当前容器中被选中的regions()，每个region要求带有一个颜色
+     */
+    private List<SelectedRegion> selectedChildRegions= new ArrayList<SelectedRegion>();
 
     public Region(Region parentRegion, int beginPos, int endPos,String text) {
         this.parentRegion = parentRegion;
         this.beginPos = beginPos;
         this.endPos = endPos;
         this.text=text;
-    }
-
-    public void selectNewChildRegion(Region newChildRegion){
-        insertNewChildRegionToRightPos(newChildRegion);
-    }
-
-    private void insertNewChildRegionToRightPos(Region newChildRegion) {
-        childRegions.add(newChildRegion);
-        // TODO: 2017/2/27 根据endPos从小到大排序的Comparter
-//        Collections.sort(childRegions);
     }
 
     /**
@@ -59,14 +52,6 @@ public class Region {
 
     public void setParentRegion(Region parentRegion) {
         this.parentRegion = parentRegion;
-    }
-
-    public List<Region> getChildRegions() {
-        return childRegions;
-    }
-
-    public void setChildRegions(List<Region> childRegions) {
-        this.childRegions = childRegions;
     }
 
     public int getBeginPos() {
