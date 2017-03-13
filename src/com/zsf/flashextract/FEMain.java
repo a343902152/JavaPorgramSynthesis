@@ -1,14 +1,10 @@
 package com.zsf.flashextract;
 
+import com.zsf.flashextract.model.FlashExtract;
 import com.zsf.flashextract.region.Region;
 import com.zsf.interpreter.expressions.regex.*;
-import com.zsf.interpreter.model.Match;
 
-import java.util.ArrayList;
 import java.util.List;
-
-import static com.zsf.interpreter.tool.StringTools.getCommonStr;
-import static com.zsf.interpreter.tool.StringTools.getReversedStr;
 
 /**
  * Created by zsf on 2017/2/26.
@@ -90,7 +86,20 @@ public class FEMain {
         // FIXME: 2017/3/13 现在假设所有要提取的数据都处于同一行，不存在跨行的结构化数据
         List<Regex> boolLineSelector=flashExtract.getLineSelector(color);
         System.out.println(boolLineSelector);
-        showRegionNeedSelect(flashExtract.getDocumentRegions(), boolLineSelector);
+        int lineRegionColor=0;
+        // TODO: 2017/3/13 selector的排序
+        flashExtract.selectRegionBySelector(boolLineSelector.get(0),lineRegionColor);
+//        showRegionNeedSelect(flashExtract.getDocumentRegions(), boolLineSelector);
+
+        // TODO: 2017/3/13 出现了新的color，怎么办？
+        int color2=2;
+        // if has lineSelector: call FF.extract() else doSelectRegion
+        // FF.extract: 根据input(selectedTextRegion)和output(mouseSecletedRegion)产生program
+        // 再对其他所有lineSelector选出的needSelectedsRegion使用program，并且标注
+
+        // 异常处理：选中的是needSelectesRegions以外的region就提示错误，忽略本次输入
+
+
     }
 
     /**
