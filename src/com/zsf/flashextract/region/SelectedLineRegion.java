@@ -1,11 +1,16 @@
 package com.zsf.flashextract.region;
 
+import com.zsf.StringProcessor;
 import com.zsf.interpreter.expressions.Expression;
 import com.zsf.interpreter.expressions.NonTerminalExpression;
 import com.zsf.interpreter.expressions.regex.Regex;
+import com.zsf.interpreter.model.ExamplePair;
 import com.zsf.interpreter.model.ExpressionGroup;
+import com.zsf.interpreter.model.ResultMap;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * 表示被某种规则选中的Region,
@@ -34,8 +39,16 @@ public class SelectedLineRegion extends Region {
     }
 
     public ExpressionGroup selectChildRegion(int color,String targetString){
-        //todo 调用FF input为本地text, output为target, 返回一组有效的Expressions
-        return null;
+        //调用FF input为本地text, output为target, 返回一组有效的Expressions
+
+        StringProcessor stringProcessor=new StringProcessor();
+        List<ExamplePair> examplePairs=new ArrayList<ExamplePair>();
+        examplePairs.add(new ExamplePair(getText(),targetString));
+
+        List<ResultMap> resultMaps=stringProcessor.generateExpressionsByExamples(examplePairs);
+        ExpressionGroup expressionGroup=stringProcessor.selectTopKExps(resultMaps,10);
+
+        return expressionGroup;
     }
 
     public void setColorfulRegionExpressions(int color, ExpressionGroup expressionGroup) {
