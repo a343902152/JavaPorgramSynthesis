@@ -2,13 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="892c6dfa-8bbe-4ab1-aa74-39dc85976126" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/src/com/zsf/flashextract/region/SelectedLineRegion.java" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/com/zsf/flashextract/region/SelectedRegion.java" afterPath="" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/com/zsf/flashextract/FEMain.java" afterPath="$PROJECT_DIR$/src/com/zsf/flashextract/FEMain.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/com/zsf/flashextract/model/Document.java" afterPath="$PROJECT_DIR$/src/com/zsf/flashextract/model/Document.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/com/zsf/flashextract/model/FlashExtract.java" afterPath="$PROJECT_DIR$/src/com/zsf/flashextract/model/FlashExtract.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/com/zsf/flashextract/region/Region.java" afterPath="$PROJECT_DIR$/src/com/zsf/flashextract/region/Region.java" />
     </list>
     <ignored path="ZSFProgramSynthesis.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -35,31 +30,43 @@
       <file leaf-file-name="Main.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/com/zsf/Main.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="133">
-              <caret line="698" column="0" selection-start-line="698" selection-start-column="0" selection-end-line="698" selection-end-column="0" />
+            <state relative-caret-position="342">
+              <caret line="787" column="60" selection-start-line="787" selection-start-column="60" selection-end-line="787" selection-end-column="60" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="FEMain.java" pinned="false" current-in-tab="false">
+      <file leaf-file-name="SubStringExpression.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/com/zsf/interpreter/expressions/string/SubStringExpression.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="362">
+              <caret line="50" column="17" selection-start-line="50" selection-start-column="17" selection-end-line="50" selection-end-column="17" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="FEMain.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/com/zsf/flashextract/FEMain.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="199">
-              <caret line="94" column="40" selection-start-line="94" selection-start-column="40" selection-end-line="94" selection-end-column="40" />
+            <state relative-caret-position="353">
+              <caret line="111" column="5" selection-start-line="111" selection-start-column="5" selection-end-line="111" selection-end-column="5" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Document.java" pinned="false" current-in-tab="true">
+      <file leaf-file-name="Document.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/com/zsf/flashextract/model/Document.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="379">
-              <caret line="382" column="45" selection-start-line="382" selection-start-column="45" selection-end-line="382" selection-end-column="45" />
+            <state relative-caret-position="2947">
+              <caret line="413" column="44" selection-start-line="413" selection-start-column="44" selection-end-line="413" selection-end-column="44" />
               <folding>
-                <element signature="e#1027#1034#0" expanded="true" />
-                <element signature="e#14330#14343#0" expanded="true" />
+                <element signature="e#1103#1110#0" expanded="true" />
+                <element signature="e#14410#14423#0" expanded="true" />
+                <element signature="e#16194#16195#0" expanded="true" />
+                <element signature="e#16253#16254#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -68,13 +75,17 @@
       <file leaf-file-name="FlashExtract.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/com/zsf/flashextract/model/FlashExtract.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="305">
-              <caret line="95" column="45" selection-start-line="95" selection-start-column="45" selection-end-line="95" selection-end-column="45" />
+            <state relative-caret-position="693">
+              <caret line="104" column="41" selection-start-line="104" selection-start-column="41" selection-end-line="104" selection-end-column="41" />
               <folding>
+                <element signature="e#3457#3458#0" expanded="true" />
+                <element signature="e#3529#3530#0" expanded="true" />
                 <element signature="e#3778#3779#0" expanded="true" />
                 <element signature="e#3832#3833#0" expanded="true" />
                 <element signature="e#3991#3992#0" expanded="true" />
                 <element signature="e#4056#4057#0" expanded="true" />
+                <element signature="e#4383#4384#0" expanded="true" />
+                <element signature="e#4444#4445#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -83,15 +94,16 @@
       <file leaf-file-name="SelectedLineRegion.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/com/zsf/flashextract/region/SelectedLineRegion.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="199">
-              <caret line="40" column="16" selection-start-line="40" selection-start-column="16" selection-end-line="40" selection-end-column="16" />
+            <state relative-caret-position="467">
+              <caret line="49" column="0" selection-start-line="49" selection-start-column="0" selection-end-line="49" selection-end-column="0" />
               <folding>
                 <element signature="imports" expanded="true" />
-                <element signature="e#792#818#0" expanded="true" />
-                <element signature="e#1670#1671#0" expanded="true" />
-                <element signature="e#1702#1703#0" expanded="true" />
-                <element signature="e#1749#1750#0" expanded="true" />
-                <element signature="e#1791#1792#0" expanded="true" />
+                <element signature="e#965#991#0" expanded="true" />
+                <element signature="e#1491#1504#0" expanded="true" />
+                <element signature="e#2234#2235#0" expanded="true" />
+                <element signature="e#2266#2267#0" expanded="true" />
+                <element signature="e#2313#2314#0" expanded="true" />
+                <element signature="e#2355#2356#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -110,16 +122,9 @@
       <file leaf-file-name="StringProcessor.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/com/zsf/StringProcessor.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="9360">
-              <caret line="482" column="0" selection-start-line="482" selection-start-column="0" selection-end-line="482" selection-end-column="0" />
-              <folding>
-                <element signature="imports" expanded="false" />
-                <element signature="e#1357#1368#0" expanded="false" />
-                <element signature="e#9459#9474#0" expanded="false" />
-                <element signature="e#12476#12483#0" expanded="false" />
-                <element signature="e#14927#14934#0" expanded="false" />
-                <element signature="e#18291#18308#0" expanded="false" />
-              </folding>
+            <state relative-caret-position="542">
+              <caret line="455" column="57" selection-start-line="455" selection-start-column="57" selection-end-line="455" selection-end-column="57" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -170,27 +175,6 @@
                 <element signature="e#1067#1068#0" expanded="false" />
                 <element signature="e#1110#1111#0" expanded="false" />
                 <element signature="e#1136#1137#0" expanded="false" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="ResultMap.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/com/zsf/interpreter/model/ResultMap.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="800">
-              <caret line="48" column="0" selection-start-line="48" selection-start-column="0" selection-end-line="48" selection-end-column="0" />
-              <folding>
-                <element signature="e#517#518#0" expanded="false" />
-                <element signature="e#564#565#0" expanded="false" />
-                <element signature="e#616#617#0" expanded="false" />
-                <element signature="e#654#655#0" expanded="false" />
-                <element signature="e#903#904#0" expanded="false" />
-                <element signature="e#929#930#0" expanded="false" />
-                <element signature="e#964#965#0" expanded="false" />
-                <element signature="e#994#995#0" expanded="false" />
-                <element signature="e#1082#1083#0" expanded="false" />
-                <element signature="e#1112#1113#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -255,16 +239,17 @@
         <option value="$PROJECT_DIR$/src/com/zsf/interpreter/expressions/pos/MatchStartPos.java" />
         <option value="$PROJECT_DIR$/src/com/zsf/interpreter/expressions/linking/ConcatenateExpressionBack.java" />
         <option value="$PROJECT_DIR$/src/com/zsf/interpreter/expressions/linking/DeprecatedConcatenateExpression.java" />
-        <option value="$PROJECT_DIR$/src/com/zsf/StringProcessor.java" />
         <option value="$PROJECT_DIR$/src/com/zsf/interpreter/expressions/string/ConstStrExpression.java" />
         <option value="$PROJECT_DIR$/src/com/zsf/interpreter/expressions/linking/ConcatenateExpression.java" />
-        <option value="$PROJECT_DIR$/src/com/zsf/Main.java" />
         <option value="$PROJECT_DIR$/src/com/zsf/flashextract/FlashExtract.java" />
         <option value="$PROJECT_DIR$/src/com/zsf/flashextract/region/SelectedRegion.java" />
-        <option value="$PROJECT_DIR$/src/com/zsf/flashextract/FEMain.java" />
-        <option value="$PROJECT_DIR$/src/com/zsf/flashextract/model/FlashExtract.java" />
+        <option value="$PROJECT_DIR$/src/com/zsf/FlashFill.java" />
+        <option value="$PROJECT_DIR$/src/com/zsf/Main.java" />
         <option value="$PROJECT_DIR$/src/com/zsf/flashextract/region/SelectedLineRegion.java" />
+        <option value="$PROJECT_DIR$/src/com/zsf/StringProcessor.java" />
+        <option value="$PROJECT_DIR$/src/com/zsf/flashextract/model/FlashExtract.java" />
         <option value="$PROJECT_DIR$/src/com/zsf/flashextract/model/Document.java" />
+        <option value="$PROJECT_DIR$/src/com/zsf/flashextract/FEMain.java" />
       </list>
     </option>
   </component>
@@ -323,6 +308,34 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
             </PATH_ELEMENT>
           </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ZSFProgramSynthesis" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ZSFProgramSynthesis" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ZSFProgramSynthesis" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ZSFProgramSynthesis" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="zsf" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
         </subPane>
       </pane>
       <pane id="Scope" />
@@ -335,7 +348,7 @@
     <property name="settings.editor.splitter.proportion" value="0.2" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/out" />
     <property name="extract.method.default.visibility" value="private" />
-    <property name="SearchEverywhereHistoryKey" value="selecre&#9;PSI&#9;JAVA://com.zsf.flashextract.region.SelectedRegion&#10;flash&#9;PSI&#9;JAVA://com.zsf.flashextract.model.FlashExtract&#10;docu&#9;PSI&#9;JAVA://com.zsf.flashextract.model.Document&#10;femain&#9;PSI&#9;JAVA://com.zsf.flashextract.FEMain&#10;const&#9;FILE&#9;file://D:/MyProjectsRepertory/JAVA_project/ZSFProgramSynthesis/src/com/zsf/interpreter/expressions/string/ConstStrExpression.java&#10;stringpro&#9;PSI&#9;JAVA://com.zsf.StringProcessor" />
+    <property name="SearchEverywhereHistoryKey" value="sub&#9;FILE&#9;file://D:/MyProjectsRepertory/JAVA_project/ZSFProgramSynthesis/src/com/zsf/interpreter/expressions/string/SubStringExpression.java&#10;selecre&#9;PSI&#9;JAVA://com.zsf.flashextract.region.SelectedRegion&#10;flash&#9;PSI&#9;JAVA://com.zsf.flashextract.model.FlashExtract&#10;docu&#9;PSI&#9;JAVA://com.zsf.flashextract.model.Document&#10;femain&#9;PSI&#9;JAVA://com.zsf.flashextract.FEMain&#10;const&#9;FILE&#9;file://D:/MyProjectsRepertory/JAVA_project/ZSFProgramSynthesis/src/com/zsf/interpreter/expressions/string/ConstStrExpression.java&#10;stringpro&#9;PSI&#9;JAVA://com.zsf.StringProcessor" />
   </component>
   <component name="RecentsManager">
     <key name="CopyClassDialog.RECENTS_KEY">
@@ -786,6 +799,9 @@
   <component name="ShelveChangesManager" show_recycled="false">
     <option name="remove_strategy" value="false" />
   </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
       <changelist id="892c6dfa-8bbe-4ab1-aa74-39dc85976126" name="Default" comment="" />
@@ -815,7 +831,7 @@
       <workItem from="1488504993991" duration="5824000" />
       <workItem from="1488935518976" duration="2029000" />
       <workItem from="1489393820882" duration="2327000" />
-      <workItem from="1489454794950" duration="5379000" />
+      <workItem from="1489454794950" duration="8020000" />
     </task>
     <task id="LOCAL-00001" summary="初步定型">
       <created>1482801968826</created>
@@ -901,11 +917,25 @@
       <option name="project" value="LOCAL" />
       <updated>1488510166825</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="加入简化版LineRegion等，准备将FE和FF结合">
+      <created>1489474308206</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1489474308206</updated>
+    </task>
+    <task id="LOCAL-00014" summary="初级版融合了FF和FE，同时可以选择多种color的解决方案，准备不考虑代码优化，直接到DataStand上进行实验">
+      <created>1489476306058</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1489476306058</updated>
+    </task>
+    <option name="localTasksCounter" value="15" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="88445000" />
+    <option name="totallyTimeSpent" value="91086000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1936" height="1066" extended-state="6" />
@@ -918,8 +948,8 @@
       <window_info id="Capture Analysis" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.39889503" sideWeight="0.5042644" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.27403316" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.30939227" sideWeight="0.49573562" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4839779" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.30939227" sideWeight="0.49573562" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32928178" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Capture Tool" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Designer" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
@@ -930,7 +960,7 @@
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="UI Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.48729283" sideWeight="0.4968017" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.6519337" sideWeight="0.4968017" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -983,7 +1013,9 @@
     <MESSAGE value="刘然BUG" />
     <MESSAGE value="concat更新为list形式，一定程度上能解决ranking问题(但是还有很多bug，见现在的example)" />
     <MESSAGE value="修正连接符(- , () [] 等)在对concat评分的影响，修正新concat不会正确合并constr的问题" />
-    <option name="LAST_COMMIT_MESSAGE" value="修正连接符(- , () [] 等)在对concat评分的影响，修正新concat不会正确合并constr的问题" />
+    <MESSAGE value="加入简化版LineRegion等，准备将FE和FF结合" />
+    <MESSAGE value="初级版融合了FF和FE，同时可以选择多种color的解决方案，准备不考虑代码优化，直接到DataStand上进行实验" />
+    <option name="LAST_COMMIT_MESSAGE" value="初级版融合了FF和FE，同时可以选择多种color的解决方案，准备不考虑代码优化，直接到DataStand上进行实验" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -1007,13 +1039,19 @@
           <option name="timeStamp" value="91" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/com/zsf/flashextract/FEMain.java</url>
-          <line>106</line>
+          <url>file://$PROJECT_DIR$/src/com/zsf/flashextract/model/Document.java</url>
+          <line>386</line>
           <properties />
-          <option name="timeStamp" value="94" />
+          <option name="timeStamp" value="99" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/com/zsf/flashextract/model/Document.java</url>
+          <line>54</line>
+          <properties />
+          <option name="timeStamp" value="100" />
         </line-breakpoint>
       </breakpoints>
-      <option name="time" value="99" />
+      <option name="time" value="102" />
     </breakpoint-manager>
     <watches-manager />
   </component>
@@ -1198,14 +1236,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/com/zsf/interpreter/expressions/string/SubStringExpression.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="320">
-          <caret line="16" column="0" selection-start-line="16" selection-start-column="0" selection-end-line="16" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/com/zsf/interpreter/tool/ExpScoreComparator.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="300">
@@ -1335,21 +1365,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/com/zsf/StringProcessor.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="9360">
-          <caret line="482" column="0" selection-start-line="482" selection-start-column="0" selection-end-line="482" selection-end-column="0" />
-          <folding>
-            <element signature="imports" expanded="false" />
-            <element signature="e#1357#1368#0" expanded="false" />
-            <element signature="e#9459#9474#0" expanded="false" />
-            <element signature="e#12476#12483#0" expanded="false" />
-            <element signature="e#14927#14934#0" expanded="false" />
-            <element signature="e#18291#18308#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/com/zsf/interpreter/expressions/linking/ConcatenateExpression.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1120">
@@ -1373,14 +1388,6 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/com/zsf/flashextract/FlashExtract.java" />
-    <entry file="file://$PROJECT_DIR$/src/com/zsf/Main.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="133">
-          <caret line="698" column="0" selection-start-line="698" selection-start-column="0" selection-end-line="698" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/com/zsf/flashextract/region/Region.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="140">
@@ -1391,48 +1398,79 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/com/zsf/flashextract/region/SelectedLineRegion.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="199">
-          <caret line="40" column="16" selection-start-line="40" selection-start-column="16" selection-end-line="40" selection-end-column="16" />
+        <state relative-caret-position="467">
+          <caret line="49" column="0" selection-start-line="49" selection-start-column="0" selection-end-line="49" selection-end-column="0" />
           <folding>
             <element signature="imports" expanded="true" />
-            <element signature="e#792#818#0" expanded="true" />
-            <element signature="e#1670#1671#0" expanded="true" />
-            <element signature="e#1702#1703#0" expanded="true" />
-            <element signature="e#1749#1750#0" expanded="true" />
-            <element signature="e#1791#1792#0" expanded="true" />
+            <element signature="e#965#991#0" expanded="true" />
+            <element signature="e#1491#1504#0" expanded="true" />
+            <element signature="e#2234#2235#0" expanded="true" />
+            <element signature="e#2266#2267#0" expanded="true" />
+            <element signature="e#2313#2314#0" expanded="true" />
+            <element signature="e#2355#2356#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/com/zsf/flashextract/FEMain.java">
+    <entry file="file://$PROJECT_DIR$/src/com/zsf/interpreter/expressions/string/SubStringExpression.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="199">
-          <caret line="94" column="40" selection-start-line="94" selection-start-column="40" selection-end-line="94" selection-end-column="40" />
+        <state relative-caret-position="362">
+          <caret line="50" column="17" selection-start-line="50" selection-start-column="17" selection-end-line="50" selection-end-column="17" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/com/zsf/Main.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="342">
+          <caret line="787" column="60" selection-start-line="787" selection-start-column="60" selection-end-line="787" selection-end-column="60" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/com/zsf/StringProcessor.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="542">
+          <caret line="455" column="57" selection-start-line="455" selection-start-column="57" selection-end-line="455" selection-end-column="57" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/com/zsf/flashextract/model/FlashExtract.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="305">
-          <caret line="95" column="45" selection-start-line="95" selection-start-column="45" selection-end-line="95" selection-end-column="45" />
+        <state relative-caret-position="693">
+          <caret line="104" column="41" selection-start-line="104" selection-start-column="41" selection-end-line="104" selection-end-column="41" />
           <folding>
+            <element signature="e#3457#3458#0" expanded="true" />
+            <element signature="e#3529#3530#0" expanded="true" />
             <element signature="e#3778#3779#0" expanded="true" />
             <element signature="e#3832#3833#0" expanded="true" />
             <element signature="e#3991#3992#0" expanded="true" />
             <element signature="e#4056#4057#0" expanded="true" />
+            <element signature="e#4383#4384#0" expanded="true" />
+            <element signature="e#4444#4445#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/com/zsf/flashextract/model/Document.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="379">
-          <caret line="382" column="45" selection-start-line="382" selection-start-column="45" selection-end-line="382" selection-end-column="45" />
+        <state relative-caret-position="2947">
+          <caret line="413" column="44" selection-start-line="413" selection-start-column="44" selection-end-line="413" selection-end-column="44" />
           <folding>
-            <element signature="e#1027#1034#0" expanded="true" />
-            <element signature="e#14330#14343#0" expanded="true" />
+            <element signature="e#1103#1110#0" expanded="true" />
+            <element signature="e#14410#14423#0" expanded="true" />
+            <element signature="e#16194#16195#0" expanded="true" />
+            <element signature="e#16253#16254#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/com/zsf/flashextract/FEMain.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="353">
+          <caret line="111" column="5" selection-start-line="111" selection-start-column="5" selection-end-line="111" selection-end-column="5" />
+          <folding />
         </state>
       </provider>
     </entry>

@@ -84,8 +84,8 @@ public class FEMain {
 //        flashExtract.doSelectRegion(color,5,7,19,"John Cameron");
 
         // FIXME: 2017/3/13 现在假设所有要提取的数据都处于同一行，不存在跨行的结构化数据
-        // 当region达到2个时，可以自动产生LineSelector并应用
         // TODO: 2017/3/14 下面几个方法可以整合到一起
+        // 当region达到2个时，可以自动产生LineSelector并应用
         if (flashExtract.needGenerateLineReions(color)){
             List<Regex> boolLineSelector=flashExtract.getLineSelector(color);
             System.out.println(boolLineSelector);
@@ -99,19 +99,16 @@ public class FEMain {
 
 //        showRegionNeedSelect(flashExtract.getDocumentRegions(), boolLineSelector);
 
-        // TODO: 2017/3/13 出现了新的color，怎么办？
         int color2=2;
         flashExtract.doSelectRegionInLineRegions(color2,5,86,121,"Associate Professor/Senior Engineer");
 
         int color3=3;
-        flashExtract.doSelectRegionInLineRegions(color3,5,214,284,"Medical and stereo image processing; IC design; Biomedical Engineering");
-        // if has lineSelector: call FF.extract() else doSelectRegion
+        // TODO if has lineSelector: call FF.extract() else doSelectRegion
         // FF.extract: 根据input(selectedTextRegion)和output(mouseSecletedRegion)产生program
         // 再对其他所有lineSelector选出的needSelectedsRegion使用program，并且标注
+        flashExtract.doSelectRegionInLineRegions(color3,5,214,284,"Medical and stereo image processing; IC design; Biomedical Engineering");
 
-        // 异常处理：选中的是needSelectesRegions以外的region就提示错误，忽略本次输入
-
-
+        // TODO 异常处理：选中的是needSelectesRegions以外的region就提示错误，忽略本次输入
     }
 
     /**
