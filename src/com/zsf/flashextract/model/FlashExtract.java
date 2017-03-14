@@ -1,15 +1,10 @@
 package com.zsf.flashextract.model;
 
-import com.zsf.flashextract.region.Region;
-import com.zsf.flashextract.region.SelectedRegion;
+import com.zsf.flashextract.region.SelectedLineRegion;
 import com.zsf.interpreter.expressions.regex.*;
-import com.zsf.interpreter.model.Match;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.zsf.interpreter.tool.StringTools.getCommonStr;
-import static com.zsf.interpreter.tool.StringTools.getReversedStr;
 
 /**
  * Created by zsf on 2017/3/13.
@@ -66,11 +61,12 @@ public class FlashExtract {
 
     /**
      * 根据某个selector(Regex)选择符合条件的regions
+     *
      * @param selector
      */
-    public void selectRegionBySelector(Regex selector,int color) {
-        List<SelectedRegion> selectedRegions=document.selectRegionsBySelector(selector,color);
-        for (SelectedRegion region:selectedRegions){
+    public void selectRegionBySelector(Regex selector, int color) {
+        List<SelectedLineRegion> selectedLineRegions = document.selectRegionsBySelector(selector, color);
+        for (SelectedLineRegion region : selectedLineRegions) {
             System.out.println(region.getText());
         }
 //        for (Region region:document.getDocumentRegions()){
@@ -81,7 +77,7 @@ public class FlashExtract {
     }
 
     public void setInputDocument(String inputDocument) {
-        this.document=new Document(inputDocument,usefulRegex);
+        this.document = new Document(inputDocument, usefulRegex);
     }
 
     public void doSelectRegion(int color, int lineIndex, int beginPos, int endPos, String selectedText) {
@@ -90,5 +86,18 @@ public class FlashExtract {
 
     public List<Regex> getLineSelector(int color) {
         return document.getLineSelector(color);
+    }
+
+    /**
+     * 产生LineSelector之后，自动在LineRegion中根据提供的例子产生childRegion
+     * @param color
+     */
+    public void generateChildRegionsInLineRegions(int color) {
+        document.generateChildRegionsInLineRegions(color);
+    }
+
+    public void doSelectRegionInLineRegions(int color, int lineIndex, int beginPos, int endPos, String selectedText) {
+        // FIXME: 2017/3/14 这个函数最终要个doSelectRegion合并
+        document.doSelectRegionInLineRegions(color,lineIndex,beginPos,endPos,selectedText);
     }
 }

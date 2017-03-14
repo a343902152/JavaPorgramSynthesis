@@ -24,7 +24,7 @@ public class Region {
     /**
      * 在当前容器中被选中的regions()，每个region要求带有一个颜色
      */
-    private List<SelectedRegion> selectedChildRegions= new ArrayList<SelectedRegion>();
+    private List<SelectedLineRegion> selectedChildRegions= new ArrayList<SelectedLineRegion>();
 
     public Region(Region parentRegion, int beginPos, int endPos,String text) {
         this.parentRegion = parentRegion;
