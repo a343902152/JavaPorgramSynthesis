@@ -1,9 +1,11 @@
 package com.zsf.flashextract.model;
 
 import com.zsf.flashextract.region.Region;
-import com.zsf.flashextract.region.SelectedRegion;
+import com.zsf.flashextract.region.SelectedLineRegion;
 import com.zsf.interpreter.expressions.regex.DynamicRegex;
 import com.zsf.interpreter.expressions.regex.Regex;
+import com.zsf.interpreter.model.ExamplePair;
+import com.zsf.interpreter.model.ExpressionGroup;
 import com.zsf.interpreter.model.Match;
 
 import java.util.ArrayList;
@@ -23,7 +25,15 @@ public class Document {
     private List<Regex> usefulRegex;
     private Map<Integer, List<Region>> colorfulRegions = new HashMap<Integer, List<Region>>();
 
-    private List<SelectedRegion> selectedRegions = new ArrayList<SelectedRegion>();
+    /**
+     * 记录根据positiveExamples提取出的lineSelector
+     */
+    private List<Regex> lineSelector = new ArrayList<Regex>();
+    /**
+     * 当前使用的selector方案(可以选出selectedRegions)
+     */
+    private Regex curSelector;
+    private List<SelectedLineRegion> selectedLineRegions = new ArrayList<SelectedLineRegion>();
 
     public Document(String inputDocument, List<Regex> usefulRegex) {
         this.usefulRegex = usefulRegex;
@@ -53,7 +63,8 @@ public class Document {
         // 注意这个新选择的region还不是ParentRegion的ChildRegion, 只有LineSelector选出来的region才是childRegion
 //        regions.add(new Region(documentRegions.get(lineIndex), beginPos, endPos, selectedText));
         // 这里加入的是带颜色的被选中的region，而不是普通region
-        regions.add(new SelectedRegion(documentRegions.get(lineIndex), beginPos, endPos, selectedText, color));
+        // FIXME: 2017/3/14 逻辑有点混乱，可能这里不需要加入这个？？
+        regions.add(new SelectedLineRegion(documentRegions.get(lineIndex), beginPos, endPos, selectedText, color,lineIndex));
         // 直接将这一行设置为positiveLine
         addPositiveLineIndex(color, lineIndex);
     }
@@ -147,6 +158,8 @@ public class Document {
         List<Regex> usefulLineSelector = new ArrayList<Regex>();
         usefulLineSelector.addAll(filterUsefulSelector(startWithLineSelector, documentRegions, getPositiveLineIndex(color), getNegativeLineIndex(color)));
         usefulLineSelector.addAll(filterUsefulSelector(endWithLineSelector, documentRegions, getPositiveLineIndex(color), getNegativeLineIndex(color)));
+
+        this.lineSelector = usefulLineSelector;
 
         return usefulLineSelector;
     }
@@ -336,19 +349,69 @@ public class Document {
 
     /**
      * 用某个selector(Regex)选出当前document中符合条件的region，并将他们标注为selectedRegions&返回给外部
-     * 
+     *
      * @param selector
      * @param color
      * @return
      */
-    public List<SelectedRegion> selectRegionsBySelector(Regex selector, int color) {
-        this.selectedRegions = new ArrayList<SelectedRegion>();
-        for (Region region : documentRegions) {
+    public List<SelectedLineRegion> selectRegionsBySelector(Regex selector, int color) {
+        this.curSelector = selector;
+        this.selectedLineRegions = new ArrayList<SelectedLineRegion>();
+        for (int i=0;i<documentRegions.size();i++){
+            Region region=documentRegions.get(i);
             if (region.canMatch(selector)) {
-                selectedRegions.add(new SelectedRegion(region.getParentRegion(),
-                        region.getBeginPos(), region.getEndPos(), region.getText(), color));
+                selectedLineRegions.add(new SelectedLineRegion(region.getParentRegion(),
+                        region.getBeginPos(), region.getEndPos(), region.getText(), color,i));
             }
         }
-        return selectedRegions;
+        return selectedLineRegions;
+    }
+
+    /**
+     * 产生LineSelector之后，自动在LineRegion中根据提供的例子产生childRegion
+     * @param color
+     */
+    public void generateChildRegionsInLineRegions(int color) {
+        // TODO 利用上面的所有positiveExamples通过FF产生expressions
+        List<Region> regions=colorfulRegions.get(color);
+        List<ExamplePair> examples=new ArrayList<ExamplePair>();
+        for (Region region:regions){
+            examples.add(new ExamplePair(region.getParentRegion().getText(),region.getText()));
+        }
+
+        // TODO: 2017/3/14 expressionGroup=FF.generateExp()...
+        ExpressionGroup expressionGroup=null;
+
+        if (expressionGroup!=null){
+            for (SelectedLineRegion lineRegion:selectedLineRegions){
+                lineRegion.setColorfulRegionExpressions(color,expressionGroup);
+            }
+        }
+
+    }
+
+    public void doSelectRegionInLineRegions(int color, int lineIndex, int beginPos, int endPos, String selectedText) {
+        // FIXME: 2017/3/14 这个函数最终要个doSelectRegion合并
+        boolean IisindexInSelectLineRegion=true;
+        if (IisindexInSelectLineRegion){
+            SelectedLineRegion lineRegion=null;
+            for (SelectedLineRegion r:selectedLineRegions){
+                if (r.getLineIndex()==lineIndex){
+                    lineRegion=r;
+                    break;
+                }
+            }
+
+            ExpressionGroup expressionGroup= null;
+            if (lineRegion != null) {
+                expressionGroup = lineRegion.selectChildRegion(color,selectedText);
+            }
+            if (expressionGroup!=null){
+                for (SelectedLineRegion region:selectedLineRegions){
+                    region.setColorfulRegionExpressions(color,expressionGroup);
+                }
+            }
+
+        }
     }
 }
