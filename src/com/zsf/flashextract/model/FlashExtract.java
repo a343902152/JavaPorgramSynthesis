@@ -100,4 +100,8 @@ public class FlashExtract {
         // FIXME: 2017/3/14 这个函数最终要个doSelectRegion合并
         document.doSelectRegionInLineRegions(color,lineIndex,beginPos,endPos,selectedText);
     }
+
+    public boolean needGenerateLineReions(int color) {
+        return document.needGenerateLineReions(color);
+    }
 }

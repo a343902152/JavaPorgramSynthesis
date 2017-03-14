@@ -1,5 +1,6 @@
 package com.zsf.flashextract.model;
 
+import com.zsf.StringProcessor;
 import com.zsf.flashextract.region.Region;
 import com.zsf.flashextract.region.SelectedLineRegion;
 import com.zsf.interpreter.expressions.regex.DynamicRegex;
@@ -7,6 +8,7 @@ import com.zsf.interpreter.expressions.regex.Regex;
 import com.zsf.interpreter.model.ExamplePair;
 import com.zsf.interpreter.model.ExpressionGroup;
 import com.zsf.interpreter.model.Match;
+import com.zsf.interpreter.model.ResultMap;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -374,13 +376,15 @@ public class Document {
     public void generateChildRegionsInLineRegions(int color) {
         // TODO 利用上面的所有positiveExamples通过FF产生expressions
         List<Region> regions=colorfulRegions.get(color);
-        List<ExamplePair> examples=new ArrayList<ExamplePair>();
+        List<ExamplePair> examplePairs=new ArrayList<ExamplePair>();
         for (Region region:regions){
-            examples.add(new ExamplePair(region.getParentRegion().getText(),region.getText()));
+            examplePairs.add(new ExamplePair(region.getParentRegion().getText(),region.getText()));
         }
 
         // TODO: 2017/3/14 expressionGroup=FF.generateExp()...
-        ExpressionGroup expressionGroup=null;
+        StringProcessor stringProcessor=new StringProcessor();
+        List<ResultMap> resultMaps=stringProcessor.generateExpressionsByExamples(examplePairs);
+        ExpressionGroup expressionGroup=stringProcessor.selectTopKExps(resultMaps,10);
 
         if (expressionGroup!=null){
             for (SelectedLineRegion lineRegion:selectedLineRegions){
@@ -413,5 +417,14 @@ public class Document {
             }
 
         }
+    }
+
+    /**
+     * 当某种color的个数大于等于2时，就可以产生lineRegion了(简化处理)
+     * @param color
+     * @return
+     */
+    public boolean needGenerateLineReions(int color) {
+        return colorfulRegions.get(color).size()>=2;
     }
 }

@@ -453,6 +453,7 @@ public class StringProcessor {
             }
         }
         ExpressionGroup validExpressions = new ExpressionGroup();
+        // FIXME: 2017/3/14 现在只返回了第一个example产生的exp集合，后期修正
         validExpressions = ansList.get(0);
         return validExpressions;
     }
