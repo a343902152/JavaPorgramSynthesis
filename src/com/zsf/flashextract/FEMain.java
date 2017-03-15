@@ -77,7 +77,7 @@ public class FEMain {
         flashExtract.setInputDocument(inputDocument);
 
         int color=1;
-        flashExtract.doSelectRegion(color,5,45,54,"Ran Liu");
+        flashExtract.doSelectRegion(color,5,45,53,"Ran Liu");
         flashExtract.doSelectRegion(color,13,45,48,"陈波");
 
 //        flashExtract.doSelectRegion(color,4,7,21,"Russell Smith");
