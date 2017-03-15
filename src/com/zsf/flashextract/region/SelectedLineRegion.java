@@ -67,4 +67,12 @@ public class SelectedLineRegion extends Region {
     public void setLineIndex(int lineIndex) {
         this.lineIndex = lineIndex;
     }
+
+    public int getColor() {
+        return color;
+    }
+
+    public void setColor(int color) {
+        this.color = color;
+    }
 }
