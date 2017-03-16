@@ -2,6 +2,7 @@ package com.zsf.flashextract.regex;
 
 import com.zsf.flashextract.region.Region;
 import com.zsf.flashextract.region.newregion.Field;
+import com.zsf.flashextract.region.newregion.LineField;
 import com.zsf.interpreter.expressions.Expression;
 import com.zsf.interpreter.expressions.regex.DynamicRegex;
 import com.zsf.interpreter.expressions.regex.Regex;
@@ -142,22 +143,20 @@ public class RegexCommomTools {
         return regexList;
     }
 
-    public static List<Regex> filterUsefulSelector(List<Regex> regices, List<String> splitedLineDocument,
+    public static List<Regex> filterUsefulSelector(List<Regex> regices, List<LineField> lineFields,
                                                    List<Integer> positiveLineIndex, List<Integer> negataiveLineIndex) {
         List<Regex> usefulLineSelector = new ArrayList<Regex>();
 
         for (Regex regex : regices) {
             boolean needAddIn = true;
             for (int index : positiveLineIndex) {
-                String str = splitedLineDocument.get(index);
-                if (!canMatch(str, regex)) {
+                if (!lineFields.get(index).canMatch(regex)) {
                     needAddIn = false;
                     break;
                 }
             }
             for (int index : negataiveLineIndex) {
-                String str = splitedLineDocument.get(index);
-                if (canMatch(str, regex)) {
+                if (lineFields.get(index).canMatch(regex)) {
                     needAddIn = false;
                     break;
                 }
@@ -174,13 +173,37 @@ public class RegexCommomTools {
      *
      * @param fieldsByUser
      */
-    public static void addDynamicToken(String inputDocument, List<Field> fieldsByUser, List<Regex> usefulRegex) {
+    public static void addDynamicToken(List<Field> fieldsByUser, List<Regex> usefulRegex) {
+        Field field=fieldsByUser.get(0);
 
-    }
+        // 左匹配
+        String textBeforeSelected = field.getParentField().getText().substring(0, field.getBeginPos()-field.getParentField().getBeginPos());
+        String leftCommonStr = textBeforeSelected;
+        System.out.println(textBeforeSelected);
+        for (int i = 1; i < fieldsByUser.size(); i++) {
+            Field curField = fieldsByUser.get(i);
+            leftCommonStr = getCommonStr(getReversedStr(leftCommonStr),
+                    getReversedStr(curField.getParentField().getText().substring(0, curField.getBeginPos()-curField.getParentField().getBeginPos())));
+            leftCommonStr = getReversedStr(leftCommonStr);
+            System.out.println("leftCommonStr:  " + leftCommonStr);
+        }
 
-    public static boolean canMatch(String text, Regex selector) {
-        List<Match> matches = selector.doMatch(text);
-        return matches.size() > 0;
+        // 右匹配
+        String textAfterSelected = field.getParentField().getText().substring(field.getEndPos()-field.getParentField().getBeginPos());
+        String rightCommonStr = textAfterSelected;
+        System.out.println(textAfterSelected);
+        for (int i = 1; i < fieldsByUser.size(); i++) {
+            Field curField= fieldsByUser.get(i);
+            rightCommonStr = getCommonStr(rightCommonStr,
+                    curField.getParentField().getText().substring(curField.getEndPos()-curField.getParentField().getBeginPos()));
+            System.out.println("rightCommonStr:  " + rightCommonStr);
+        }
+
+        Regex leftRegex = new DynamicRegex("DynamicTok(" + leftCommonStr + ")", leftCommonStr);
+        Regex rightRegex = new DynamicRegex("DynamicTok(" + rightCommonStr + ")", rightCommonStr);
+
+        usefulRegex.add(leftRegex);
+        usefulRegex.add(rightRegex);
     }
 
     public static int indexNOf(String inputString, String target, int n) {

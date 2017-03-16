@@ -2,8 +2,6 @@ package com.zsf.flashextract.region.newregion;
 
 import com.zsf.StringProcessor;
 import com.zsf.flashextract.regex.RegexCommomTools;
-import com.zsf.flashextract.region.Region;
-import com.zsf.flashextract.region.SelectedLineRegion;
 import com.zsf.interpreter.expressions.Expression;
 import com.zsf.interpreter.expressions.regex.DynamicRegex;
 import com.zsf.interpreter.expressions.regex.Regex;
@@ -18,10 +16,9 @@ import java.util.List;
 /**
  * Created by hasee on 2017/3/16.
  */
-public class ColorRegion{
+public class ColorRegion {
     private Color color;
     private String parentDocument;
-    private List<String> splitedLineDocument;
 
     private List<Field> fieldsByUser = new ArrayList<Field>();
     private List<Field> fieldsGenerated = new ArrayList<Field>();
@@ -30,7 +27,7 @@ public class ColorRegion{
     private List<Integer> negativeLineIndex = new ArrayList<Integer>();
     private List<Integer> needSelectLineIndex = new ArrayList<Integer>();
 
-    private List<LineField> lineFields=new ArrayList<LineField>();
+    private List<LineField> lineFields = new ArrayList<LineField>();
 
     private List<Regex> lineSelectors = new ArrayList<Regex>();
     private Regex curLineSelector = null;
@@ -42,28 +39,31 @@ public class ColorRegion{
         this.color = color;
         this.parentDocument = parentDocument;
 
-        splitedLineDocument = new ArrayList<String>();
-        lineFields=new ArrayList<LineField>();
+        lineFields = new ArrayList<LineField>();
         String[] splitedLines = parentDocument.split("\n");
-        for (int i=0;i<splitedLines.length;i++){
-            String line=splitedLines[i];
-            // FIXME: 2017/3/16 下面结果还没有确认过
-            int beginPos=RegexCommomTools.indexNOf(parentDocument,"\n",i)+1;
-            int endPos=beginPos+line.length();
-            lineFields.add(new LineField(null,beginPos,endPos,line));
-            splitedLineDocument.add(line);
+        for (int i = 0; i < splitedLines.length; i++) {
+            String line = splitedLines[i];
+            int beginPos = RegexCommomTools.indexNOf(parentDocument, "\n", i) + 1;
+            int endPos = beginPos + line.length();
+            lineFields.add(new LineField(null, beginPos, endPos, line));
         }
     }
 
     public void selectField(int beginPos, int endPos, String text) {
         int lineIndex = calculateLineIndex(beginPos, endPos);
-        Field field = new PlainField(lineFields.get(lineIndex),color, beginPos, endPos, text);
+        Field field = new PlainField(lineFields.get(lineIndex), color, beginPos, endPos, text);
         if (!fieldsByUser.contains(field)) {
             fieldsByUser.add(field);
             addPositiveLineIndex(lineIndex);
         }
         if (needGenerateLineSelectors()) {
             doGenerateLineSelectors();
+
+            // FIXME: 2017/3/16 下面几个可能要一起调用？
+            generateLineFieldsByCurSelector();
+
+            generateExpressionGroup();
+            generatePlainFieldsByCurExp();
         }
     }
 
@@ -77,17 +77,17 @@ public class ColorRegion{
      * 在selectField()时，如果判断需要产生LineSelectors就会调用此方法，产生LineSelecotr,排序结果后设置curSelector
      */
     private void doGenerateLineSelectors() {
-        RegexCommomTools.addDynamicToken(parentDocument,fieldsByUser,MainDocument.usefulRegex);
+        RegexCommomTools.addDynamicToken(fieldsByUser, MainDocument.usefulRegex);
 
         List<List<Regex>> startWithReges = new ArrayList<List<Regex>>();
         List<List<Regex>> endWithReges = new ArrayList<List<Regex>>();
         int curDeepth = 1;
         int maxDeepth = 3;
 
-        for (int index:positiveLineIndex) {
-            List<Match> matches = RegexCommomTools.buildStringMatches(splitedLineDocument.get(index),MainDocument.usefulRegex);
+        for (int index : positiveLineIndex) {
+            List<Match> matches = RegexCommomTools.buildStringMatches(lineFields.get(index).getText(), MainDocument.usefulRegex);
             startWithReges.add(RegexCommomTools.buildStartWith(curDeepth, maxDeepth, matches, 0, new DynamicRegex("", "")));
-            endWithReges.add(RegexCommomTools.buildEndWith(curDeepth, maxDeepth, matches, splitedLineDocument.get(index).length(), new DynamicRegex("", "")));
+            endWithReges.add(RegexCommomTools.buildEndWith(curDeepth, maxDeepth, matches, lineFields.get(index).getText().length(), new DynamicRegex("", "")));
         }
         System.out.println("start with:");
         System.out.println(startWithReges.get(1));
@@ -102,11 +102,12 @@ public class ColorRegion{
 
         // 利用positive和negativeExamples对selectors进行筛选
         List<Regex> usefulLineSelector = new ArrayList<Regex>();
-        usefulLineSelector.addAll(RegexCommomTools.filterUsefulSelector(startWithLineSelector, splitedLineDocument, positiveLineIndex, getNegativeLineIndex()));
-        usefulLineSelector.addAll(RegexCommomTools.filterUsefulSelector(endWithLineSelector, splitedLineDocument,positiveLineIndex, getNegativeLineIndex()));
+        usefulLineSelector.addAll(RegexCommomTools.filterUsefulSelector(startWithLineSelector, lineFields, positiveLineIndex, getNegativeLineIndex()));
+        usefulLineSelector.addAll(RegexCommomTools.filterUsefulSelector(endWithLineSelector, lineFields, positiveLineIndex, getNegativeLineIndex()));
 
-        this.lineSelectors=usefulLineSelector;
-        this.curLineSelector =lineSelectors.get(0);
+        // TODO: 2017/3/16 lineSelector的ranking
+        this.lineSelectors = usefulLineSelector;
+        this.curLineSelector = lineSelectors.get(0);
     }
 
     private void addPositiveLineIndex(int lineIndex) {
@@ -118,31 +119,43 @@ public class ColorRegion{
     /**
      * 根据当前的selector产生fileds，会在getFileds()之前调用
      */
-    private void generateFieldsByCurSelector() {
-//        needSelectLineIndex=new ArrayList<Integer>();
-//        for (int i=0;i<splitedLineDocument.size();i++){
-//            if (RegexCommomTools.canMatch(splitedLineDocument.get(i),curLineSelector)){
-//                needSelectLineIndex.add(i);
-//            }
-//        }
-//
-//        List<ExamplePair> examplePairs = new ArrayList<ExamplePair>();
-//        for (Field field:fieldsByUser){
-//            examplePairs.add(new ExamplePair())
-//        }
-//        for (Region region : regions) {
-//            examplePairs.add(new ExamplePair(region.getParentRegion().getText(), region.getText()));
-//        }
-//
-//        StringProcessor stringProcessor = new StringProcessor();
-//        List<ResultMap> resultMaps = stringProcessor.generateExpressionsByExamples(examplePairs);
-//        ExpressionGroup expressionGroup = stringProcessor.selectTopKExps(resultMaps, 10);
-//
-//        if (expressionGroup != null) {
-//            for (SelectedLineRegion lineRegion : selectedLineRegions) {
-//                lineRegion.setColorfulRegionExpressions(color, expressionGroup);
-//            }
-//        }
+    private void generateLineFieldsByCurSelector() {
+        needSelectLineIndex = new ArrayList<Integer>();
+        if (curLineSelector == null) {
+            // FIXME: 2017/3/16 需要一个优雅的解决方案
+            return;
+        }
+        for (int i = 0; i < lineFields.size(); i++) {
+            if (lineFields.get(i).canMatch(curLineSelector)) {
+                needSelectLineIndex.add(i);
+            }
+        }
+    }
+
+    private void generateExpressionGroup(){
+        List<ExamplePair> examplePairs = new ArrayList<ExamplePair>();
+        for (Field field : fieldsByUser) {
+            examplePairs.add(new ExamplePair(field.getParentField().getText(), field.getText()));
+        }
+        StringProcessor stringProcessor = new StringProcessor();
+        List<ResultMap> resultMaps = stringProcessor.generateExpressionsByExamples(examplePairs);
+        ExpressionGroup expressionGroup = stringProcessor.selectTopKExps(resultMaps, 10);
+
+        this.expressionGroup = expressionGroup;
+        if (expressionGroup!=null){
+            curExpression = expressionGroup.getExpressions().get(0);
+        }
+    }
+
+    private void generatePlainFieldsByCurExp(){
+        if (curExpression!=null){
+            for (int lineIndex : needSelectLineIndex) {
+                // TODO: 2017/3/16 去重复？
+                // TODO: 2017/3/16 ChildField。坐标
+                this.fieldsGenerated.addAll(
+                        lineFields.get(lineIndex).selectChildFieldByExp(curExpression));
+            }
+        }
     }
 
     private int calculateLineIndex(int beginPos, int endPos) {
@@ -161,7 +174,6 @@ public class ColorRegion{
     }
 
     public List<Field> getFieldsGenerated() {
-        generateFieldsByCurSelector();
         return fieldsGenerated;
     }
 
@@ -182,6 +194,16 @@ public class ColorRegion{
     }
 
     public List<Integer> getNegativeLineIndex() {
+        negativeLineIndex = new ArrayList<Integer>();
+        int max = 0;
+        for (int index : positiveLineIndex) {
+            max = Math.max(max, index);
+        }
+        for (int i = 0; i < max; i++) {
+            if (!positiveLineIndex.contains(i)) {
+                negativeLineIndex.add(i);
+            }
+        }
         return negativeLineIndex;
     }
 }

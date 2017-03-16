@@ -1,5 +1,14 @@
 package com.zsf.flashextract.region.newregion;
 
+import com.zsf.interpreter.expressions.Expression;
+import com.zsf.interpreter.expressions.NonTerminalExpression;
+import com.zsf.interpreter.expressions.regex.Regex;
+import com.zsf.interpreter.model.Match;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 /**
  * Created by hasee on 2017/3/16.
  */
@@ -18,22 +27,36 @@ public class LineField implements Field {
     }
 
     @Override
+    public Field getParentField() {
+        return parentField;
+    }
+
+    @Override
     public int getBeginPos() {
-        return 0;
+        return beginPos;
     }
 
     @Override
     public int getEndPos() {
-        return 0;
+        return endPos;
     }
 
     @Override
     public String getText() {
-        return null;
+        return text;
     }
 
-    @Override
-    public Field getParentField() {
-        return null;
+    public boolean canMatch(Regex curLineSelector) {
+        List<Match> matches = curLineSelector.doMatch(text);
+        return matches.size() > 0;
+    }
+
+    public List<PlainField> selectChildFieldByExp(Expression curExpression) {
+        List<PlainField> plainFields=new ArrayList<PlainField>();
+        // TODO: 2017/3/16 不要sout，要new Field
+        if (curExpression instanceof NonTerminalExpression){
+            System.out.println(((NonTerminalExpression) curExpression).interpret(text));
+        }
+        return plainFields;
     }
 }

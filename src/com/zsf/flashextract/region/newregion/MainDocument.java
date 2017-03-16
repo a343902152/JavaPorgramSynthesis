@@ -53,7 +53,6 @@ public class MainDocument {
         regexList.add(new EpicRegex(">", "[>]+"));
         regexList.add(new EpicRegex("/", "[/]+"));
         regexList.add(new EpicRegex("SpaceToken", "[ ]+")); // 加上之后就出不了结果？？
-        // FIXME: 2017/2/5 如果开启这个SpTok在当前算法下会导致解过于庞大
 //        regexList.add(new Regex("SpecialTokens","[ -+()\\[\\],.:]+"));
 
         return regexList;
@@ -69,6 +68,7 @@ public class MainDocument {
             colorRegion = new ColorRegion(color, document);
             colorRegionMap.put(color, colorRegion);
         }
+        // TODO: 2017/3/16 判断当前区域是否在其他color的lineSelector之内！！
         colorRegion.selectField(beginPos,endPos,text);
     }
 
@@ -77,7 +77,7 @@ public class MainDocument {
         for (ColorRegion colorRegion:colorRegionMap.values()){
             fieldList.addAll(colorRegion.getFieldsGenerated());
         }
-        // TODO: 2017/3/16 sort
+        // TODO: 2017/3/16 按照beginPos从小到大sort
         return fieldList;
     }
 }
