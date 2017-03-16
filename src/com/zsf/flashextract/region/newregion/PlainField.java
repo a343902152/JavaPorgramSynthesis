@@ -4,17 +4,20 @@ package com.zsf.flashextract.region.newregion;
  * Created by hasee on 2017/3/16.
  */
 public class PlainField implements Field {
+    private Field parentField;
     private Color color;
     private int beginPos;
     private int endPos;
     private String text;
 
-    public PlainField(Color color, int beginPos, int endPos, String text) {
+    public PlainField(Field parentField, Color color, int beginPos, int endPos, String text) {
+        this.parentField = parentField;
         this.color = color;
         this.beginPos = beginPos;
         this.endPos = endPos;
         this.text = text;
     }
+
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof PlainField){
@@ -23,8 +26,14 @@ public class PlainField implements Field {
         return false;
     }
 
+
     public Color getColor() {
         return color;
+    }
+
+    @Override
+    public Field getParentField() {
+        return parentField;
     }
 
     public int getBeginPos() {
@@ -38,6 +47,8 @@ public class PlainField implements Field {
     public String getText() {
         return text;
     }
+
+
 
 
 }

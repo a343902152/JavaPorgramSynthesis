@@ -2,12 +2,15 @@ package com.zsf.flashextract.regex;
 
 import com.zsf.flashextract.region.Region;
 import com.zsf.flashextract.region.newregion.Field;
+import com.zsf.interpreter.expressions.Expression;
 import com.zsf.interpreter.expressions.regex.DynamicRegex;
 import com.zsf.interpreter.expressions.regex.Regex;
 import com.zsf.interpreter.model.Match;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.zsf.interpreter.tool.StringTools.getCommonStr;
 import static com.zsf.interpreter.tool.StringTools.getReversedStr;
@@ -21,7 +24,7 @@ public class RegexCommomTools {
      * 在每次有新的input时就调用此方法，可以返回 各个pos上所有能够和input匹配的集合
      * 当generatePosition()需要时，直接根据match的pos(index)去查找使用，避免重复计算
      */
-    public static List<Match> buildStringMatches(String inputString,List<Regex> usefulRegex) {
+    public static List<Match> buildStringMatches(String inputString, List<Regex> usefulRegex) {
         List<Match> matches = new ArrayList<Match>();
         for (int i = 0; i < usefulRegex.size(); i++) {
             Regex regex = usefulRegex.get(i);
@@ -74,7 +77,7 @@ public class RegexCommomTools {
      * @param lastRegex
      */
     public static List<Regex> buildEndWith(int curDeepth, int maxDeepth,
-                                     List<Match> matches, int endNode, Regex lastRegex) {
+                                           List<Match> matches, int endNode, Regex lastRegex) {
         if (curDeepth > maxDeepth) {
             return null;
         }
@@ -111,7 +114,7 @@ public class RegexCommomTools {
      * @param lastRegex
      */
     public static List<Regex> buildStartWith(int curDeepth, int maxDeepth,
-                                       List<Match> matches, int beginNode, Regex lastRegex) {
+                                             List<Match> matches, int beginNode, Regex lastRegex) {
         if (curDeepth > maxDeepth) {
             return null;
         }
@@ -140,21 +143,21 @@ public class RegexCommomTools {
     }
 
     public static List<Regex> filterUsefulSelector(List<Regex> regices, List<String> splitedLineDocument,
-                                             List<Integer> positiveLineIndex, List<Integer> negataiveLineIndex) {
+                                                   List<Integer> positiveLineIndex, List<Integer> negataiveLineIndex) {
         List<Regex> usefulLineSelector = new ArrayList<Regex>();
 
         for (Regex regex : regices) {
             boolean needAddIn = true;
             for (int index : positiveLineIndex) {
-                String str=splitedLineDocument.get(index);
-                if (!canMatch(str,regex)) {
+                String str = splitedLineDocument.get(index);
+                if (!canMatch(str, regex)) {
                     needAddIn = false;
                     break;
                 }
             }
             for (int index : negataiveLineIndex) {
-                String str=splitedLineDocument.get(index);
-                if (canMatch(str,regex)) {
+                String str = splitedLineDocument.get(index);
+                if (canMatch(str, regex)) {
                     needAddIn = false;
                     break;
                 }
@@ -171,46 +174,27 @@ public class RegexCommomTools {
      *
      * @param fieldsByUser
      */
-    public static void addDynamicToken(String inputDocument,List<Field> fieldsByUser, List<Regex> usefulRegex) {
-        Field field0=fieldsByUser.get(0);
+    public static void addDynamicToken(String inputDocument, List<Field> fieldsByUser, List<Regex> usefulRegex) {
 
-        // 左匹配
-        String textBeforeSelected = inputDocument.substring(0,field0.getBeginPos());
-        if (textBeforeSelected.lastIndexOf("\n")>=0){
-            textBeforeSelected=textBeforeSelected.substring(textBeforeSelected.lastIndexOf("\n")+1);
-        }
-        String leftCommonStr = textBeforeSelected;
-//        System.out.println(textBeforeSelected);
-        for (int i = 1; i < fieldsByUser.size(); i++) {
-            Field field=fieldsByUser.get(i);
-            leftCommonStr = getCommonStr(getReversedStr(leftCommonStr),
-                    getReversedStr(inputDocument.substring(0,field.getBeginPos())));
-            leftCommonStr = getReversedStr(leftCommonStr);
-//            System.out.println("leftCommonStr:  " + leftCommonStr);
-        }
-
-        // 右匹配
-        String textAfterSelected = inputDocument.substring(field0.getEndPos());
-        if (textAfterSelected.indexOf("\n")>0){
-            textAfterSelected=textAfterSelected.substring(0,textAfterSelected.indexOf("\n"));
-        }
-        String rightCommonStr = textAfterSelected;
-        System.out.println(textAfterSelected);
-        for (int i = 1; i < fieldsByUser.size(); i++) {
-            Field field=fieldsByUser.get(i);
-            rightCommonStr = getCommonStr(rightCommonStr,inputDocument.substring(field.getEndPos()));
-//            System.out.println("rightCommonStr:  " + rightCommonStr);
-        }
-
-        Regex leftRegex = new DynamicRegex("DynamicTok(" + leftCommonStr + ")", leftCommonStr);
-        Regex rightRegex = new DynamicRegex("DynamicTok(" + rightCommonStr + ")", rightCommonStr);
-
-        usefulRegex.add(leftRegex);
-        usefulRegex.add(rightRegex);
     }
 
     public static boolean canMatch(String text, Regex selector) {
-        List<Match> matches=selector.doMatch(text);
+        List<Match> matches = selector.doMatch(text);
         return matches.size() > 0;
+    }
+
+    public static int indexNOf(String inputString, String target, int n) {
+        Matcher matcher = Pattern.compile(target).matcher(inputString);
+        int count = 1;
+        while (matcher.find()) {
+            if (count++ == n) {
+                break;
+            }
+        }
+        try {
+            return matcher.start();
+        } catch (Exception e) {
+            return -1;
+        }
     }
 }

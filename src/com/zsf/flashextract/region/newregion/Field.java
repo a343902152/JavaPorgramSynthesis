@@ -7,4 +7,5 @@ public interface Field {
     int getBeginPos();
     int getEndPos();
     String getText();
+    Field getParentField();
 }
