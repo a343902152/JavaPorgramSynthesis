@@ -1,7 +1,7 @@
 package com.zsf.flashextract.region.newregion;
 
-import com.zsf.flashextract.model.FlashExtract;
-import com.zsf.interpreter.expressions.regex.Regex;
+import com.zsf.flashextract.region.newregion.field.Field;
+import com.zsf.flashextract.region.newregion.tools.Color;
 
 import java.util.List;
 
@@ -66,7 +66,6 @@ public class WebMain {
         fieldList=document.showSelectedFields();
         showField(fieldList);
 
-//
         document.selectField(Color.BLUE,1197,1199,"陈波");
         fieldList=document.showSelectedFields();
         showField(fieldList);
@@ -74,7 +73,10 @@ public class WebMain {
         document.selectField(Color.GREEN,516,551,"Associate Professor/Senior Engineer");
         fieldList=document.showSelectedFields();
         showField(fieldList);
-//
+
+        document.setRegionTitle(Color.BLUE,"姓名");
+        document.setRegionTitle(Color.GREEN,"职称");
+
 //        // FIXME: 2017/3/13 现在假设所有要提取的数据都处于同一行，不存在跨行的结构化数据
 //        // 当region达到2个时，可以自动产生LineSelector并应用
 //        if (flashExtract.needGenerateLineReions(color)){

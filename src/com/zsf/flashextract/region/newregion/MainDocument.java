@@ -1,11 +1,16 @@
 package com.zsf.flashextract.region.newregion;
 
+import com.zsf.flashextract.region.newregion.field.Field;
+import com.zsf.flashextract.region.newregion.region.ColorRegion;
+import com.zsf.flashextract.region.newregion.tools.Color;
+import com.zsf.flashextract.region.newregion.tools.FieldComparator;
 import com.zsf.interpreter.expressions.regex.EpicRegex;
 import com.zsf.interpreter.expressions.regex.NormalRegex;
 import com.zsf.interpreter.expressions.regex.RareRegex;
 import com.zsf.interpreter.expressions.regex.Regex;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -87,7 +92,15 @@ public class MainDocument {
         for (ColorRegion colorRegion:colorRegionMap.values()){
             fieldList.addAll(colorRegion.getFieldsGenerated());
         }
-        // TODO: 2017/3/16 按照beginPos从小到大sort
+        // 按照beginPos从小到大sort
+        Collections.sort(fieldList,new FieldComparator());
         return fieldList;
+    }
+
+    public void setRegionTitle(Color color, String title) {
+        ColorRegion colorRegion = colorRegionMap.get(color);
+        if (colorRegion!=null){
+            colorRegion.setRegionTitle(title);
+        }
     }
 }

@@ -1,5 +1,6 @@
-package com.zsf.flashextract.region.newregion;
+package com.zsf.flashextract.region.newregion.field;
 
+import com.zsf.flashextract.region.newregion.tools.Color;
 import com.zsf.interpreter.expressions.Expression;
 import com.zsf.interpreter.expressions.NonTerminalExpression;
 import com.zsf.interpreter.expressions.regex.Regex;
@@ -7,7 +8,6 @@ import com.zsf.interpreter.expressions.string.SubStringExpression;
 import com.zsf.interpreter.model.Match;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**

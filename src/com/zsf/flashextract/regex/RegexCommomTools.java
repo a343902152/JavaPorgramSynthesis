@@ -1,9 +1,7 @@
 package com.zsf.flashextract.regex;
 
-import com.zsf.flashextract.region.Region;
-import com.zsf.flashextract.region.newregion.Field;
-import com.zsf.flashextract.region.newregion.LineField;
-import com.zsf.interpreter.expressions.Expression;
+import com.zsf.flashextract.region.newregion.field.Field;
+import com.zsf.flashextract.region.newregion.field.LineField;
 import com.zsf.interpreter.expressions.regex.DynamicRegex;
 import com.zsf.interpreter.expressions.regex.Regex;
 import com.zsf.interpreter.model.Match;

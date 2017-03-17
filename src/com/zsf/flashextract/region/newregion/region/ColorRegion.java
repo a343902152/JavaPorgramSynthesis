@@ -1,7 +1,12 @@
-package com.zsf.flashextract.region.newregion;
+package com.zsf.flashextract.region.newregion.region;
 
 import com.zsf.StringProcessor;
 import com.zsf.flashextract.regex.RegexCommomTools;
+import com.zsf.flashextract.region.newregion.MainDocument;
+import com.zsf.flashextract.region.newregion.field.Field;
+import com.zsf.flashextract.region.newregion.field.LineField;
+import com.zsf.flashextract.region.newregion.field.PlainField;
+import com.zsf.flashextract.region.newregion.tools.Color;
 import com.zsf.interpreter.expressions.Expression;
 import com.zsf.interpreter.expressions.regex.DynamicRegex;
 import com.zsf.interpreter.expressions.regex.Regex;
@@ -18,6 +23,7 @@ import java.util.List;
  */
 public class ColorRegion {
     private Color color;
+    private String regionTitle="unnamed";
     private String parentDocument;
 
     private List<Field> fieldsByUser = new ArrayList<Field>();
@@ -204,6 +210,14 @@ public class ColorRegion {
             }
         }
         return count;
+    }
+
+    public String getRegionTitle() {
+        return regionTitle;
+    }
+
+    public void setRegionTitle(String regionTitle) {
+        this.regionTitle = regionTitle;
     }
 
     public List<Field> getFieldsGenerated() {
