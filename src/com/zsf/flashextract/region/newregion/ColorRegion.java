@@ -49,8 +49,15 @@ public class ColorRegion {
         }
     }
 
-    public void selectField(int beginPos, int endPos, String text) {
-        int lineIndex = calculateLineIndex(beginPos, endPos);
+    /**
+     * 当选择新的fileds时(>=2,若3个+则说明之前的selector不够好)，设置positive，negative、产生lineSelector等
+     *
+     * @param lineIndex
+     * @param beginPos
+     * @param endPos
+     * @param text
+     */
+    public void selectField(int lineIndex, int beginPos, int endPos, String text) {
         Field field = new PlainField(lineFields.get(lineIndex), color, beginPos, endPos, text);
         if (!fieldsByUser.contains(field)) {
             fieldsByUser.add(field);
@@ -65,6 +72,32 @@ public class ColorRegion {
             generateExpressionGroup();
             generatePlainFieldsByCurExp();
         }
+    }
+
+    /**
+     * 当选择和其他color同行数据时会调用这个方法，通过别人提供的selector产生plainFields
+     * <p>
+     * 和普通selectField()唯一的区别就在于 不做doGenerateLineSelectors()
+     *
+     * @param lineIndex
+     * @param beginPos
+     * @param endPos
+     * @param text
+     * @param selector
+     */
+    public void selectFieldByOuterSelector(int lineIndex, int beginPos, int endPos, String text, Regex selector) {
+        this.curLineSelector = selector;
+
+        Field field = new PlainField(lineFields.get(lineIndex), color, beginPos, endPos, text);
+        if (!fieldsByUser.contains(field)) {
+            fieldsByUser.add(field);
+            addPositiveLineIndex(lineIndex);
+        }
+
+        generateLineFieldsByCurSelector();
+
+        generateExpressionGroup();
+        generatePlainFieldsByCurExp();
     }
 
     private boolean needGenerateLineSelectors() {
@@ -132,7 +165,7 @@ public class ColorRegion {
         }
     }
 
-    private void generateExpressionGroup(){
+    private void generateExpressionGroup() {
         List<ExamplePair> examplePairs = new ArrayList<ExamplePair>();
         for (Field field : fieldsByUser) {
             examplePairs.add(new ExamplePair(field.getParentField().getText(), field.getText()));
@@ -142,23 +175,23 @@ public class ColorRegion {
         ExpressionGroup expressionGroup = stringProcessor.selectTopKExps(resultMaps, 10);
 
         this.expressionGroup = expressionGroup;
-        if (expressionGroup!=null){
+        if (expressionGroup != null) {
             curExpression = expressionGroup.getExpressions().get(0);
         }
     }
 
-    private void generatePlainFieldsByCurExp(){
-        if (curExpression!=null){
+    private void generatePlainFieldsByCurExp() {
+        if (curExpression != null) {
             for (int lineIndex : needSelectLineIndex) {
                 // TODO: 2017/3/16 去重复？
                 // TODO: 2017/3/16 ChildField。坐标
                 this.fieldsGenerated.addAll(
-                        lineFields.get(lineIndex).selectChildFieldByExp(curExpression,color));
+                        lineFields.get(lineIndex).selectChildFieldByExp(curExpression, color));
             }
         }
     }
 
-    private int calculateLineIndex(int beginPos, int endPos) {
+    public int calculateLineIndex(int beginPos, int endPos) {
         String textBeforeSelect = parentDocument.substring(0, beginPos);
         int count = 0;
         int index = 0;
@@ -191,6 +224,10 @@ public class ColorRegion {
 
     public Regex getCurLineSelector() {
         return curLineSelector;
+    }
+
+    public List<Integer> getNeedSelectLineIndex() {
+        return needSelectLineIndex;
     }
 
     public List<Integer> getNegativeLineIndex() {

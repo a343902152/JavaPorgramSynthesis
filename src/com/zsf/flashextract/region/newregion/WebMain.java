@@ -66,13 +66,14 @@ public class WebMain {
         fieldList=document.showSelectedFields();
         showField(fieldList);
 
-//        document.selectField(Color.GREEN,516,551,"Associate Professor/Senior Engineer");
-//        document.showSelectedFields();
 //
         document.selectField(Color.BLUE,1197,1199,"陈波");
         fieldList=document.showSelectedFields();
         showField(fieldList);
 
+        document.selectField(Color.GREEN,516,551,"Associate Professor/Senior Engineer");
+        fieldList=document.showSelectedFields();
+        showField(fieldList);
 //
 //        // FIXME: 2017/3/13 现在假设所有要提取的数据都处于同一行，不存在跨行的结构化数据
 //        // 当region达到2个时，可以自动产生LineSelector并应用
@@ -92,8 +93,10 @@ public class WebMain {
     }
 
     private static void showField(List<Field> fieldList) {
+        System.out.println("+++++++++++++++++++++++++++++++++");
         for (Field field:fieldList){
             System.out.println(String.format("%s,%s,%d,%d",field.getColor(),field.getText(),field.getBeginPos(),field.getEndPos()));
         }
+        System.out.println("+++++++++++++++++++++++++++++++++");
     }
 }

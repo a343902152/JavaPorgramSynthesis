@@ -69,7 +69,17 @@ public class MainDocument {
             colorRegionMap.put(color, colorRegion);
         }
         // TODO: 2017/3/16 判断当前区域是否在其他color的lineSelector之内！！
-        colorRegion.selectField(beginPos,endPos,text);
+        // TODO: 2017/3/17 判断是否已经产生过selector了
+        int lineIndex=colorRegion.calculateLineIndex(beginPos, endPos);
+        for (ColorRegion region:colorRegionMap.values()){
+            if (region!=colorRegion){
+                if (region.getNeedSelectLineIndex().contains(lineIndex)){
+                    colorRegion.selectFieldByOuterSelector(lineIndex,beginPos, endPos,text,region.getCurLineSelector());
+                    break;
+                }
+            }
+        }
+        colorRegion.selectField(lineIndex,beginPos,endPos,text);
     }
 
     public List<Field> showSelectedFields(){
