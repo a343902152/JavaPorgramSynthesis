@@ -72,7 +72,6 @@ public class LineField implements Field {
                         this.beginPos + ((SubStringExpression) curExpression).getPos2(),
                         txt));
             }
-//            System.out.println(((NonTerminalExpression) curExpression).interpret(text));
         }
         return plainFields;
     }

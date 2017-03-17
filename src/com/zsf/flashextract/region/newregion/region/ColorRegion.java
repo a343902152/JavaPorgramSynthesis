@@ -244,6 +244,10 @@ public class ColorRegion {
         return needSelectLineIndex;
     }
 
+    public List<Field> getFieldsByUser() {
+        return fieldsByUser;
+    }
+
     public List<Integer> getNegativeLineIndex() {
         negativeLineIndex = new ArrayList<Integer>();
         int max = 0;

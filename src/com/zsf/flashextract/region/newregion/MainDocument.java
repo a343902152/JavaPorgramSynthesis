@@ -67,7 +67,7 @@ public class MainDocument {
         this.document = document;
     }
 
-    public void selectField(Color color,int beginPos,int endPos,String text) {
+    public void selectField(Color color, int beginPos, int endPos, String text) {
         ColorRegion colorRegion = colorRegionMap.get(color);
         if (colorRegion == null) {
             colorRegion = new ColorRegion(color, document);
@@ -75,31 +75,40 @@ public class MainDocument {
         }
         // TODO: 2017/3/16 判断当前区域是否在其他color的lineSelector之内！！
         // TODO: 2017/3/17 判断是否已经产生过selector了
-        int lineIndex=colorRegion.calculateLineIndex(beginPos, endPos);
-        for (ColorRegion region:colorRegionMap.values()){
-            if (region!=colorRegion){
-                if (region.getNeedSelectLineIndex().contains(lineIndex)){
-                    colorRegion.selectFieldByOuterSelector(lineIndex,beginPos, endPos,text,region.getCurLineSelector());
+        int lineIndex = colorRegion.calculateLineIndex(beginPos, endPos);
+        for (ColorRegion region : colorRegionMap.values()) {
+            if (region != colorRegion) {
+                if (region.getNeedSelectLineIndex().contains(lineIndex)) {
+                    colorRegion.selectFieldByOuterSelector(lineIndex, beginPos, endPos, text, region.getCurLineSelector());
                     break;
                 }
             }
         }
-        colorRegion.selectField(lineIndex,beginPos,endPos,text);
+        colorRegion.selectField(lineIndex, beginPos, endPos, text);
     }
 
-    public List<Field> showSelectedFields(){
-        List<Field> fieldList=new ArrayList<Field>();
-        for (ColorRegion colorRegion:colorRegionMap.values()){
-            fieldList.addAll(colorRegion.getFieldsGenerated());
+    public List<Field> showSelectedFields() {
+        List<Field> fieldList = new ArrayList<Field>();
+        for (ColorRegion colorRegion : colorRegionMap.values()) {
+            for (Field field : colorRegion.getFieldsGenerated()) {
+                if (!fieldList.contains(field)) {
+                    fieldList.add(field);
+                }
+            }
+            for (Field field : colorRegion.getFieldsByUser()) {
+                if (!fieldList.contains(field)) {
+                    fieldList.add(field);
+                }
+            }
         }
         // 按照beginPos从小到大sort
-        Collections.sort(fieldList,new FieldComparator());
+        Collections.sort(fieldList, new FieldComparator());
         return fieldList;
     }
 
     public void setRegionTitle(Color color, String title) {
         ColorRegion colorRegion = colorRegionMap.get(color);
-        if (colorRegion!=null){
+        if (colorRegion != null) {
             colorRegion.setRegionTitle(title);
         }
     }
