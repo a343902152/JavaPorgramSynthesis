@@ -153,7 +153,7 @@ public class ColorRegion {
                 // TODO: 2017/3/16 去重复？
                 // TODO: 2017/3/16 ChildField。坐标
                 this.fieldsGenerated.addAll(
-                        lineFields.get(lineIndex).selectChildFieldByExp(curExpression));
+                        lineFields.get(lineIndex).selectChildFieldByExp(curExpression,color));
             }
         }
     }

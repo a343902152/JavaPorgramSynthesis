@@ -61,15 +61,17 @@ public class WebMain {
                 "                </div>";
         MainDocument document=new MainDocument(inputDocument);
 
+        List<Field> fieldList;
         document.selectField(Color.BLUE,476,483,"Ran Liu");
-        document.showSelectedFields();
+        fieldList=document.showSelectedFields();
+        showField(fieldList);
 
 //        document.selectField(Color.GREEN,516,551,"Associate Professor/Senior Engineer");
 //        document.showSelectedFields();
 //
         document.selectField(Color.BLUE,1197,1199,"陈波");
-        document.showSelectedFields();
-
+        fieldList=document.showSelectedFields();
+        showField(fieldList);
 
 //
 //        // FIXME: 2017/3/13 现在假设所有要提取的数据都处于同一行，不存在跨行的结构化数据
@@ -87,5 +89,11 @@ public class WebMain {
 //        int color3=3;
 //        flashExtract.selectRegion(color3,5,214,284,"Medical and stereo image processing; IC design; Biomedical Engineering");
         // TODO 异常处理：选中的是needSelectesRegions以外的region就提示错误，忽略本次输入
+    }
+
+    private static void showField(List<Field> fieldList) {
+        for (Field field:fieldList){
+            System.out.println(String.format("%s,%s,%d,%d",field.getColor(),field.getText(),field.getBeginPos(),field.getEndPos()));
+        }
     }
 }
